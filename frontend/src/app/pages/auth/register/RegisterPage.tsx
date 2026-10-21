@@ -1,12 +1,12 @@
-import { useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
-import { authApi } from '../../../apis/auth'
-import { ApiClientError } from '../../../apis/fetch-api'
 import { ROLE } from '../../../constants/role.constant'
 import { ROUTE } from '../../../constants/route.constant'
 import type { RegisterPayload } from '../../../model/auth.model'
+import { authActions } from '../../../modules/auth/redux'
 import { useRecaptcha } from '../../../provider/external-auth-provider'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { AuthShell } from '../components/auth-shell'
 import { GoogleAuthButton } from '../components/google-auth-button'
 
@@ -14,32 +14,30 @@ const initialForm: Omit<RegisterPayload, 'recaptchaToken'> = { fullName: '', ema
 
 export default function RegisterPage() {
   const [form, setForm] = useState(initialForm)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const dispatch = useAppDispatch()
+  const navigate = useNavigate()
+  const { error, message: success, submitting, user } = useAppSelector((state) => state.auth)
   const executeRecaptcha = useRecaptcha()
   const update = (field: keyof typeof form, value: string) => setForm((current) => ({ ...current, [field]: value }))
 
+  useEffect(() => { dispatch(authActions.feedbackCleared()) }, [dispatch])
+  useEffect(() => { if (user) navigate(ROUTE.HOME, { replace: true }) }, [navigate, user])
+
   const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault(); setError(''); setSuccess(''); setSubmitting(true)
+    event.preventDefault()
     try {
       const token = await executeRecaptcha('register')
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng ký.')
-      const response = await authApi.register({ ...form, recaptchaToken: token })
-      setSuccess(response.message || 'Đăng ký thành công. Vui lòng kiểm tra email của bạn.')
-    } catch (caught) { setError(caught instanceof ApiClientError ? caught.message : (caught as Error).message) }
-    finally { setSubmitting(false) }
+      dispatch(authActions.registerRequested({ ...form, recaptchaToken: token }))
+    } catch (caught) { dispatch(authActions.authFailed((caught as Error).message)) }
   }
 
   const handleGoogle = async (credential: string) => {
-    setError(''); setSubmitting(true)
     try {
       const token = await executeRecaptcha('google_register')
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng ký.')
-      await authApi.google({ credential, role: form.role, recaptchaToken: token })
-      setSuccess('Tài khoản Google đã được kết nối thành công.')
-    } catch (caught) { setError(caught instanceof ApiClientError ? caught.message : (caught as Error).message) }
-    finally { setSubmitting(false) }
+      dispatch(authActions.googleRequested({ credential, role: form.role, recaptchaToken: token }))
+    } catch (caught) { dispatch(authActions.authFailed((caught as Error).message)) }
   }
 
   return <AuthShell title="Tạo tài khoản" description="Chọn mục đích sử dụng để bắt đầu với không gian phù hợp.">
