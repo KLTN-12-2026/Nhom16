@@ -1,4 +1,4 @@
-import type { AuthUser, LoginPayload, RegisterPayload } from '../../model/auth.model'
+import type { AuthUser, GoogleAuthPayload, LoginPayload, RegisterPayload } from '../../model/auth.model'
 import { fetchApi } from '../fetch-api'
 
 export const authApi = {
@@ -10,6 +10,12 @@ export const authApi = {
   },
   login(payload: LoginPayload) {
     return fetchApi<{ user: AuthUser }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+  google(payload: GoogleAuthPayload) {
+    return fetchApi<{ user: AuthUser }>('/auth/google', {
       method: 'POST',
       body: JSON.stringify(payload),
     })

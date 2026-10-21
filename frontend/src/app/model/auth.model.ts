@@ -24,3 +24,9 @@ export interface LoginPayload {
   password: string
   recaptchaToken: string
 }
+
+export interface GoogleAuthPayload {
+  credential: string
+  role?: Extract<Role, 'CANDIDATE' | 'EMPLOYER'>
+  recaptchaToken: string
+}
