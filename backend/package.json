@@ -7,7 +7,7 @@
   "scripts": {
     "clean": "rimraf dist && mkdir dist",
     "clean-log": "rimraf logs && mkdir logs",
-    "build": "yarn run clean && babel app --out-dir dist && ncp app/template dist/template && ncp app/config/rsa-private-key.pem dist/config/rsa-private-key.pem",
+    "build": "yarn run clean && babel app --out-dir dist && ncp app/template dist/template",
     "start": "env-cmd nodemon --delay 500ms --trace-warnings --exec babel-node app/server.js",
     "serve": "node dist/server.js",
     "db:migrate": "sequelize-cli db:migrate",
