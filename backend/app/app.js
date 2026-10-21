@@ -8,7 +8,7 @@ const { env } = require('./config/env')
 const { createReadiness, health } = require('./controller/common')
 const { errorHandler, notFound } = require('./middleware/error')
 
-const createApp = ({ database, redis } = {}) => {
+const createApp = ({ database, redis, authRouter } = {}) => {
   const app = express()
 
   app.disable('x-powered-by')
@@ -23,6 +23,7 @@ const createApp = ({ database, redis } = {}) => {
 
   app.get('/health', health)
   app.get('/ready', createReadiness({ database, redis }))
+  if (authRouter) app.use('/api/auth', authRouter)
 
   app.use(notFound)
   app.use(errorHandler)

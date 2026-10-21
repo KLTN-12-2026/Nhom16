@@ -2,12 +2,14 @@ const { createApp } = require('./app')
 const { database } = require('./config/database')
 const { env } = require('./config/env')
 const { redis } = require('./config/redis')
+const { createAuthModule } = require('./service/auth')
 
 const startServer = async () => {
   await database.authenticate()
   await redis.connect()
 
-  const app = createApp({ database, redis })
+  const { router: authRouter } = createAuthModule({ database })
+  const app = createApp({ database, redis, authRouter })
   const server = app.listen(env.port, () => {
     console.log(`API listening on port ${env.port}`)
   })
