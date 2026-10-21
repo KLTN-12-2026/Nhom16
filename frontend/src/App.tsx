@@ -1,10 +1,11 @@
-import HomePage from './app/pages/home/HomePage'
+import { AppProvider } from './app/provider/app-provider'
+import { AppRouter } from './app/routing/AppRouter'
 
 function App() {
   return (
-    <main className="app-shell">
-      <HomePage />
-    </main>
+    <AppProvider>
+      <AppRouter />
+    </AppProvider>
   )
 }
 
