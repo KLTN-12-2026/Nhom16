@@ -1,6 +1,6 @@
 'use strict'
 
-const { PERMISSIONS, ROLES, ROLE_PERMISSIONS } = require('../../constants')
+const { PERMISSIONS, ROLES, ROLE_CODES, ROLE_PERMISSIONS } = require('../../constants')
 
 const humanize = (code) =>
   code
@@ -11,9 +11,10 @@ const humanize = (code) =>
 module.exports = {
   async up(queryInterface) {
     const now = new Date()
-    const roleRows = Object.values(ROLES).map((code) => ({
-      code,
-      name: code === ROLES.CANDIDATE ? 'Ứng viên' : code === ROLES.EMPLOYER ? 'Nhà tuyển dụng' : 'Quản trị viên',
+    const roleRows = Object.values(ROLES).map((id) => ({
+      id,
+      code: ROLE_CODES[id],
+      name: id === ROLES.CANDIDATE ? 'Ứng viên' : id === ROLES.EMPLOYER ? 'Nhà tuyển dụng' : 'Quản trị viên',
       created_at: now,
       updated_at: now,
     }))
@@ -27,13 +28,11 @@ module.exports = {
     await queryInterface.bulkInsert('roles', roleRows)
     await queryInterface.bulkInsert('permissions', permissionRows)
 
-    const [roles] = await queryInterface.sequelize.query('SELECT id, code FROM roles')
     const [permissions] = await queryInterface.sequelize.query('SELECT id, code FROM permissions')
-    const roleIds = new Map(roles.map((role) => [role.code, role.id]))
     const permissionIds = new Map(permissions.map((permission) => [permission.code, permission.id]))
     const assignments = Object.entries(ROLE_PERMISSIONS).flatMap(([role, permissionCodes]) =>
       permissionCodes.map((permission) => ({
-        role_id: roleIds.get(role),
+        role_id: Number(role),
         permission_id: permissionIds.get(permission),
         created_at: now,
         updated_at: now,
@@ -46,6 +45,6 @@ module.exports = {
   async down(queryInterface) {
     await queryInterface.bulkDelete('role_permissions', null, {})
     await queryInterface.bulkDelete('permissions', { code: Object.values(PERMISSIONS) }, {})
-    await queryInterface.bulkDelete('roles', { code: Object.values(ROLES) }, {})
+    await queryInterface.bulkDelete('roles', { id: Object.values(ROLES) }, {})
   },
 }

@@ -5,7 +5,8 @@ const { ApiError } = require('../../util/api-error')
 
 const googleSchema = yup.object({
   credential: yup.string().trim().required('Không nhận được thông tin xác thực Google.'),
-  role: yup.string().oneOf(PUBLIC_REGISTRATION_ROLES, 'Loại tài khoản không hợp lệ.').optional(),
+  role: yup.number().integer().oneOf(PUBLIC_REGISTRATION_ROLES, 'Loại tài khoản không hợp lệ.').optional(),
+  termsAccepted: yup.boolean().when('role', { is: (role) => Boolean(role), then: (schema) => schema.oneOf([true], 'Bạn cần đồng ý với điều khoản sử dụng.').required(), otherwise: (schema) => schema.strip() }),
   recaptchaToken: yup.string().trim().required('Không thể xác minh yêu cầu. Vui lòng thử lại.'),
 }).noUnknown(true)
 

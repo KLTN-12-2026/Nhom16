@@ -1,4 +1,4 @@
-const { PUBLIC_REGISTRATION_ROLES } = require('../../constants')
+const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
 const { ApiError } = require('../../util/api-error')
 
 const createRegistrationService = ({
@@ -6,6 +6,7 @@ const createRegistrationService = ({
   userRepository,
   roleRepository,
   identityRepository,
+  employerProfileRepository,
   passwordService,
   recaptchaVerifier,
 }) => ({
@@ -29,7 +30,7 @@ const createRegistrationService = ({
         })
       }
 
-      const role = await roleRepository.findByCode(payload.role, { transaction })
+      const role = await roleRepository.findById(payload.role, { transaction })
       if (!role) {
         throw new ApiError(503, 'Dữ liệu phân quyền chưa sẵn sàng.', 'ROLE_NOT_CONFIGURED')
       }
@@ -56,6 +57,25 @@ const createRegistrationService = ({
         { transaction },
       )
 
+      if (payload.role === ROLES.EMPLOYER) {
+        const existingCompany = await employerProfileRepository.findByTaxCode(payload.taxCode, { transaction })
+        if (existingCompany) {
+          throw new ApiError(409, 'Mã số thuế này đã được đăng ký.', 'TAX_CODE_ALREADY_EXISTS', { taxCode: 'Mã số thuế này đã được đăng ký.' })
+        }
+        await employerProfileRepository.create({
+          userId: createdUser.id,
+          companyName: payload.companyName,
+          taxCode: payload.taxCode,
+          businessLicenseNumber: payload.businessLicenseNumber,
+          companyPhone: payload.companyPhone,
+          companyAddress: payload.companyAddress,
+          companyWebsite: payload.companyWebsite,
+          representativeName: payload.representativeName,
+          representativePosition: payload.representativePosition,
+          verificationStatus: 'PENDING_REVIEW',
+        }, { transaction })
+      }
+
       return createdUser
     })
 
@@ -65,6 +85,7 @@ const createRegistrationService = ({
       fullName: user.fullName,
       role: payload.role,
       status: user.status,
+      ...(payload.role === ROLES.EMPLOYER ? { companyVerificationStatus: 'PENDING_REVIEW' } : {}),
     }
   },
 })

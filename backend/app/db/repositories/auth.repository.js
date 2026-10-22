@@ -1,4 +1,4 @@
-const createAuthRepositories = ({ AuthIdentity, Role, User, UserRole }) => ({
+const createAuthRepositories = ({ AuthIdentity, EmployerProfile, Role, User, UserRole }) => ({
   userRepository: {
     findByEmail(email, options = {}) {
       return User.findOne({ where: { email }, transaction: options.transaction })
@@ -27,8 +27,16 @@ const createAuthRepositories = ({ AuthIdentity, Role, User, UserRole }) => ({
     },
   },
   roleRepository: {
-    findByCode(code, options = {}) {
-      return Role.findOne({ where: { code }, transaction: options.transaction })
+    findById(id, options = {}) {
+      return Role.findByPk(id, { transaction: options.transaction })
+    },
+  },
+  employerProfileRepository: {
+    findByTaxCode(taxCode, options = {}) {
+      return EmployerProfile.findOne({ where: { taxCode }, transaction: options.transaction })
+    },
+    create(data, options = {}) {
+      return EmployerProfile.create(data, { transaction: options.transaction })
     },
   },
   identityRepository: {

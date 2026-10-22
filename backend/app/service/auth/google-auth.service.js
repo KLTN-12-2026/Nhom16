@@ -1,6 +1,6 @@
 const { OAuth2Client } = require('google-auth-library')
 
-const { PUBLIC_REGISTRATION_ROLES } = require('../../constants')
+const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
 const { ApiError } = require('../../util/api-error')
 const { toAuthUser } = require('./authentication.service')
 
@@ -9,6 +9,9 @@ const createGoogleAuthService = ({ clientId, transactionManager, userRepository,
   return {
     async authenticate(payload, context = {}) {
       if (!clientId) throw new ApiError(503, 'Đăng nhập Google chưa được cấu hình.', 'GOOGLE_AUTH_NOT_CONFIGURED')
+      if (payload.role === ROLES.EMPLOYER) {
+        throw new ApiError(422, 'Doanh nghiệp cần đăng ký bằng biểu mẫu xác minh.', 'EMPLOYER_VERIFICATION_REQUIRED')
+      }
       const action = payload.role ? 'google_register' : 'google_login'
       await recaptchaVerifier.verify({ token: payload.recaptchaToken, action, remoteIp: context.ip })
 
@@ -33,7 +36,7 @@ const createGoogleAuthService = ({ clientId, transactionManager, userRepository,
           if (!payload.role || !PUBLIC_REGISTRATION_ROLES.includes(payload.role)) {
             throw new ApiError(404, 'Tài khoản chưa tồn tại. Vui lòng đăng ký trước.', 'ACCOUNT_NOT_FOUND')
           }
-          const role = await roleRepository.findByCode(payload.role, { transaction })
+          const role = await roleRepository.findById(payload.role, { transaction })
           if (!role) throw new ApiError(503, 'Dữ liệu phân quyền chưa sẵn sàng.', 'ROLE_NOT_CONFIGURED')
           user = await userRepository.create({
             email,
