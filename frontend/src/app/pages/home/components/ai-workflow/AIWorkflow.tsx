@@ -1,3 +1,7 @@
+import { Link } from 'react-router-dom'
+
+import { ROUTE } from '../../../../constants/route.constant'
+
 const workflowSteps = [
   { number: '01', icon: 'bi-cloud-arrow-up', title: 'Tải CV lên hệ thống', description: 'Hỗ trợ định dạng PDF và DOCX. Quá trình tải lên nhanh chóng và an toàn.' },
   { number: '02', icon: 'bi-cpu', title: 'AI phân tích hồ sơ', description: 'Hệ thống trích xuất kỹ năng, kinh nghiệm, học vấn và đánh giá chất lượng CV.' },
@@ -17,7 +21,7 @@ export function AIWorkflow() {
             </article>
           ))}
         </div>
-        <div className="workflow-action"><a className="btn btn-primary btn-lg" href="#upload-cv"><i className="bi bi-upload" /> Phân tích CV miễn phí</a><span>Không yêu cầu thẻ thanh toán</span></div>
+        <div className="workflow-action"><Link className="btn btn-primary btn-lg" to={ROUTE.REGISTER}><i className="bi bi-upload" /> Bắt đầu với CV của bạn</Link><span>Không yêu cầu thẻ thanh toán</span></div>
       </div>
     </section>
   )

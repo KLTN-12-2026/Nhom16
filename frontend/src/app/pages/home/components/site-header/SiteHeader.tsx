@@ -1,10 +1,12 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
+
+import { ROUTE } from '../../../../constants/route.constant'
 
 const navigationItems = [
-  { label: "Việc làm", href: "#featured-jobs" },
-  { label: "Phân tích CV", href: "#ai-workflow" },
-  { label: "Ngành nghề", href: "#categories" },
-  { label: "Dành cho doanh nghiệp", href: "#employer" },
+  { label: 'Việc làm', to: ROUTE.JOBS },
+  { label: 'Đánh giá CV', to: ROUTE.CV_ANALYSIS },
+  { label: 'Ngành nghề', to: ROUTE.CATEGORIES },
+  { label: 'Dành cho doanh nghiệp', to: ROUTE.FOR_EMPLOYERS },
 ];
 
 function Brand() {
@@ -31,9 +33,9 @@ export function SiteHeader() {
         <Brand />
         <div className="desktop-navigation">
           {navigationItems.map((item) => (
-            <a href={item.href} key={item.href}>
+            <NavLink to={item.to} key={item.to}>
               {item.label}
-            </a>
+            </NavLink>
           ))}
         </div>
         <div className="header-actions">
@@ -50,9 +52,9 @@ export function SiteHeader() {
           </summary>
           <div className="mobile-menu">
             {navigationItems.map((item) => (
-              <a href={item.href} key={item.href}>
+              <NavLink to={item.to} key={item.to}>
                 {item.label}
-              </a>
+              </NavLink>
             ))}
             <Link to="/auth/login">Đăng nhập</Link>
             <Link className="mobile-menu__primary" to="/auth/register">

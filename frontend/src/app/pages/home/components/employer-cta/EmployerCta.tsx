@@ -1,3 +1,7 @@
+import { Link } from 'react-router-dom'
+
+import { ROUTE } from '../../../../constants/route.constant'
+
 const employerBenefits = [
   'AI phân tích và chuẩn hóa mô tả công việc',
   'Tự động xếp hạng ứng viên theo mức độ phù hợp',
@@ -21,8 +25,8 @@ export function EmployerCta() {
             <p>Đơn giản hóa quy trình sàng lọc với dữ liệu rõ ràng và khả năng phân tích của AI.</p>
             <ul>{employerBenefits.map((benefit) => <li key={benefit}><i className="bi bi-check-circle-fill" />{benefit}</li>)}</ul>
             <div className="employer-actions">
-              <a className="btn btn-light btn-lg" href="#post-job">Đăng tin tuyển dụng</a>
-              <a className="text-link-light" href="#employer-detail">Tìm hiểu giải pháp <i className="bi bi-arrow-right" /></a>
+              <Link className="btn btn-light btn-lg" to={ROUTE.REGISTER}>Đăng ký doanh nghiệp</Link>
+              <Link className="text-link-light" to={ROUTE.LOGIN}>Đăng nhập nhà tuyển dụng <i className="bi bi-arrow-right" /></Link>
             </div>
           </div>
           <div className="candidate-ranking" aria-label="Minh họa bảng xếp hạng ứng viên">

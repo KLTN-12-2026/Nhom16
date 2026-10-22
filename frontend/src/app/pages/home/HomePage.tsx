@@ -1,8 +1,4 @@
-import { AIWorkflow } from './components/ai-workflow'
-import { EmployerCta } from './components/employer-cta'
-import { FeaturedJobs } from './components/featured-jobs'
 import { HeroSection } from './components/hero-section'
-import { JobCategories } from './components/job-categories'
 import { SiteFooter } from './components/site-footer'
 import { SiteHeader } from './components/site-header'
 import './home-page.scss'
@@ -14,10 +10,6 @@ function HomePage() {
       <SiteHeader />
       <main id="main-content">
         <HeroSection />
-        <FeaturedJobs />
-        <AIWorkflow />
-        <JobCategories />
-        <EmployerCta />
       </main>
       <SiteFooter />
     </div>

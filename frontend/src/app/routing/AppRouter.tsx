@@ -13,6 +13,10 @@ import CandidateHomePage from '../pages/candidate/CandidateHomePage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
 import EmployerHomePage from '../pages/employer/EmployerHomePage'
 import HomePage from '../pages/home/HomePage'
+import CategoriesPage from '../pages/public/CategoriesPage'
+import CvAnalysisPage from '../pages/public/CvAnalysisPage'
+import ForEmployersPage from '../pages/public/ForEmployersPage'
+import JobsPage from '../pages/public/JobsPage'
 import { useAuth } from '../provider/auth-provider'
 import { FullPageLoader } from './FullPageLoader'
 import { RequireAuth } from './RequireAuth'
@@ -35,7 +39,10 @@ export function AppRouter() {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<HomeEntry />} />
-        <Route path="jobs/*" element={<ComingSoonPage />} />
+        <Route path="jobs" element={<JobsPage />} />
+        <Route path="cv-analysis" element={<CvAnalysisPage />} />
+        <Route path="categories" element={<CategoriesPage />} />
+        <Route path="for-employers" element={<ForEmployersPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
       </Route>

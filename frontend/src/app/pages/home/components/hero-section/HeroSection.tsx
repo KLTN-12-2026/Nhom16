@@ -1,8 +1,23 @@
+import { type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+
+import { ROUTE } from '../../../../constants/route.constant'
 import { trustStats } from '../../home.data'
 
 function JobSearchForm() {
+  const navigate = useNavigate()
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const values = new FormData(event.currentTarget)
+    const search = new URLSearchParams()
+    const keyword = String(values.get('keyword') || '').trim()
+    const location = String(values.get('location') || '').trim()
+    if (keyword) search.set('keyword', keyword)
+    if (location) search.set('location', location)
+    navigate(`${ROUTE.JOBS}${search.size ? `?${search}` : ''}`)
+  }
   return (
-    <form className="job-search" action="#featured-jobs" role="search">
+    <form className="job-search" role="search" onSubmit={handleSubmit}>
       <div className="search-field search-field--keyword">
         <label htmlFor="home-keyword">Vị trí hoặc kỹ năng</label>
         <div className="search-input">
@@ -73,7 +88,7 @@ export function HeroSection() {
             <p className="hero-description">AI hỗ trợ phân tích CV, đánh giá mức độ phù hợp và kết nối ứng viên với doanh nghiệp nhanh chóng, minh bạch hơn.</p>
             <JobSearchForm />
             <div className="hero-links">
-              <a href="#ai-workflow"><i className="bi bi-file-earmark-arrow-up" /> Tải CV để nhận đánh giá</a>
+              <Link to={ROUTE.CV_ANALYSIS}><i className="bi bi-file-earmark-arrow-up" /> Tải CV để nhận đánh giá</Link>
               <span aria-hidden="true" />
               <p><i className="bi bi-shield-check" /> Dữ liệu được bảo vệ an toàn</p>
             </div>
