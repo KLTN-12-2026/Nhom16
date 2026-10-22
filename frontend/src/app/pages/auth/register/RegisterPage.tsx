@@ -9,6 +9,7 @@ import { useRecaptcha } from '../../../provider/external-auth-provider'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { AuthShell } from '../components/auth-shell'
 import { GoogleAuthButton } from '../components/google-auth-button'
+import { PasswordStrength } from '../components/password-strength'
 
 const initialForm: Omit<RegisterPayload, 'recaptchaToken'> = {
   fullName: '', email: '', password: '', confirmPassword: '', role: ROLE.CANDIDATE, termsAccepted: false,
@@ -53,7 +54,7 @@ export default function RegisterPage() {
     <form className="auth-form" onSubmit={handleSubmit}>
       <label>Họ và tên<input value={form.fullName} onChange={(event) => update('fullName', event.target.value)} autoComplete="name" required /></label>
       <label>Email<input type="email" value={form.email} onChange={(event) => update('email', event.target.value)} autoComplete="email" required /></label>
-      <div className="auth-form__row"><label>Mật khẩu<input type="password" value={form.password} onChange={(event) => update('password', event.target.value)} autoComplete="new-password" required /></label><label>Xác nhận mật khẩu<input type="password" value={form.confirmPassword} onChange={(event) => update('confirmPassword', event.target.value)} autoComplete="new-password" required /></label></div>
+      <div className="auth-form__row"><label>Mật khẩu<input type="password" value={form.password} onChange={(event) => update('password', event.target.value)} autoComplete="new-password" required /><PasswordStrength password={form.password} /></label><label>Xác nhận mật khẩu<input type="password" value={form.confirmPassword} onChange={(event) => update('confirmPassword', event.target.value)} autoComplete="new-password" required /></label></div>
       {form.role === ROLE.EMPLOYER && <div className="auth-form__section">
         <h3>Thông tin xác minh doanh nghiệp</h3>
         <label>Tên doanh nghiệp<input value={form.companyName} onChange={(event) => update('companyName', event.target.value)} required /></label>

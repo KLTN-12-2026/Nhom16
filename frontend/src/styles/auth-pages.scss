@@ -17,6 +17,19 @@
 .auth-form__row { display: grid; grid-template-columns: 1fr 1fr; gap: .85rem; }
 .auth-form__section { display: grid; gap: 1rem; padding-top: .5rem; }
 .auth-form__section h3 { margin: 0; color: #172033; font-size: 1rem; }
+.password-strength { display: grid; gap: .4rem; font-weight: 500; }
+.password-strength__bar { display: grid; grid-template-columns: repeat(5, 1fr); gap: .3rem; }
+.password-strength__bar span { height: 4px; border-radius: 999px; background: #e4e7ec; transition: background-color .2s ease; }
+.password-strength--weak .password-strength__bar .is-active { background: #e5484d; }
+.password-strength--medium .password-strength__bar .is-active { background: #f59e0b; }
+.password-strength--good .password-strength__bar .is-active { background: #22a06b; }
+.password-strength--strong .password-strength__bar .is-active { background: #15803d; }
+.password-strength__caption { display: flex; justify-content: space-between; gap: .75rem; color: #667085; font-size: .72rem; line-height: 1.35; }
+.password-strength__caption span { flex: 0 0 auto; font-weight: 700; }
+.password-strength--weak .password-strength__caption span { color: #c9363e; }
+.password-strength--medium .password-strength__caption span { color: #b45309; }
+.password-strength--good .password-strength__caption span, .password-strength--strong .password-strength__caption span { color: #087443; }
+.password-strength__caption small { color: #7c8798; font-size: inherit; text-align: right; }
 .auth-form__options { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; }
 .auth-form__options label, .auth-consent { display: flex !important; align-items: flex-start; gap: .5rem !important; font-weight: 500 !important; }
 .auth-form__options a, .auth-switch a { color: #2563eb; font-weight: 650; text-decoration: none; }
@@ -30,4 +43,4 @@
 .role-picker i { font-size: 1.3rem; }
 .role-picker span, .role-picker strong, .role-picker small { display: block; }
 .role-picker small { margin-top: .15rem; color: #7c8798; font-size: .72rem; }
-@media (max-width: 560px) { .auth-page__content { padding: 1rem; } .auth-panel { padding: 1.35rem; border-radius: 18px; } .role-picker, .auth-form__row { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .auth-page__content { padding: 1rem; } .auth-panel { padding: 1.35rem; border-radius: 18px; } .role-picker, .auth-form__row { grid-template-columns: 1fr; } .password-strength__caption { display: grid; } .password-strength__caption small { text-align: left; } }
