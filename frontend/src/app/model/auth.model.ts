@@ -15,7 +15,16 @@ export interface RegisterPayload {
   email: string
   password: string
   confirmPassword: string
-  role: Extract<Role, 'CANDIDATE' | 'EMPLOYER'>
+  role: Extract<Role, 1 | 2>
+  termsAccepted: boolean
+  companyName?: string
+  taxCode?: string
+  businessLicenseNumber?: string
+  companyPhone?: string
+  companyAddress?: string
+  companyWebsite?: string
+  representativeName?: string
+  representativePosition?: string
   recaptchaToken: string
 }
 
@@ -27,6 +36,7 @@ export interface LoginPayload {
 
 export interface GoogleAuthPayload {
   credential: string
-  role?: Extract<Role, 'CANDIDATE' | 'EMPLOYER'>
+  role?: Extract<Role, 1 | 2>
+  termsAccepted?: boolean
   recaptchaToken: string
 }
