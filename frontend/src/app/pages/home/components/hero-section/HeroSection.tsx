@@ -95,8 +95,6 @@ export function HeroSection() {
           </div>
           <div className="col-lg-6 hero-visual-column">
             <AnalysisPreview />
-            <div className="floating-card floating-card--jobs" aria-hidden="true"><span><i className="bi bi-briefcase-fill" /></span><div><strong>24 việc làm phù hợp</strong><small>Được AI đề xuất cho bạn</small></div></div>
-            <div className="floating-card floating-card--verified" aria-hidden="true"><i className="bi bi-patch-check-fill" /><div><strong>Hồ sơ nổi bật</strong><small>Top 8% ứng viên</small></div></div>
           </div>
         </div>
         <div className="trust-strip" aria-label="Số liệu tổng quan của hệ thống">

@@ -16,6 +16,7 @@ export default function LoginPage() {
   const executeRecaptcha = useRecaptcha()
   const navigate = useNavigate()
   const location = useLocation()
+  const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting
 
   useEffect(() => {
     dispatch(authActions.feedbackCleared())
@@ -29,6 +30,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    if (!canSubmit) return
     try {
       const token = await executeRecaptcha('login')
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng nhập.')
@@ -53,7 +55,7 @@ export default function LoginPage() {
       <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
       <label>Mật khẩu<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /></label>
       <div className="auth-form__options"><label><input type="checkbox" /> Ghi nhớ đăng nhập</label><a href="#forgot-password">Quên mật khẩu?</a></div>
-      <button className="btn btn-primary auth-submit" type="submit" disabled={submitting}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
+      <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
     </form>
     <p className="auth-switch">Chưa có tài khoản? <Link to={ROUTE.REGISTER}>Đăng ký ngay</Link></p>
   </AuthShell>

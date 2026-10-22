@@ -24,12 +24,14 @@ export default function RegisterPage() {
   const { error, message: success, submitting, user } = useAppSelector((state) => state.auth)
   const executeRecaptcha = useRecaptcha()
   const update = <K extends keyof typeof form>(field: K, value: (typeof form)[K]) => setForm((current) => ({ ...current, [field]: value }))
+  const canSubmit = form.termsAccepted && !submitting
 
   useEffect(() => { dispatch(authActions.feedbackCleared()) }, [dispatch])
   useEffect(() => { if (user) navigate(ROUTE.HOME, { replace: true }) }, [navigate, user])
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    if (!canSubmit) return
     try {
       const token = await executeRecaptcha('register')
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng ký.')
@@ -65,9 +67,9 @@ export default function RegisterPage() {
         <p className="auth-config-note">Hồ sơ doanh nghiệp sẽ được kiểm tra trước khi sử dụng đầy đủ tính năng tuyển dụng.</p>
       </div>}
       <label className="auth-consent"><input type="checkbox" checked={form.termsAccepted} onChange={(event) => update('termsAccepted', event.target.checked)} /> Tôi đồng ý với điều khoản sử dụng và chính sách bảo mật.</label>
-      {form.termsAccepted && <button className="btn btn-primary auth-submit" type="submit" disabled={submitting}>{submitting ? 'Đang tạo tài khoản...' : form.role === ROLE.EMPLOYER ? 'Gửi hồ sơ đăng ký' : 'Tạo tài khoản'}</button>}
+      <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang tạo tài khoản...' : form.role === ROLE.EMPLOYER ? 'Gửi hồ sơ đăng ký' : 'Tạo tài khoản'}</button>
     </form>
-    {form.role === ROLE.CANDIDATE && form.termsAccepted && <><div className="auth-divider"><span>hoặc đăng ký nhanh</span></div><GoogleAuthButton onCredential={handleGoogle} /></>}
+    {form.role === ROLE.CANDIDATE && <><div className="auth-divider"><span>hoặc đăng ký nhanh</span></div><GoogleAuthButton onCredential={handleGoogle} disabled={!form.termsAccepted || submitting} /></>}
     <p className="auth-switch">Đã có tài khoản? <Link to={ROUTE.LOGIN}>Đăng nhập</Link></p>
   </AuthShell>
 }
