@@ -12,7 +12,7 @@
   --line: #e5ebf2;
   --shadow-sm: 0 12px 30px rgba(16, 42, 67, 0.08);
   --shadow-lg: 0 30px 80px rgba(16, 42, 67, 0.14);
-  overflow: hidden;
+  overflow-x: clip;
   color: var(--ink);
   background: var(--surface);
 }
@@ -235,7 +235,7 @@
 
 .hero-section {
   position: relative;
-  padding: 6rem 0 0;
+  padding: 4.75rem 0 0;
   background: linear-gradient(180deg, #f7fbff 0%, #fff 90%);
 }
 
@@ -290,7 +290,7 @@
 .hero-content h1 {
   margin: 1.25rem 0 1.15rem;
   letter-spacing: -0.055em;
-  font-size: clamp(3rem, 5vw, 4.75rem);
+  font-size: clamp(2.75rem, 4.35vw, 4.2rem);
   line-height: 1.02;
   font-weight: 900;
 }
@@ -397,14 +397,15 @@
 }
 
 .hero-visual-column {
-  padding: 1.75rem 1rem;
+  min-width: 0;
+  padding: 1.25rem 0.75rem;
 }
 
 .analysis-preview {
   position: relative;
-  max-width: 35rem;
+  max-width: 32.5rem;
   margin-left: auto;
-  padding: 1.55rem;
+  padding: 1.3rem;
   background: rgba(255, 255, 255, 0.97);
   border: 1px solid rgba(218, 228, 239, 0.9);
   border-radius: 20px;
@@ -614,8 +615,8 @@
 }
 
 .floating-card--jobs {
-  bottom: 3.2rem;
-  left: -1.5rem;
+  bottom: 1.75rem;
+  left: 1rem;
 }
 
 .floating-card--jobs > span {
@@ -629,8 +630,8 @@
 }
 
 .floating-card--verified {
-  top: 0;
-  right: -0.5rem;
+  top: 0.25rem;
+  right: 1rem;
   animation-delay: 0.6s;
 }
 
@@ -1211,7 +1212,7 @@
 
 @media (max-width: 1199.98px) {
   .desktop-navigation { gap: 1.15rem; }
-  .floating-card--jobs { left: 0; }
+  .floating-card { display: none; }
   .employer-panel { gap: 2.5rem; padding: 3rem; }
 }
 

@@ -34,7 +34,7 @@ export function PasswordStrength({ password }: { password: string }) {
       </div>
       <div className="password-strength__caption">
         <span>{meta.label}</span>
-        {score < 5 && password && <small>Cần 8 ký tự, chữ hoa, chữ thường, số và ký tự đặc biệt.</small>}
+        {score < 5 && password && <small>8+ ký tự · A–Z · a–z · 0–9 · ký tự đặc biệt</small>}
       </div>
     </div>
   )
