@@ -1,6 +1,5 @@
 const { env } = require('../../config/env')
 const { createAuthController, createAuthRouter } = require('../../controller/auth')
-const { initializeModels } = require('../../db/models')
 const { createAuthRepositories } = require('../../db/repositories')
 const { createPassportMiddleware, createRecaptchaMiddleware } = require('../../middleware/auth')
 const { createAuthRateLimiters } = require('../../middleware/rate-limit')
@@ -17,8 +16,8 @@ const { createRegistrationService } = require('./registration.service')
 const { createSessionService } = require('./session.service')
 const { createTokenService } = require('./token.service')
 
-const createAuthModule = ({ database, emailQueue, redis }) => {
-  const repositories = createAuthRepositories(initializeModels(database))
+const createAuthModule = ({ database, emailQueue, models, redis }) => {
+  const repositories = createAuthRepositories(models)
   const recaptchaVerifier = createRecaptchaVerifier({
     secretKey: env.recaptcha.secretKey,
     minimumScore: env.recaptcha.minimumScore,

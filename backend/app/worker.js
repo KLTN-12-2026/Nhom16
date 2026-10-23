@@ -1,12 +1,11 @@
-const { createEmailWorker } = require('./worker/index')
+const { initWorker } = require('./worker/index')
 
 const startWorker = () => {
-  const { connection, worker } = createEmailWorker()
+  const workers = initWorker()
 
   const shutdown = async (signal) => {
     console.log(`${signal} received, stopping workers`)
-    await worker.close()
-    await connection.quit()
+    await workers.close()
     process.exit(0)
   }
 
