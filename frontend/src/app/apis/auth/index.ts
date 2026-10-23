@@ -1,4 +1,5 @@
 export * from './google-auth.api'
+export * from './email-verification.api'
 export * from './login.api'
 export * from './password-recovery.api'
 export * from './register.api'

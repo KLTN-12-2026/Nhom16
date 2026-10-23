@@ -11,6 +11,7 @@ import LoginPage from '../pages/auth/login'
 import ForgotPasswordPage from '../pages/auth/forgot-password'
 import RegisterPage from '../pages/auth/register'
 import ResetPasswordPage from '../pages/auth/reset-password'
+import VerifyEmailPage from '../pages/auth/verify-email'
 import CandidateHomePage from '../pages/candidate/CandidateHomePage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
 import EmployerHomePage from '../pages/employer/EmployerHomePage'
@@ -49,6 +50,7 @@ export function AppRouter() {
         <Route path="auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="verify-email" element={<VerifyEmailPage />} />
       </Route>
       <Route path="candidate" element={<RequireAuth><RequireRole role={ROLE.CANDIDATE}><CandidateLayout /></RequireRole></RequireAuth>}>
         <Route index element={<CandidateHomePage />} />
