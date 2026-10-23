@@ -2,7 +2,7 @@ const express = require('express')
 
 const { asyncHandler } = require('../../util/async-handler')
 
-const createAuthRouter = ({ authController, authMiddleware, validateBody, validators, verifyRecaptcha }) => {
+const createAuthRouter = ({ authController, authMiddleware, rateLimiters, validateBody, validators, verifyRecaptcha }) => {
   const router = express.Router()
 
   router.post(
@@ -13,6 +13,7 @@ const createAuthRouter = ({ authController, authMiddleware, validateBody, valida
   )
   router.post(
     '/login',
+    rateLimiters.login,
     validateBody(validators.login),
     verifyRecaptcha('login'),
     authMiddleware.authenticateLocal,

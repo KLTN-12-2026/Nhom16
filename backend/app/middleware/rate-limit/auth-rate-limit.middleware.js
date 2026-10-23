@@ -1,0 +1,35 @@
+const { rateLimit } = require('express-rate-limit')
+const { RedisStore } = require('rate-limit-redis')
+
+const { ApiError } = require('../../util/api-error')
+
+const createLimiter = ({ redis, prefix, windowMs, limit, message }) => rateLimit({
+  windowMs,
+  limit,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  store: new RedisStore({
+    prefix: `rate-limit:${prefix}:`,
+    sendCommand: (...args) => redis.call(...args),
+  }),
+  handler: (request, response, next) => next(new ApiError(429, message, 'RATE_LIMITED')),
+})
+
+const createAuthRateLimiters = ({ redis, config }) => ({
+  login: createLimiter({
+    redis,
+    prefix: 'login',
+    windowMs: config.loginWindowMs,
+    limit: config.loginMax,
+    message: 'Bạn đã đăng nhập sai quá nhiều lần. Vui lòng thử lại sau.',
+  }),
+  refresh: createLimiter({
+    redis,
+    prefix: 'refresh',
+    windowMs: config.refreshWindowMs,
+    limit: config.refreshMax,
+    message: 'Yêu cầu làm mới phiên quá thường xuyên. Vui lòng thử lại sau.',
+  }),
+})
+
+module.exports = { createAuthRateLimiters }
