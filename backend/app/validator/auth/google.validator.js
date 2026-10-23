@@ -23,6 +23,10 @@ const googleCompleteSchema = yup.object({
   representativePosition: yup.string().trim().max(100).when('role', { is: ROLES.EMPLOYER, then: (schema) => schema.required('Vui lòng nhập chức vụ người đại diện.'), otherwise: (schema) => schema.strip() }),
 }).noUnknown(true)
 
+const googleResendSchema = yup.object({
+  challengeId: yup.string().uuid('Phiên xác minh không hợp lệ.').required('Phiên xác minh không hợp lệ.'),
+}).noUnknown(true)
+
 const validate = (schema, message) => async (payload) => {
   try {
     return await schema.validate(payload, { abortEarly: false, stripUnknown: true })
@@ -34,4 +38,5 @@ const validate = (schema, message) => async (payload) => {
 module.exports = {
   validateGoogleStartPayload: validate(googleStartSchema, 'Thông tin đăng nhập Google chưa hợp lệ.'),
   validateGoogleCompletePayload: validate(googleCompleteSchema, 'Thông tin hoàn tất đăng nhập Google chưa hợp lệ.'),
+  validateGoogleResendPayload: validate(googleResendSchema, 'Thông tin gửi lại mã chưa hợp lệ.'),
 }

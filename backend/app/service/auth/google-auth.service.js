@@ -43,6 +43,7 @@ const createGoogleAuthService = ({ clientId, emailQueue, employerProfileReposito
       await redis.set(challengeKey(challengeId), JSON.stringify({
         codeHash: hashCode(challengeId, code),
         attempts: 0,
+        lastSentAt: Math.floor(Date.now() / 1000),
         email,
         fullName: profile.name || email.split('@')[0],
         providerSubject: profile.sub,
@@ -56,6 +57,40 @@ const createGoogleAuthService = ({ clientId, emailQueue, employerProfileReposito
       }, { jobId: `google-otp-${challengeId}` })
 
       return { challengeId, email: maskEmail(email), requiresProfile: !existingUser }
+    },
+
+    async resend(payload) {
+      const code = crypto.randomInt(100000, 1000000).toString()
+      const now = Math.floor(Date.now() / 1000)
+      const script = `
+        local raw = redis.call('GET', KEYS[1])
+        if not raw then return -1 end
+        local value = cjson.decode(raw)
+        local remaining = 15 - (${now} - (value.lastSentAt or 0))
+        if remaining > 0 then return remaining end
+        value.codeHash = ARGV[1]
+        value.attempts = 0
+        value.lastSentAt = ${now}
+        redis.call('SET', KEYS[1], cjson.encode(value), 'EX', 600)
+        return 0
+      `
+      const result = await redis.eval(
+        script,
+        1,
+        challengeKey(payload.challengeId),
+        hashCode(payload.challengeId, code),
+      )
+      if (result === -1) throw new ApiError(422, 'Phiên xác minh đã hết hạn. Vui lòng chọn lại tài khoản Google.', 'GOOGLE_CHALLENGE_EXPIRED')
+      if (result > 0) throw new ApiError(429, `Vui lòng chờ ${result} giây trước khi gửi lại mã.`, 'GOOGLE_OTP_COOLDOWN', { retryAfter: result })
+
+      const raw = await redis.get(challengeKey(payload.challengeId))
+      const challenge = JSON.parse(raw)
+      await emailQueue.add(EMAIL_JOBS.GOOGLE_OTP, {
+        code,
+        email: challenge.email,
+        fullName: challenge.fullName,
+      }, { jobId: `google-otp-${payload.challengeId}-${now}` })
+      return { cooldownSeconds: 15 }
     },
 
     async complete(payload) {

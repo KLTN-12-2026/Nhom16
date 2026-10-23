@@ -8,7 +8,7 @@ const createEmailService = (config) => {
     host: config.host,
     port: config.port,
     secure: config.secure,
-    auth: { user: config.user, pass: config.password },
+    auth: { user: config.user.trim(), pass: config.password.replace(/\s/g, '') },
   })
 
   return {

@@ -36,6 +36,10 @@ const createAuthController = ({ authCookie, emailVerificationService, googleAuth
     authCookie.set(response, await sessionService.issue(user, requestContext(request)))
     return sendSuccess(response, { data: { user }, message: 'Xác minh và đăng nhập Google thành công.' })
   },
+  async googleResend(request, response) {
+    const result = await googleAuthService.resend(request.validatedBody)
+    return sendSuccess(response, { data: result, message: 'Mã xác minh mới đã được gửi đến Gmail của bạn.' })
+  },
   async refresh(request, response) {
     const result = await sessionService.rotate(readCookie(request, REFRESH_COOKIE), requestContext(request))
     authCookie.set(response, result.tokens)

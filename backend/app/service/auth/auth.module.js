@@ -6,7 +6,7 @@ const { createPassportMiddleware, createRecaptchaMiddleware } = require('../../m
 const { createAuthRateLimiters } = require('../../middleware/rate-limit')
 const { validateBody } = require('../../middleware/validation')
 const { createAuthCookieHelper } = require('../../util/auth-cookie.helper')
-const { validateForgotPasswordPayload, validateGoogleCompletePayload, validateGoogleStartPayload, validateLoginPayload, validateRegisterPayload, validateResendVerificationPayload, validateResetPasswordPayload, validateVerifyEmailPayload } = require('../../validator/auth')
+const { validateForgotPasswordPayload, validateGoogleCompletePayload, validateGoogleResendPayload, validateGoogleStartPayload, validateLoginPayload, validateRegisterPayload, validateResendVerificationPayload, validateResetPasswordPayload, validateVerifyEmailPayload } = require('../../validator/auth')
 const { createAuthenticationService } = require('./authentication.service')
 const { createEmailVerificationService } = require('./email-verification.service')
 const { createGoogleAuthService } = require('./google-auth.service')
@@ -89,6 +89,7 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
       validators: {
         googleStart: validateGoogleStartPayload,
         googleComplete: validateGoogleCompletePayload,
+        googleResend: validateGoogleResendPayload,
         forgotPassword: validateForgotPasswordPayload,
         login: validateLoginPayload,
         register: validateRegisterPayload,

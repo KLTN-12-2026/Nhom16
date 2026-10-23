@@ -42,6 +42,12 @@ const createAuthRouter = ({ authController, authMiddleware, rateLimiters, valida
     validateBody(validators.googleComplete),
     asyncHandler(authController.googleComplete),
   )
+  router.post(
+    '/google/resend',
+    rateLimiters.login,
+    validateBody(validators.googleResend),
+    asyncHandler(authController.googleResend),
+  )
   router.post('/refresh', rateLimiters.refresh, asyncHandler(authController.refresh))
   router.post(
     '/forgot-password',
