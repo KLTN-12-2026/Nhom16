@@ -1,5 +1,6 @@
 const { env } = require('../../config')
 const { createAuthRepositories } = require('../../db')
+const { createAuthCookieHelper } = require('../../util')
 const { createAuthenticationService, toAuthUser } = require('./authentication.service')
 const { createEmailVerificationService } = require('./email-verification.service')
 const { createGoogleAuthService } = require('./google-auth.service')
@@ -54,6 +55,7 @@ const createAuthServices = ({ database, emailQueue, models, redis }) => {
     transactionManager: database,
   })
   return {
+    authCookie: createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' }),
     authenticationService,
     emailVerificationService,
     googleAuthService,
