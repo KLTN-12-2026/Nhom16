@@ -20,10 +20,11 @@ export class ApiClientError extends Error {
 
 interface FetchApiOptions extends RequestInit {
   timeoutMs?: number
+  skipAuthRefresh?: boolean
 }
 
 export async function fetchApi<T>(path: string, options: FetchApiOptions = {}): Promise<ApiResponse<T>> {
-  const { timeoutMs = 15000, headers, body, ...requestOptions } = options
+  const { timeoutMs = 15000, skipAuthRefresh = false, headers, body, ...requestOptions } = options
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
@@ -40,6 +41,11 @@ export async function fetchApi<T>(path: string, options: FetchApiOptions = {}): 
       },
     })
     const payload = (await response.json().catch(() => ({}))) as Partial<ApiResponse<T>>
+
+    if (response.status === 401 && !skipAuthRefresh && (path === '/auth/me' || !path.startsWith('/auth/'))) {
+      await fetchApi('/auth/refresh', { method: 'POST', skipAuthRefresh: true })
+      return fetchApi<T>(path, { ...options, skipAuthRefresh: true })
+    }
 
     if (!response.ok) {
       throw new ApiClientError(

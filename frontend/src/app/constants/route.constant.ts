@@ -6,6 +6,8 @@ export const ROUTE = {
   FOR_EMPLOYERS: '/for-employers',
   LOGIN: '/auth/login',
   REGISTER: '/auth/register',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/reset-password',
   CANDIDATE_HOME: '/candidate',
   EMPLOYER_HOME: '/employer',
   ADMIN_HOME: '/admin/dashboard',

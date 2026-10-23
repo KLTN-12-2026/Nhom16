@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
-import type { AuthUser, GoogleAuthPayload, LoginPayload, RegisterPayload } from '../../../model/auth.model'
+import type { AuthUser, ForgotPasswordPayload, GoogleAuthPayload, LoginPayload, RegisterPayload, ResetPasswordPayload } from '../../../model/auth.model'
 
 interface AuthState {
   user: AuthUser | null
@@ -21,6 +21,9 @@ const authSlice = createSlice({
     loginRequested(state, _action: PayloadAction<LoginPayload>) { state.submitting = true; state.error = ''; state.message = '' },
     registerRequested(state, _action: PayloadAction<RegisterPayload>) { state.submitting = true; state.error = ''; state.message = '' },
     googleRequested(state, _action: PayloadAction<GoogleAuthPayload>) { state.submitting = true; state.error = ''; state.message = '' },
+    forgotPasswordRequested(state, _action: PayloadAction<ForgotPasswordPayload>) { state.submitting = true; state.error = ''; state.message = '' },
+    resetPasswordRequested(state, _action: PayloadAction<ResetPasswordPayload>) { state.submitting = true; state.error = ''; state.message = '' },
+    recoverySucceeded(state, action: PayloadAction<string>) { state.submitting = false; state.error = ''; state.message = action.payload },
     authSucceeded(state, action: PayloadAction<{ user: AuthUser; message?: string }>) { state.user = action.payload.user; state.submitting = false; state.error = ''; state.message = action.payload.message || '' },
     registerSucceeded(state, action: PayloadAction<string>) { state.submitting = false; state.error = ''; state.message = action.payload },
     authFailed(state, action: PayloadAction<string>) { state.submitting = false; state.error = action.payload },

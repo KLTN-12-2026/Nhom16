@@ -8,7 +8,9 @@ import { EmployerLayout } from '../layouts/employer-layout'
 import { PublicLayout } from '../layouts/public-layout'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import LoginPage from '../pages/auth/login'
+import ForgotPasswordPage from '../pages/auth/forgot-password'
 import RegisterPage from '../pages/auth/register'
+import ResetPasswordPage from '../pages/auth/reset-password'
 import CandidateHomePage from '../pages/candidate/CandidateHomePage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
 import EmployerHomePage from '../pages/employer/EmployerHomePage'
@@ -44,7 +46,9 @@ export function AppRouter() {
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="for-employers" element={<ForEmployersPage />} />
         <Route path="auth/login" element={<LoginPage />} />
+        <Route path="auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="auth/register" element={<RegisterPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
       </Route>
       <Route path="candidate" element={<RequireAuth><RequireRole role={ROLE.CANDIDATE}><CandidateLayout /></RequireRole></RequireAuth>}>
         <Route index element={<CandidateHomePage />} />

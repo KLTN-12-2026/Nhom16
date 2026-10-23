@@ -54,7 +54,7 @@ export default function LoginPage() {
     <form className="auth-form" onSubmit={handleSubmit}>
       <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
       <label>Mật khẩu<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /></label>
-      <div className="auth-form__options"><label><input type="checkbox" /> Ghi nhớ đăng nhập</label><a href="#forgot-password">Quên mật khẩu?</a></div>
+      <div className="auth-form__options"><label><input type="checkbox" /> Ghi nhớ đăng nhập</label><Link to={ROUTE.FORGOT_PASSWORD}>Quên mật khẩu?</Link></div>
       <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
     </form>
     <p className="auth-switch">Chưa có tài khoản? <Link to={ROUTE.REGISTER}>Đăng ký ngay</Link></p>

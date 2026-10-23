@@ -1,10 +1,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
 
-import { getCurrentUserApi, googleAuthApi, loginApi, logoutApi, registerApi } from '../../../apis/auth'
+import { forgotPasswordApi, getCurrentUserApi, googleAuthApi, loginApi, logoutApi, registerApi, resetPasswordApi } from '../../../apis/auth'
 import { ApiClientError } from '../../../apis/fetch-api'
 import type { ApiResponse } from '../../../model/api.model'
-import type { AuthUser, GoogleAuthPayload, LoginPayload, RegisterPayload } from '../../../model/auth.model'
+import type { AuthUser, ForgotPasswordPayload, GoogleAuthPayload, LoginPayload, RegisterPayload, ResetPasswordPayload } from '../../../model/auth.model'
 import { authActions } from './auth.slice'
 
 const errorMessage = (error: unknown) => error instanceof ApiClientError ? error.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.'
@@ -37,6 +37,20 @@ function* googleWorker(action: PayloadAction<GoogleAuthPayload>) {
   } catch (error) { yield put(authActions.authFailed(errorMessage(error))) }
 }
 
+function* forgotPasswordWorker(action: PayloadAction<ForgotPasswordPayload>) {
+  try {
+    const response: ApiResponse<never> = yield call(forgotPasswordApi, action.payload)
+    yield put(authActions.recoverySucceeded(response.message || 'Nếu email tồn tại, hướng dẫn sẽ được gửi trong ít phút.'))
+  } catch (error) { yield put(authActions.authFailed(errorMessage(error))) }
+}
+
+function* resetPasswordWorker(action: PayloadAction<ResetPasswordPayload>) {
+  try {
+    const response: ApiResponse<never> = yield call(resetPasswordApi, action.payload)
+    yield put(authActions.recoverySucceeded(response.message || 'Đặt lại mật khẩu thành công.'))
+  } catch (error) { yield put(authActions.authFailed(errorMessage(error))) }
+}
+
 function* logoutWorker() {
   try { yield call(logoutApi) } finally { yield put(authActions.logoutFinished()) }
 }
@@ -46,5 +60,7 @@ export function* authSaga() {
   yield takeLatest(authActions.loginRequested.type, loginWorker)
   yield takeLatest(authActions.registerRequested.type, registerWorker)
   yield takeLatest(authActions.googleRequested.type, googleWorker)
+  yield takeLatest(authActions.forgotPasswordRequested.type, forgotPasswordWorker)
+  yield takeLatest(authActions.resetPasswordRequested.type, resetPasswordWorker)
   yield takeEvery(authActions.logoutRequested.type, logoutWorker)
 }
