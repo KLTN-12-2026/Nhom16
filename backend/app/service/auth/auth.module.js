@@ -6,7 +6,7 @@ const { createPassportMiddleware, createRecaptchaMiddleware } = require('../../m
 const { createAuthRateLimiters } = require('../../middleware/rate-limit')
 const { validateBody } = require('../../middleware/validation')
 const { createAuthCookieHelper } = require('../../util/auth-cookie.helper')
-const { validateForgotPasswordPayload, validateGooglePayload, validateLoginPayload, validateRegisterPayload, validateResendVerificationPayload, validateResetPasswordPayload, validateVerifyEmailPayload } = require('../../validator/auth')
+const { validateForgotPasswordPayload, validateGoogleCompletePayload, validateGoogleStartPayload, validateLoginPayload, validateRegisterPayload, validateResendVerificationPayload, validateResetPasswordPayload, validateVerifyEmailPayload } = require('../../validator/auth')
 const { createAuthenticationService } = require('./authentication.service')
 const { createEmailVerificationService } = require('./email-verification.service')
 const { createGoogleAuthService } = require('./google-auth.service')
@@ -43,7 +43,15 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
     transactionManager: database,
   })
   const authenticationService = createAuthenticationService({ ...repositories, passwordService, tokenService })
-  const googleAuthService = createGoogleAuthService({ ...repositories, clientId: env.googleClientId, emailQueue, recaptchaVerifier, transactionManager: database })
+  const googleAuthService = createGoogleAuthService({
+    ...repositories,
+    clientId: env.googleClientId,
+    emailQueue,
+    otpSecret: env.auth.refreshSecret,
+    recaptchaVerifier,
+    redis,
+    transactionManager: database,
+  })
   const sessionService = createSessionService({ ...repositories, tokenService, transactionManager: database })
   const passwordResetService = createPasswordResetService({
     ...repositories,
@@ -79,7 +87,8 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
       validateBody,
       verifyRecaptcha,
       validators: {
-        google: validateGooglePayload,
+        googleStart: validateGoogleStartPayload,
+        googleComplete: validateGoogleCompletePayload,
         forgotPassword: validateForgotPasswordPayload,
         login: validateLoginPayload,
         register: validateRegisterPayload,

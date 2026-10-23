@@ -27,10 +27,14 @@ const createAuthController = ({ authCookie, emailVerificationService, googleAuth
     authCookie.set(response, await sessionService.issue(request.user, requestContext(request)))
     return sendSuccess(response, { data: { user: request.user }, message: 'Đăng nhập thành công.' })
   },
-  async google(request, response) {
-    const user = await googleAuthService.authenticate(request.validatedBody, { ip: request.ip })
+  async googleStart(request, response) {
+    const challenge = await googleAuthService.start(request.validatedBody, { ip: request.ip })
+    return sendSuccess(response, { data: challenge, message: 'Mã xác minh đã được gửi đến Gmail của bạn.' })
+  },
+  async googleComplete(request, response) {
+    const user = await googleAuthService.complete(request.validatedBody)
     authCookie.set(response, await sessionService.issue(user, requestContext(request)))
-    return sendSuccess(response, { data: { user }, message: 'Đăng nhập Google thành công.' })
+    return sendSuccess(response, { data: { user }, message: 'Xác minh và đăng nhập Google thành công.' })
   },
   async refresh(request, response) {
     const result = await sessionService.rotate(readCookie(request, REFRESH_COOKIE), requestContext(request))

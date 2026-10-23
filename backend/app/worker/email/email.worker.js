@@ -4,7 +4,7 @@ const { env } = require('../../config/env')
 const { createQueueRedis } = require('../../config/queue-redis')
 const { EMAIL_JOBS, EMAIL_QUEUE } = require('../../queue')
 const { createEmailService } = require('../../service/notification')
-const { createEmailVerificationEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template/email')
+const { createEmailVerificationEmail, createGoogleOtpEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template/email')
 
 const createEmailWorker = () => {
   const connection = createQueueRedis()
@@ -18,6 +18,9 @@ const createEmailWorker = () => {
     }
     if (job.name === EMAIL_JOBS.GOOGLE_WELCOME) {
       return emailService.send({ to: job.data.email, ...createGoogleWelcomeEmail(job.data) })
+    }
+    if (job.name === EMAIL_JOBS.GOOGLE_OTP) {
+      return emailService.send({ to: job.data.email, ...createGoogleOtpEmail(job.data) })
     }
     throw new Error(`Unsupported email job: ${job.name}`)
   }, {
