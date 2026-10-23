@@ -8,18 +8,11 @@ const createRegistrationService = ({
   identityRepository,
   employerProfileRepository,
   passwordService,
-  recaptchaVerifier,
 }) => ({
-  async register(payload, context = {}) {
+  async register(payload) {
     if (!PUBLIC_REGISTRATION_ROLES.includes(payload.role)) {
       throw new ApiError(403, 'Không thể đăng ký loại tài khoản này.', 'ROLE_NOT_ALLOWED')
     }
-
-    await recaptchaVerifier.verify({
-      token: payload.recaptchaToken,
-      action: 'register',
-      remoteIp: context.ip,
-    })
 
     const email = payload.email.trim().toLowerCase()
     const user = await transactionManager.transaction(async (transaction) => {

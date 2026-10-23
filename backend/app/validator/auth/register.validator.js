@@ -1,7 +1,7 @@
 const yup = require('yup')
 
 const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
-const { ApiError } = require('../../util/api-error')
+const { validationError } = require('../../util/error.helper')
 
 const registerSchema = yup
   .object({
@@ -27,10 +27,7 @@ const validateRegisterPayload = async (payload) => {
   try {
     return await registerSchema.validate(payload, { abortEarly: false, stripUnknown: true })
   } catch (error) {
-    const details = error.inner?.length
-      ? error.inner.reduce((result, item) => ({ ...result, [item.path]: item.message }), {})
-      : { form: error.message }
-    throw new ApiError(422, 'Thông tin đăng ký chưa hợp lệ.', 'VALIDATION_ERROR', details)
+    throw validationError(error, 'Thông tin đăng ký chưa hợp lệ.')
   }
 }
 

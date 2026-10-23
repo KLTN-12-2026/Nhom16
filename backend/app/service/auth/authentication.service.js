@@ -13,9 +13,8 @@ const toAuthUser = (user) => {
   }
 }
 
-const createAuthenticationService = ({ userRepository, passwordService, recaptchaVerifier, tokenService }) => ({
-  async login(payload, context = {}) {
-    await recaptchaVerifier.verify({ token: payload.recaptchaToken, action: 'login', remoteIp: context.ip })
+const createAuthenticationService = ({ userRepository, passwordService, tokenService }) => ({
+  async authenticateLocal(payload) {
     const user = await userRepository.findByEmailWithRoles(payload.email.trim().toLowerCase())
     const passwordValid = user?.passwordHash && await passwordService.compare(payload.password, user.passwordHash)
     if (!passwordValid) throw new ApiError(401, 'Email hoặc mật khẩu không chính xác.', 'INVALID_CREDENTIALS')
@@ -23,11 +22,15 @@ const createAuthenticationService = ({ userRepository, passwordService, recaptch
       throw new ApiError(403, 'Tài khoản hiện không thể đăng nhập.', 'ACCOUNT_UNAVAILABLE')
     }
     await userRepository.updateLastLogin(user.id)
-    return { user: toAuthUser(user), accessToken: tokenService.sign(user.id) }
+    return toAuthUser(user)
   },
-  async getCurrentUser(accessToken) {
-    if (!accessToken) throw new ApiError(401, 'Bạn chưa đăng nhập.', 'UNAUTHORIZED')
-    const payload = tokenService.verify(accessToken)
+  createAccessToken(user) {
+    return tokenService.sign(user.id)
+  },
+  async getCurrentUserFromPayload(payload) {
+    if (!payload?.sub || payload.type !== 'access') {
+      throw new ApiError(401, 'Phiên đăng nhập không hợp lệ.', 'UNAUTHORIZED')
+    }
     const user = await userRepository.findByIdWithRoles(payload.sub)
     if (!user || ['LOCKED', 'DISABLED'].includes(user.status)) {
       throw new ApiError(401, 'Phiên đăng nhập không hợp lệ.', 'UNAUTHORIZED')

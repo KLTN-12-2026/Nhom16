@@ -1,12 +1,35 @@
 const express = require('express')
 
-const createAuthRouter = ({ authController }) => {
+const { asyncHandler } = require('../../util/async-handler')
+
+const createAuthRouter = ({ authController, authMiddleware, validateBody, validators, verifyRecaptcha }) => {
   const router = express.Router()
-  router.post('/register', authController.register)
-  router.post('/login', authController.login)
-  router.post('/google', authController.google)
-  router.get('/me', authController.me)
+
+  router.post(
+    '/register',
+    validateBody(validators.register),
+    verifyRecaptcha('register'),
+    asyncHandler(authController.register),
+  )
+  router.post(
+    '/login',
+    validateBody(validators.login),
+    verifyRecaptcha('login'),
+    authMiddleware.authenticateLocal,
+    asyncHandler(authController.login),
+  )
+  router.post(
+    '/google',
+    validateBody(validators.google),
+    asyncHandler(authController.google),
+  )
+  router.get(
+    '/me',
+    authMiddleware.authenticateJwt,
+    asyncHandler(authController.me),
+  )
   router.post('/logout', authController.logout)
+
   return router
 }
 

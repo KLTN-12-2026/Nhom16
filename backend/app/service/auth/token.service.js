@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 
 const { ApiError } = require('../../util/api-error')
+const { unauthorizedError } = require('../../util/error.helper')
 
 const createTokenService = ({ secret, expiresIn = '15m' }) => ({
   sign(userId) {
@@ -13,7 +14,7 @@ const createTokenService = ({ secret, expiresIn = '15m' }) => ({
       if (payload.type !== 'access') throw new Error('Invalid token type')
       return payload
     } catch (error) {
-      throw new ApiError(401, 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn.', 'UNAUTHORIZED')
+      throw unauthorizedError()
     }
   },
 })

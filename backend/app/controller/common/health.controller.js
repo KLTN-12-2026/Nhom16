@@ -1,12 +1,14 @@
+const { sendSuccess } = require('../../util/response.helper')
+
 const health = (request, response) => {
-  response.status(200).json({ success: true, data: { status: 'up' } })
+  return sendSuccess(response, { data: { status: 'up' } })
 }
 
 const createReadiness = ({ database, redis } = {}) => async (request, response) => {
   try {
     await database?.authenticate()
     await redis?.ping()
-    response.status(200).json({ success: true, data: { status: 'ready' } })
+    return sendSuccess(response, { data: { status: 'ready' } })
   } catch (error) {
     response.status(503).json({
       success: false,

@@ -1,13 +1,6 @@
 const yup = require('yup')
 
-const { ApiError } = require('../../util/api-error')
-
-const toApiError = (error, message) => {
-  const details = error.inner?.length
-    ? error.inner.reduce((result, item) => ({ ...result, [item.path]: item.message }), {})
-    : { form: error.message }
-  return new ApiError(422, message, 'VALIDATION_ERROR', details)
-}
+const { validationError } = require('../../util/error.helper')
 
 const loginSchema = yup.object({
   email: yup.string().trim().lowercase().email('Email không đúng định dạng.').required('Vui lòng nhập email.'),
@@ -19,7 +12,7 @@ const validateLoginPayload = async (payload) => {
   try {
     return await loginSchema.validate(payload, { abortEarly: false, stripUnknown: true })
   } catch (error) {
-    throw toApiError(error, 'Thông tin đăng nhập chưa hợp lệ.')
+    throw validationError(error, 'Thông tin đăng nhập chưa hợp lệ.')
   }
 }
 

@@ -2,6 +2,9 @@ const { env } = require('../../config/env')
 const { createAuthController, createAuthRouter } = require('../../controller/auth')
 const { initializeModels } = require('../../db/models')
 const { createAuthRepositories } = require('../../db/repositories')
+const { createPassportMiddleware, createRecaptchaMiddleware } = require('../../middleware/auth')
+const { validateBody } = require('../../middleware/validation')
+const { createAuthCookieHelper } = require('../../util/auth-cookie.helper')
 const { validateGooglePayload, validateLoginPayload, validateRegisterPayload } = require('../../validator/auth')
 const { createAuthenticationService } = require('./authentication.service')
 const { createGoogleAuthService } = require('./google-auth.service')
@@ -23,13 +26,28 @@ const createAuthModule = ({ database }) => {
     transactionManager: database,
     ...repositories,
     passwordService,
-    recaptchaVerifier,
   })
-  const authenticationService = createAuthenticationService({ ...repositories, passwordService, recaptchaVerifier, tokenService })
+  const authenticationService = createAuthenticationService({ ...repositories, passwordService, tokenService })
   const googleAuthService = createGoogleAuthService({ ...repositories, clientId: env.googleClientId, recaptchaVerifier, tokenService, transactionManager: database })
-  const authController = createAuthController({ authenticationService, googleAuthService, registrationService, validateGooglePayload, validateLoginPayload, validateRegisterPayload, isProduction: env.nodeEnv === 'production' })
+  const authCookie = createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' })
+  const authController = createAuthController({ authenticationService, authCookie, googleAuthService, registrationService })
+  const authMiddleware = createPassportMiddleware({ authenticationService, jwtSecret: env.auth.accessSecret })
+  const verifyRecaptcha = createRecaptchaMiddleware({ recaptchaVerifier })
 
-  return { router: createAuthRouter({ authController }) }
+  return {
+    passportInitialize: authMiddleware.initialize,
+    router: createAuthRouter({
+      authController,
+      authMiddleware,
+      validateBody,
+      verifyRecaptcha,
+      validators: {
+        google: validateGooglePayload,
+        login: validateLoginPayload,
+        register: validateRegisterPayload,
+      },
+    }),
+  }
 }
 
 module.exports = { createAuthModule }

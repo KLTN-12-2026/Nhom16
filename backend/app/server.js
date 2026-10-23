@@ -8,8 +8,8 @@ const startServer = async () => {
   await database.authenticate()
   await redis.connect()
 
-  const { router: authRouter } = createAuthModule({ database })
-  const app = createApp({ database, redis, authRouter })
+  const { passportInitialize, router: authRouter } = createAuthModule({ database })
+  const app = createApp({ database, redis, authRouter, passportInitialize })
   const server = app.listen(env.port, () => {
     console.log(`API listening on port ${env.port}`)
   })
