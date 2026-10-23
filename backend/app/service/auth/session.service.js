@@ -62,6 +62,4 @@ const createSessionService = ({ sessionRepository, tokenService, transactionMana
   }
 }
 
-const createLoginSession = (sessionService, user, context) => sessionService.issue(user, context)
-
-module.exports = { createLoginSession, createSessionService }
+module.exports = { createSessionService }

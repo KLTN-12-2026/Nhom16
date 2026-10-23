@@ -1,5 +1,5 @@
 const { REFRESH_COOKIE } = require('../../constants')
-const { createLoginSession } = require('../../service')
+const { userSignIn } = require('../../service')
 const { readCookie, sendSuccess } = require('../../util')
 
 const getRequestContext = (req) => ({
@@ -45,13 +45,11 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/login',
     rateLimiters.login,
     validateBody(validators.login),
-    verifyRecaptcha('login'),
-    authMiddleware.authenticateLocal,
-    (req, res, next) => createLoginSession(sessionService, req.user, getRequestContext(req))
-      .then((tokens) => {
+    (req, res, next) => userSignIn(req.body, getRequestContext(req))
+      .then(({ tokens, user }) => {
         authCookie.set(res, tokens)
         return sendSuccess(res, {
-          data: { user: req.user },
+          data: { user },
           message: 'Đăng nhập thành công.',
         })
       })

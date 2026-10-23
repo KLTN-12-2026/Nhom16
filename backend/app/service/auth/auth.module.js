@@ -1,7 +1,7 @@
 const { env } = require('../../config')
 const { createAuthRepositories } = require('../../db')
 const { createAuthCookieHelper } = require('../../util')
-const { createAuthenticationService, toAuthUser } = require('./authentication.service')
+const { createAuthenticationService, initUserSignIn, toAuthUser } = require('./authentication.service')
 const { createEmailVerificationService } = require('./email-verification.service')
 const { createGoogleAuthService } = require('./google-auth.service')
 const { createPasswordService } = require('./password.service')
@@ -53,6 +53,12 @@ const createAuthServices = ({ database, emailQueue, models, redis }) => {
     frontendOrigin: env.frontendOrigin,
     passwordService,
     transactionManager: database,
+  })
+  initUserSignIn({
+    passwordService,
+    recaptchaVerifier,
+    sessionService,
+    userRepository: repositories.userRepository,
   })
   return {
     authCookie: createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' }),
