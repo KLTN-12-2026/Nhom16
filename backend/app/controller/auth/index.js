@@ -1,15 +1,15 @@
+const express = require('express')
+
 const { env } = require('../../config')
 const { createPassportMiddleware, createRecaptchaMiddleware, createAuthRateLimiters, validateBody } = require('../../middleware')
 const { createAuthServices } = require('../../service')
 const { createAuthCookieHelper } = require('../../util')
 const validators = require('../../validator')
-const { createAuthController } = require('./auth.controller')
-const { createAuthRouter } = require('./auth.router')
+const { initAuthEmailController } = require('./auth.controller')
 
 const initAuthController = (app, dependencies) => {
   const services = createAuthServices(dependencies)
   const authCookie = createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' })
-  const authController = createAuthController({ authCookie, ...services })
   const authMiddleware = createPassportMiddleware({
     authenticationService: services.authenticationService,
     jwtSecret: env.auth.accessSecret,
@@ -28,9 +28,11 @@ const initAuthController = (app, dependencies) => {
       emailVerificationMax: env.auth.emailVerificationRateLimitMax,
     },
   })
-  const router = createAuthRouter({
-    authController,
+  const authEmail = express.Router()
+  initAuthEmailController(authEmail, {
+    authCookie,
     authMiddleware,
+    ...services,
     rateLimiters,
     validateBody,
     verifyRecaptcha,
@@ -48,7 +50,7 @@ const initAuthController = (app, dependencies) => {
   })
 
   app.use(authMiddleware.initialize)
-  app.use('/api/auth', router)
+  app.use('/api/auth', authEmail)
 }
 
-module.exports = { createAuthController, createAuthRouter, initAuthController }
+module.exports = { initAuthController, initAuthEmailController }
