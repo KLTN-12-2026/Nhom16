@@ -6,8 +6,9 @@ const { createPassportMiddleware, createRecaptchaMiddleware } = require('../../m
 const { createAuthRateLimiters } = require('../../middleware/rate-limit')
 const { validateBody } = require('../../middleware/validation')
 const { createAuthCookieHelper } = require('../../util/auth-cookie.helper')
-const { validateForgotPasswordPayload, validateGooglePayload, validateLoginPayload, validateRegisterPayload, validateResetPasswordPayload } = require('../../validator/auth')
+const { validateForgotPasswordPayload, validateGooglePayload, validateLoginPayload, validateRegisterPayload, validateResendVerificationPayload, validateResetPasswordPayload, validateVerifyEmailPayload } = require('../../validator/auth')
 const { createAuthenticationService } = require('./authentication.service')
+const { createEmailVerificationService } = require('./email-verification.service')
 const { createGoogleAuthService } = require('./google-auth.service')
 const { createPasswordService } = require('./password.service')
 const { createPasswordResetService } = require('./password-reset.service')
@@ -35,6 +36,12 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
     ...repositories,
     passwordService,
   })
+  const emailVerificationService = createEmailVerificationService({
+    ...repositories,
+    emailQueue,
+    frontendOrigin: env.frontendOrigin,
+    transactionManager: database,
+  })
   const authenticationService = createAuthenticationService({ ...repositories, passwordService, tokenService })
   const googleAuthService = createGoogleAuthService({ ...repositories, clientId: env.googleClientId, emailQueue, recaptchaVerifier, transactionManager: database })
   const sessionService = createSessionService({ ...repositories, tokenService, transactionManager: database })
@@ -46,7 +53,7 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
     transactionManager: database,
   })
   const authCookie = createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' })
-  const authController = createAuthController({ authCookie, googleAuthService, passwordResetService, registrationService, sessionService })
+  const authController = createAuthController({ authCookie, emailVerificationService, googleAuthService, passwordResetService, registrationService, sessionService })
   const authMiddleware = createPassportMiddleware({ authenticationService, jwtSecret: env.auth.accessSecret })
   const verifyRecaptcha = createRecaptchaMiddleware({ recaptchaVerifier })
   const rateLimiters = createAuthRateLimiters({
@@ -58,6 +65,8 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
       refreshMax: env.auth.refreshRateLimitMax,
       forgotPasswordWindowMs: env.auth.forgotPasswordRateLimitWindowMs,
       forgotPasswordMax: env.auth.forgotPasswordRateLimitMax,
+      emailVerificationWindowMs: env.auth.emailVerificationRateLimitWindowMs,
+      emailVerificationMax: env.auth.emailVerificationRateLimitMax,
     },
   })
 
@@ -75,6 +84,8 @@ const createAuthModule = ({ database, emailQueue, redis }) => {
         login: validateLoginPayload,
         register: validateRegisterPayload,
         resetPassword: validateResetPasswordPayload,
+        resendVerification: validateResendVerificationPayload,
+        verifyEmail: validateVerifyEmailPayload,
       },
     }),
   }

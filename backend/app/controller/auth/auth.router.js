@@ -20,6 +20,17 @@ const createAuthRouter = ({ authController, authMiddleware, rateLimiters, valida
     asyncHandler(authController.login),
   )
   router.post(
+    '/verify-email',
+    validateBody(validators.verifyEmail),
+    asyncHandler(authController.verifyEmail),
+  )
+  router.post(
+    '/resend-verification',
+    rateLimiters.emailVerification,
+    validateBody(validators.resendVerification),
+    asyncHandler(authController.resendVerification),
+  )
+  router.post(
     '/google',
     validateBody(validators.google),
     asyncHandler(authController.google),

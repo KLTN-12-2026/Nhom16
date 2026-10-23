@@ -5,14 +5,23 @@ const { toAuthUser } = require('../../service/auth/authentication.service')
 
 const requestContext = (request) => ({ ip: request.ip, userAgent: request.get('user-agent') })
 
-const createAuthController = ({ authCookie, googleAuthService, passwordResetService, registrationService, sessionService }) => ({
+const createAuthController = ({ authCookie, emailVerificationService, googleAuthService, passwordResetService, registrationService, sessionService }) => ({
   async register(request, response) {
     const user = await registrationService.register(request.validatedBody)
+    await emailVerificationService.issue(user)
     return sendSuccess(response, {
       statusCode: 201,
       data: { user },
       message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
     })
+  },
+  async verifyEmail(request, response) {
+    await emailVerificationService.verify(request.validatedBody.token)
+    return sendSuccess(response, { message: 'Xác minh email thành công. Bạn có thể đăng nhập.' })
+  },
+  async resendVerification(request, response) {
+    await emailVerificationService.resend(request.validatedBody.email)
+    return sendSuccess(response, { message: 'Nếu tài khoản đang chờ xác minh, email mới sẽ được gửi trong ít phút.' })
   },
   async login(request, response) {
     authCookie.set(response, await sessionService.issue(request.user, requestContext(request)))

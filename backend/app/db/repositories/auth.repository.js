@@ -1,6 +1,6 @@
 const { Op } = require('sequelize')
 
-const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, PasswordResetToken, Role, User, UserRole }) => ({
+const createAuthRepositories = ({ AuthIdentity, AuthSession, EmailVerificationToken, EmployerProfile, PasswordResetToken, Role, User, UserRole }) => ({
   userRepository: {
     findByEmail(email, options = {}) {
       return User.findOne({ where: { email }, transaction: options.transaction })
@@ -29,6 +29,12 @@ const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, Pa
     },
     updatePassword(userId, passwordHash, options = {}) {
       return User.update({ passwordHash }, { where: { id: userId }, transaction: options.transaction })
+    },
+    markEmailVerified(userId, options = {}) {
+      return User.update(
+        { emailVerifiedAt: new Date(), status: 'ACTIVE' },
+        { where: { id: userId, status: 'PENDING_VERIFICATION' }, transaction: options.transaction },
+      )
     },
   },
   roleRepository: {
@@ -88,6 +94,24 @@ const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, Pa
     },
     invalidateByUser(userId, options = {}) {
       return PasswordResetToken.update(
+        { usedAt: new Date() },
+        { where: { userId, usedAt: null }, transaction: options.transaction },
+      )
+    },
+  },
+  emailVerificationRepository: {
+    create(data, options = {}) {
+      return EmailVerificationToken.create(data, { transaction: options.transaction })
+    },
+    findActiveByHash(tokenHash, options = {}) {
+      return EmailVerificationToken.findOne({
+        where: { tokenHash, usedAt: null, expiresAt: { [Op.gt]: new Date() } },
+        transaction: options.transaction,
+        lock: options.transaction?.LOCK?.UPDATE,
+      })
+    },
+    invalidateByUser(userId, options = {}) {
+      return EmailVerificationToken.update(
         { usedAt: new Date() },
         { where: { userId, usedAt: null }, transaction: options.transaction },
       )

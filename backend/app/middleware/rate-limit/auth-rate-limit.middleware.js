@@ -37,6 +37,13 @@ const createAuthRateLimiters = ({ redis, config }) => ({
     limit: config.forgotPasswordMax,
     message: 'Bạn đã yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau.',
   }),
+  emailVerification: createLimiter({
+    redis,
+    prefix: 'email-verification',
+    windowMs: config.emailVerificationWindowMs,
+    limit: config.emailVerificationMax,
+    message: 'Bạn đã yêu cầu gửi email xác minh quá nhiều lần. Vui lòng thử lại sau.',
+  }),
 })
 
 module.exports = { createAuthRateLimiters }

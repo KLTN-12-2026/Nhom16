@@ -4,12 +4,15 @@ const { env } = require('../../config/env')
 const { createQueueRedis } = require('../../config/queue-redis')
 const { EMAIL_JOBS, EMAIL_QUEUE } = require('../../queue')
 const { createEmailService } = require('../../service/notification')
-const { createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template/email')
+const { createEmailVerificationEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template/email')
 
 const createEmailWorker = () => {
   const connection = createQueueRedis()
   const emailService = createEmailService(env.mail)
   const worker = new Worker(EMAIL_QUEUE, async (job) => {
+    if (job.name === EMAIL_JOBS.EMAIL_VERIFICATION) {
+      return emailService.send({ to: job.data.email, ...createEmailVerificationEmail(job.data) })
+    }
     if (job.name === EMAIL_JOBS.PASSWORD_RESET) {
       return emailService.send({ to: job.data.email, ...createPasswordResetEmail(job.data) })
     }

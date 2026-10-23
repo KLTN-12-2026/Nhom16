@@ -21,6 +21,9 @@ const createAuthenticationService = ({ userRepository, passwordService, tokenSer
     if (['LOCKED', 'DISABLED'].includes(user.status)) {
       throw new ApiError(403, 'Tài khoản hiện không thể đăng nhập.', 'ACCOUNT_UNAVAILABLE')
     }
+    if (user.status === 'PENDING_VERIFICATION') {
+      throw new ApiError(403, 'Vui lòng xác minh email trước khi đăng nhập.', 'EMAIL_NOT_VERIFIED')
+    }
     await userRepository.updateLastLogin(user.id)
     return toAuthUser(user)
   },
