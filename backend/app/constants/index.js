@@ -1,1 +1,4 @@
-module.exports = require('./access-control.constant')
+module.exports = {
+  ...require('./access-control.constant'),
+  ...require('./auth.constant'),
+}
