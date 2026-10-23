@@ -1,4 +1,5 @@
 const { REFRESH_COOKIE } = require('../../constants')
+const { createLoginSession } = require('../../service')
 const { readCookie, sendSuccess } = require('../../util')
 
 const getRequestContext = (request) => ({
@@ -46,8 +47,7 @@ const initAuthEmailController = (authEmail, dependencies) => {
     validateBody(validators.login),
     verifyRecaptcha('login'),
     authMiddleware.authenticateLocal,
-    (request, response, next) => sessionService
-      .issue(request.user, getRequestContext(request))
+    (request, response, next) => createLoginSession(sessionService, request.user, getRequestContext(request))
       .then((tokens) => {
         authCookie.set(response, tokens)
         return sendSuccess(response, {
