@@ -9,6 +9,7 @@ export const ROUTE = {
   FORGOT_PASSWORD: '/auth/forgot-password',
   RESET_PASSWORD: '/reset-password',
   VERIFY_EMAIL: '/verify-email',
+  GOOGLE_COMPLETE: '/auth/google-complete',
   CANDIDATE_HOME: '/candidate',
   EMPLOYER_HOME: '/employer',
   ADMIN_HOME: '/admin/dashboard',

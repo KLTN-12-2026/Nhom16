@@ -8,7 +8,6 @@ import { authActions } from '../../../modules/auth/redux'
 import { useRecaptcha } from '../../../provider/external-auth-provider'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { AuthShell } from '../components/auth-shell'
-import { GoogleAuthButton } from '../components/google-auth-button'
 import { PasswordStrength } from '../components/password-strength'
 
 const initialForm: Omit<RegisterPayload, 'recaptchaToken'> = {
@@ -39,14 +38,6 @@ export default function RegisterPage() {
     } catch (caught) { dispatch(authActions.authFailed((caught as Error).message)) }
   }
 
-  const handleGoogle = async (credential: string) => {
-    try {
-      const token = await executeRecaptcha('google_register')
-      if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng ký.')
-      dispatch(authActions.googleRequested({ credential, role: form.role, termsAccepted: form.termsAccepted, recaptchaToken: token }))
-    } catch (caught) { dispatch(authActions.authFailed((caught as Error).message)) }
-  }
-
   return <AuthShell title="Tạo tài khoản" description="Chọn mục đích sử dụng để bắt đầu với không gian phù hợp.">
     <div className="role-picker" role="radiogroup" aria-label="Loại tài khoản">
       <button type="button" className={form.role === ROLE.CANDIDATE ? 'active' : ''} onClick={() => update('role', ROLE.CANDIDATE)}><i className="bi bi-person" /><span><strong>Tôi đang tìm việc</strong><small>Tạo hồ sơ ứng viên</small></span></button>
@@ -69,7 +60,6 @@ export default function RegisterPage() {
       <label className="auth-consent"><input type="checkbox" checked={form.termsAccepted} onChange={(event) => update('termsAccepted', event.target.checked)} /> Tôi đồng ý với điều khoản sử dụng và chính sách bảo mật.</label>
       <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang tạo tài khoản...' : form.role === ROLE.EMPLOYER ? 'Gửi hồ sơ đăng ký' : 'Tạo tài khoản'}</button>
     </form>
-    {form.role === ROLE.CANDIDATE && <><div className="auth-divider"><span>hoặc đăng ký nhanh</span></div><GoogleAuthButton onCredential={handleGoogle} disabled={!form.termsAccepted || submitting} /></>}
     <p className="auth-switch">Đã có tài khoản? <Link to={ROUTE.LOGIN}>Đăng nhập</Link></p>
   </AuthShell>
 }

@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const dispatch = useAppDispatch()
-  const { error, submitting, user } = useAppSelector((state) => state.auth)
+  const { error, googleChallenge, submitting, user } = useAppSelector((state) => state.auth)
   const executeRecaptcha = useRecaptcha()
   const navigate = useNavigate()
   const location = useLocation()
@@ -27,6 +27,10 @@ export default function LoginPage() {
     const destination = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || ROUTE.HOME
     navigate(destination, { replace: true })
   }, [location.state, navigate, user])
+
+  useEffect(() => {
+    if (googleChallenge) navigate(ROUTE.GOOGLE_COMPLETE)
+  }, [googleChallenge, navigate])
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -44,7 +48,7 @@ export default function LoginPage() {
     try {
       const token = await executeRecaptcha('google_login')
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng nhập.')
-      dispatch(authActions.googleRequested({ credential, recaptchaToken: token }))
+      dispatch(authActions.googleStartRequested({ credential, recaptchaToken: token }))
     } catch (caught) { dispatch(authActions.authFailed((caught as Error).message)) }
   }
 

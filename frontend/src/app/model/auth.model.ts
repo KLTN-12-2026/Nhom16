@@ -34,11 +34,30 @@ export interface LoginPayload {
   recaptchaToken: string
 }
 
-export interface GoogleAuthPayload {
+export interface GoogleStartPayload {
   credential: string
+  recaptchaToken: string
+}
+
+export interface GoogleChallenge {
+  challengeId: string
+  email: string
+  requiresProfile: boolean
+}
+
+export interface GoogleCompletePayload {
+  challengeId: string
+  code: string
   role?: Extract<Role, 1 | 2>
   termsAccepted?: boolean
-  recaptchaToken: string
+  companyName?: string
+  taxCode?: string
+  businessLicenseNumber?: string
+  companyPhone?: string
+  companyAddress?: string
+  companyWebsite?: string
+  representativeName?: string
+  representativePosition?: string
 }
 
 export interface ForgotPasswordPayload { email: string }

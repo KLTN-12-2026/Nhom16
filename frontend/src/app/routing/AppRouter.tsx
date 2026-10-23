@@ -9,6 +9,7 @@ import { PublicLayout } from '../layouts/public-layout'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import LoginPage from '../pages/auth/login'
 import ForgotPasswordPage from '../pages/auth/forgot-password'
+import GoogleCompletePage from '../pages/auth/google-complete'
 import RegisterPage from '../pages/auth/register'
 import ResetPasswordPage from '../pages/auth/reset-password'
 import VerifyEmailPage from '../pages/auth/verify-email'
@@ -48,6 +49,7 @@ export function AppRouter() {
         <Route path="for-employers" element={<ForEmployersPage />} />
         <Route path="auth/login" element={<LoginPage />} />
         <Route path="auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="auth/google-complete" element={<GoogleCompletePage />} />
         <Route path="auth/register" element={<RegisterPage />} />
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
