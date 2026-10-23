@@ -48,6 +48,8 @@ const env = Object.freeze({
     loginRateLimitMax: toNumber(process.env.LOGIN_RATE_LIMIT_MAX, 10),
     refreshRateLimitWindowMs: toNumber(process.env.REFRESH_RATE_LIMIT_WINDOW_MS, 60000),
     refreshRateLimitMax: toNumber(process.env.REFRESH_RATE_LIMIT_MAX, 30),
+    forgotPasswordRateLimitWindowMs: toNumber(process.env.FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS, 900000),
+    forgotPasswordRateLimitMax: toNumber(process.env.FORGOT_PASSWORD_RATE_LIMIT_MAX, 5),
   },
 })
 

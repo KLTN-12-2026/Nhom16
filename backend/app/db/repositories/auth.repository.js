@@ -1,4 +1,6 @@
-const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, Role, User, UserRole }) => ({
+const { Op } = require('sequelize')
+
+const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, PasswordResetToken, Role, User, UserRole }) => ({
   userRepository: {
     findByEmail(email, options = {}) {
       return User.findOne({ where: { email }, transaction: options.transaction })
@@ -24,6 +26,9 @@ const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, Ro
     },
     updateLastLogin(userId, options = {}) {
       return User.update({ lastLoginAt: new Date() }, { where: { id: userId }, transaction: options.transaction })
+    },
+    updatePassword(userId, passwordHash, options = {}) {
+      return User.update({ passwordHash }, { where: { id: userId }, transaction: options.transaction })
     },
   },
   roleRepository: {
@@ -61,6 +66,30 @@ const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, Ro
       return AuthSession.update(
         { revokedAt: new Date(), replacedBySessionId },
         { where: { id }, transaction: options.transaction },
+      )
+    },
+    revokeAllByUser(userId, options = {}) {
+      return AuthSession.update(
+        { revokedAt: new Date() },
+        { where: { userId, revokedAt: null }, transaction: options.transaction },
+      )
+    },
+  },
+  passwordResetRepository: {
+    create(data, options = {}) {
+      return PasswordResetToken.create(data, { transaction: options.transaction })
+    },
+    findActiveByHash(tokenHash, options = {}) {
+      return PasswordResetToken.findOne({
+        where: { tokenHash, usedAt: null, expiresAt: { [Op.gt]: new Date() } },
+        transaction: options.transaction,
+        lock: options.transaction?.LOCK?.UPDATE,
+      })
+    },
+    invalidateByUser(userId, options = {}) {
+      return PasswordResetToken.update(
+        { usedAt: new Date() },
+        { where: { userId, usedAt: null }, transaction: options.transaction },
       )
     },
   },

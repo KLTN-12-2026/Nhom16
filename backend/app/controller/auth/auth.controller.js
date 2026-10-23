@@ -5,7 +5,7 @@ const { toAuthUser } = require('../../service/auth/authentication.service')
 
 const requestContext = (request) => ({ ip: request.ip, userAgent: request.get('user-agent') })
 
-const createAuthController = ({ authCookie, googleAuthService, registrationService, sessionService }) => ({
+const createAuthController = ({ authCookie, googleAuthService, passwordResetService, registrationService, sessionService }) => ({
   async register(request, response) {
     const user = await registrationService.register(request.validatedBody)
     return sendSuccess(response, {
@@ -27,6 +27,15 @@ const createAuthController = ({ authCookie, googleAuthService, registrationServi
     const result = await sessionService.rotate(readCookie(request, REFRESH_COOKIE), requestContext(request))
     authCookie.set(response, result.tokens)
     return sendSuccess(response, { data: { user: toAuthUser(result.user) }, message: 'Làm mới phiên đăng nhập thành công.' })
+  },
+  async forgotPassword(request, response) {
+    await passwordResetService.request(request.validatedBody.email)
+    return sendSuccess(response, { message: 'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi trong ít phút.' })
+  },
+  async resetPassword(request, response) {
+    await passwordResetService.reset(request.validatedBody)
+    authCookie.clear(response)
+    return sendSuccess(response, { message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.' })
   },
   async me(request, response) {
     return sendSuccess(response, { data: { user: request.user } })

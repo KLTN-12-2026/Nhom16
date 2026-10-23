@@ -1,4 +1,5 @@
 module.exports = {
+  ...require('./password-reset.service'),
   ...require('./session.service'),
   ...require('./auth.module'),
   ...require('./authentication.service'),

@@ -1,10 +1,11 @@
 const { OAuth2Client } = require('google-auth-library')
 
 const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
+const { EMAIL_JOBS } = require('../../queue')
 const { ApiError } = require('../../util/api-error')
 const { toAuthUser } = require('./authentication.service')
 
-const createGoogleAuthService = ({ clientId, transactionManager, userRepository, roleRepository, identityRepository, recaptchaVerifier }) => {
+const createGoogleAuthService = ({ clientId, emailQueue, transactionManager, userRepository, roleRepository, identityRepository, recaptchaVerifier }) => {
   const client = new OAuth2Client(clientId)
   return {
     async authenticate(payload, context = {}) {
@@ -27,11 +28,12 @@ const createGoogleAuthService = ({ clientId, transactionManager, userRepository,
       }
 
       const email = googleProfile.email.toLowerCase()
-      const userId = await transactionManager.transaction(async (transaction) => {
+      const account = await transactionManager.transaction(async (transaction) => {
         const identity = await identityRepository.findByProviderSubject('GOOGLE', googleProfile.sub, { transaction })
-        if (identity) return identity.userId
+        if (identity) return { userId: identity.userId, isNewUser: false }
 
         let user = await userRepository.findByEmail(email, { transaction })
+        let isNewUser = false
         if (!user) {
           if (!payload.role || !PUBLIC_REGISTRATION_ROLES.includes(payload.role)) {
             throw new ApiError(404, 'Tài khoản chưa tồn tại. Vui lòng đăng ký trước.', 'ACCOUNT_NOT_FOUND')
@@ -45,6 +47,7 @@ const createGoogleAuthService = ({ clientId, transactionManager, userRepository,
             emailVerifiedAt: new Date(),
           }, { transaction })
           await userRepository.assignRole(user.id, role.id, { transaction })
+          isNewUser = true
         }
         await identityRepository.create({
           userId: user.id,
@@ -52,14 +55,22 @@ const createGoogleAuthService = ({ clientId, transactionManager, userRepository,
           providerSubject: googleProfile.sub,
           emailSnapshot: email,
         }, { transaction })
-        return user.id
+        return { userId: user.id, isNewUser }
       })
 
-      const user = await userRepository.findByIdWithRoles(userId)
+      const user = await userRepository.findByIdWithRoles(account.userId)
       if (['LOCKED', 'DISABLED'].includes(user.status)) {
         throw new ApiError(403, 'Tài khoản hiện không thể đăng nhập.', 'ACCOUNT_UNAVAILABLE')
       }
       await userRepository.updateLastLogin(user.id)
+      if (account.isNewUser) {
+        await emailQueue.add(EMAIL_JOBS.GOOGLE_WELCOME, {
+          email: user.email,
+          fullName: user.fullName,
+        }, { jobId: `google-welcome-${user.id}` }).catch((error) => {
+          console.error('Unable to enqueue Google welcome email:', error.message)
+        })
+      }
       return toAuthUser(user)
     },
   }

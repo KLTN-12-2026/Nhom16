@@ -2,13 +2,15 @@ const { createApp } = require('./app')
 const { database } = require('./config/database')
 const { env } = require('./config/env')
 const { redis } = require('./config/redis')
+const { createEmailQueue } = require('./queue')
 const { createAuthModule } = require('./service/auth')
 
 const startServer = async () => {
   await database.authenticate()
   await redis.connect()
+  const emailQueue = createEmailQueue()
 
-  const { passportInitialize, router: authRouter } = createAuthModule({ database, redis })
+  const { passportInitialize, router: authRouter } = createAuthModule({ database, emailQueue, redis })
   const app = createApp({ database, redis, authRouter, passportInitialize })
   const server = app.listen(env.port, () => {
     console.log(`API listening on port ${env.port}`)
@@ -17,7 +19,7 @@ const startServer = async () => {
   const shutdown = async (signal) => {
     console.log(`${signal} received, shutting down gracefully`)
     server.close(async () => {
-      await Promise.allSettled([database.close(), redis.quit()])
+      await Promise.allSettled([database.close(), emailQueue.close(), redis.quit()])
       process.exit(0)
     })
   }

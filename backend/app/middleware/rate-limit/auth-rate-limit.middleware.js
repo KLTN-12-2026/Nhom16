@@ -30,6 +30,13 @@ const createAuthRateLimiters = ({ redis, config }) => ({
     limit: config.refreshMax,
     message: 'Yêu cầu làm mới phiên quá thường xuyên. Vui lòng thử lại sau.',
   }),
+  forgotPassword: createLimiter({
+    redis,
+    prefix: 'forgot-password',
+    windowMs: config.forgotPasswordWindowMs,
+    limit: config.forgotPasswordMax,
+    message: 'Bạn đã yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau.',
+  }),
 })
 
 module.exports = { createAuthRateLimiters }

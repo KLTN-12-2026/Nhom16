@@ -25,6 +25,17 @@ const createAuthRouter = ({ authController, authMiddleware, rateLimiters, valida
     asyncHandler(authController.google),
   )
   router.post('/refresh', rateLimiters.refresh, asyncHandler(authController.refresh))
+  router.post(
+    '/forgot-password',
+    rateLimiters.forgotPassword,
+    validateBody(validators.forgotPassword),
+    asyncHandler(authController.forgotPassword),
+  )
+  router.post(
+    '/reset-password',
+    validateBody(validators.resetPassword),
+    asyncHandler(authController.resetPassword),
+  )
   router.get(
     '/me',
     authMiddleware.authenticateJwt,
