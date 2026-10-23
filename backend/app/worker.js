@@ -1,4 +1,4 @@
-const { createEmailWorker } = require('./worker')
+const { createEmailWorker } = require('./worker/index')
 
 const startWorker = () => {
   const { connection, worker } = createEmailWorker()
