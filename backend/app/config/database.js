@@ -10,8 +10,9 @@ const database = new Sequelize(env.database.name, env.database.user, env.databas
   pool: {
     max: env.database.poolMax,
     min: env.database.poolMin,
-    acquire: 30000,
-    idle: 10000,
+    acquire: env.database.poolAcquireMs,
+    idle: env.database.poolIdleMs,
+    evict: env.database.poolEvictMs,
   },
   define: {
     underscored: true,

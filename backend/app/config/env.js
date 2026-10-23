@@ -21,6 +21,9 @@ const env = Object.freeze({
     password: process.env.DB_PASSWORD || '',
     poolMax: toNumber(process.env.DB_POOL_MAX, 10),
     poolMin: toNumber(process.env.DB_POOL_MIN, 0),
+    poolAcquireMs: toNumber(process.env.DB_POOL_ACQUIRE_MS, 30000),
+    poolIdleMs: toNumber(process.env.DB_POOL_IDLE_MS, 10000),
+    poolEvictMs: toNumber(process.env.DB_POOL_EVICT_MS, 1000),
   },
   redis: {
     url: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
