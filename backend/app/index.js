@@ -1,5 +1,5 @@
 const { createApp } = require('./app')
-const { redis } = require('./config/redis')
+const { redis } = require('./config')
 const { initApiController } = require('./controller')
 const { closeDatabase, initDatabase } = require('./db')
 const { initErrorMiddleware } = require('./middleware')

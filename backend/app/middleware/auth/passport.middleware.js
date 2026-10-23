@@ -3,9 +3,7 @@ const { Strategy: JwtStrategy, ExtractJwt } = require('passport-jwt')
 const { Strategy: LocalStrategy } = require('passport-local')
 
 const { ACCESS_COOKIE } = require('../../constants')
-const { ApiError } = require('../../util/api-error')
-const { readCookie } = require('../../util/cookie.helper')
-const { unauthorizedError } = require('../../util/error.helper')
+const { ApiError, readCookie, unauthorizedError } = require('../../util')
 
 const createPassportMiddleware = ({ authenticationService, jwtSecret }) => {
   const passport = new Passport()

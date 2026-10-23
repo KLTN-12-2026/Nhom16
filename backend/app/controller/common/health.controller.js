@@ -1,4 +1,4 @@
-const { sendSuccess } = require('../../util/response.helper')
+const { sendSuccess } = require('../../util')
 
 const health = (request, response) => {
   return sendSuccess(response, { data: { status: 'up' } })

@@ -1,13 +1,9 @@
-const { createReadiness, health } = require('./common')
-const { createAuthModule } = require('../service/auth')
+const { initAuthController } = require('./auth')
+const { initCommonController } = require('./common')
 
 const initApiController = (app, dependencies) => {
-  const { passportInitialize, router: authRouter } = createAuthModule(dependencies)
-
-  app.use(passportInitialize)
-  app.get('/health', health)
-  app.get('/ready', createReadiness(dependencies))
-  app.use('/api/auth', authRouter)
+  initCommonController(app, dependencies)
+  initAuthController(app, dependencies)
 }
 
 module.exports = { initApiController }

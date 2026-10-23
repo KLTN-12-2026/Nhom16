@@ -1,5 +1,5 @@
 const { ROLE_PERMISSIONS } = require('../../constants')
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const toAuthUser = (user) => {
   const role = user.roles?.[0]?.id

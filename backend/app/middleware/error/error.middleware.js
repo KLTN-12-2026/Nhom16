@@ -1,4 +1,4 @@
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const notFound = (request, response, next) => {
   next(new ApiError(404, 'Không tìm thấy tài nguyên được yêu cầu.', 'NOT_FOUND'))

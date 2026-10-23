@@ -1,7 +1,7 @@
 const yup = require('yup')
 
 const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
-const { validationError } = require('../../util/error.helper')
+const { validationError } = require('../../util')
 
 const registerSchema = yup
   .object({

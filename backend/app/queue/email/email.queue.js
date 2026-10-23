@@ -1,7 +1,6 @@
 const { Queue } = require('bullmq')
 
-const { env } = require('../../config/env')
-const { createQueueRedis } = require('../../config/queue-redis')
+const { createQueueRedis, env } = require('../../config')
 
 const EMAIL_QUEUE = 'email'
 const EMAIL_JOBS = Object.freeze({

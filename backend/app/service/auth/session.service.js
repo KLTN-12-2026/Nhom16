@@ -1,6 +1,6 @@
 const crypto = require('node:crypto')
 
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const createSessionService = ({ sessionRepository, tokenService, transactionManager, userRepository }) => {
   const createSessionData = (userId, context = {}) => {

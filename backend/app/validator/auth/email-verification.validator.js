@@ -1,6 +1,6 @@
 const yup = require('yup')
 
-const { validationError } = require('../../util/error.helper')
+const { validationError } = require('../../util')
 
 const verifyEmailSchema = yup.object({
   token: yup.string().trim().required('Liên kết xác minh không hợp lệ.'),

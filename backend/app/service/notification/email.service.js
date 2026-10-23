@@ -1,6 +1,6 @@
 const nodemailer = require('nodemailer')
 
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const createEmailService = (config) => {
   const configured = Boolean(config.host && config.user && config.password)

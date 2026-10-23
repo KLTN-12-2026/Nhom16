@@ -1,6 +1,6 @@
 const express = require('express')
 
-const { asyncHandler } = require('../../util/async-handler')
+const { asyncHandler } = require('../../util')
 
 const createAuthRouter = ({ authController, authMiddleware, rateLimiters, validateBody, validators, verifyRecaptcha }) => {
   const router = express.Router()

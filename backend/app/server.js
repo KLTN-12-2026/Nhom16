@@ -1,4 +1,4 @@
-const { env } = require('./config/env')
+const { env } = require('./config')
 const { initApplication } = require('./index')
 
 const startServer = async () => {

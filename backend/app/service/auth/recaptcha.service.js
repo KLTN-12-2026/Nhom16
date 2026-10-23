@@ -1,4 +1,4 @@
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
 

@@ -1,6 +1,6 @@
 const yup = require('yup')
 
-const { validationError } = require('../../util/error.helper')
+const { validationError } = require('../../util')
 
 const loginSchema = yup.object({
   email: yup.string().trim().lowercase().email('Email không đúng định dạng.').required('Vui lòng nhập email.'),

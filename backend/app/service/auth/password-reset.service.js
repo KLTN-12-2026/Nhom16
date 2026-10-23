@@ -1,7 +1,7 @@
 const crypto = require('node:crypto')
 
 const { EMAIL_JOBS } = require('../../queue')
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const createPasswordResetService = ({ emailQueue, frontendOrigin, passwordResetRepository, passwordService, sessionRepository, transactionManager, userRepository }) => ({
   async request(email) {

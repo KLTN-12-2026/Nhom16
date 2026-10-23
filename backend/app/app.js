@@ -4,7 +4,7 @@ const cors = require('cors')
 const express = require('express')
 const helmet = require('helmet')
 
-const { env } = require('./config/env')
+const { env } = require('./config')
 const createApp = () => {
   const app = express()
 

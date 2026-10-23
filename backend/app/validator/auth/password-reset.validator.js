@@ -1,6 +1,6 @@
 const yup = require('yup')
 
-const { validationError } = require('../../util/error.helper')
+const { validationError } = require('../../util')
 
 const passwordRules = yup.string()
   .min(8, 'Mật khẩu phải có ít nhất 8 ký tự.')

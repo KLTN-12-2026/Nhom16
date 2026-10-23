@@ -1,11 +1,9 @@
-const { sendSuccess } = require('../../util/response.helper')
 const { REFRESH_COOKIE } = require('../../constants')
-const { readCookie } = require('../../util/cookie.helper')
-const { toAuthUser } = require('../../service/auth/authentication.service')
+const { readCookie, sendSuccess } = require('../../util')
 
 const requestContext = (request) => ({ ip: request.ip, userAgent: request.get('user-agent') })
 
-const createAuthController = ({ authCookie, emailVerificationService, googleAuthService, passwordResetService, registrationService, sessionService }) => ({
+const createAuthController = ({ authCookie, emailVerificationService, googleAuthService, passwordResetService, registrationService, sessionService, toAuthUser }) => ({
   async register(request, response) {
     const user = await registrationService.register(request.validatedBody)
     await emailVerificationService.issue(user)

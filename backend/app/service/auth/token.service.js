@@ -1,8 +1,7 @@
 const crypto = require('node:crypto')
 const jwt = require('jsonwebtoken')
 
-const { ApiError } = require('../../util/api-error')
-const { unauthorizedError } = require('../../util/error.helper')
+const { ApiError, unauthorizedError } = require('../../util')
 
 const createTokenService = ({ accessSecret, accessExpiresIn = '15m', refreshSecret, refreshExpiresIn = '7d' }) => ({
   signAccess(userId) {

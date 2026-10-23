@@ -1,7 +1,7 @@
 const { rateLimit } = require('express-rate-limit')
 const { RedisStore } = require('rate-limit-redis')
 
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const createLimiter = ({ redis, prefix, windowMs, limit, message }) => rateLimit({
   windowMs,

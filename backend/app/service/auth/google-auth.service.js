@@ -4,7 +4,7 @@ const { OAuth2Client } = require('google-auth-library')
 
 const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
 const { EMAIL_JOBS } = require('../../queue')
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 const { toAuthUser } = require('./authentication.service')
 
 const maskEmail = (email) => {

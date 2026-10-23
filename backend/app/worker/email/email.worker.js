@@ -1,10 +1,9 @@
 const { Worker } = require('bullmq')
 
-const { env } = require('../../config/env')
-const { createQueueRedis } = require('../../config/queue-redis')
+const { createQueueRedis, env } = require('../../config')
 const { EMAIL_JOBS, EMAIL_QUEUE } = require('../../queue')
-const { createEmailService } = require('../../service/notification')
-const { createEmailVerificationEmail, createGoogleOtpEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template/email')
+const { createEmailService } = require('../../service')
+const { createEmailVerificationEmail, createGoogleOtpEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template')
 
 const createEmailWorker = () => {
   const connection = createQueueRedis()

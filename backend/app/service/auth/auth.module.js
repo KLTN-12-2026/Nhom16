@@ -1,12 +1,6 @@
-const { env } = require('../../config/env')
-const { createAuthController, createAuthRouter } = require('../../controller/auth')
-const { createAuthRepositories } = require('../../db/repositories')
-const { createPassportMiddleware, createRecaptchaMiddleware } = require('../../middleware/auth')
-const { createAuthRateLimiters } = require('../../middleware/rate-limit')
-const { validateBody } = require('../../middleware/validation')
-const { createAuthCookieHelper } = require('../../util/auth-cookie.helper')
-const { validateForgotPasswordPayload, validateGoogleCompletePayload, validateGoogleResendPayload, validateGoogleStartPayload, validateLoginPayload, validateRegisterPayload, validateResendVerificationPayload, validateResetPasswordPayload, validateVerifyEmailPayload } = require('../../validator/auth')
-const { createAuthenticationService } = require('./authentication.service')
+const { env } = require('../../config')
+const { createAuthRepositories } = require('../../db')
+const { createAuthenticationService, toAuthUser } = require('./authentication.service')
 const { createEmailVerificationService } = require('./email-verification.service')
 const { createGoogleAuthService } = require('./google-auth.service')
 const { createPasswordService } = require('./password.service')
@@ -16,7 +10,7 @@ const { createRegistrationService } = require('./registration.service')
 const { createSessionService } = require('./session.service')
 const { createTokenService } = require('./token.service')
 
-const createAuthModule = ({ database, emailQueue, models, redis }) => {
+const createAuthServices = ({ database, emailQueue, models, redis }) => {
   const repositories = createAuthRepositories(models)
   const recaptchaVerifier = createRecaptchaVerifier({
     secretKey: env.recaptcha.secretKey,
@@ -59,45 +53,16 @@ const createAuthModule = ({ database, emailQueue, models, redis }) => {
     passwordService,
     transactionManager: database,
   })
-  const authCookie = createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' })
-  const authController = createAuthController({ authCookie, emailVerificationService, googleAuthService, passwordResetService, registrationService, sessionService })
-  const authMiddleware = createPassportMiddleware({ authenticationService, jwtSecret: env.auth.accessSecret })
-  const verifyRecaptcha = createRecaptchaMiddleware({ recaptchaVerifier })
-  const rateLimiters = createAuthRateLimiters({
-    redis,
-    config: {
-      loginWindowMs: env.auth.loginRateLimitWindowMs,
-      loginMax: env.auth.loginRateLimitMax,
-      refreshWindowMs: env.auth.refreshRateLimitWindowMs,
-      refreshMax: env.auth.refreshRateLimitMax,
-      forgotPasswordWindowMs: env.auth.forgotPasswordRateLimitWindowMs,
-      forgotPasswordMax: env.auth.forgotPasswordRateLimitMax,
-      emailVerificationWindowMs: env.auth.emailVerificationRateLimitWindowMs,
-      emailVerificationMax: env.auth.emailVerificationRateLimitMax,
-    },
-  })
-
   return {
-    passportInitialize: authMiddleware.initialize,
-    router: createAuthRouter({
-      authController,
-      authMiddleware,
-      rateLimiters,
-      validateBody,
-      verifyRecaptcha,
-      validators: {
-        googleStart: validateGoogleStartPayload,
-        googleComplete: validateGoogleCompletePayload,
-        googleResend: validateGoogleResendPayload,
-        forgotPassword: validateForgotPasswordPayload,
-        login: validateLoginPayload,
-        register: validateRegisterPayload,
-        resetPassword: validateResetPasswordPayload,
-        resendVerification: validateResendVerificationPayload,
-        verifyEmail: validateVerifyEmailPayload,
-      },
-    }),
+    authenticationService,
+    emailVerificationService,
+    googleAuthService,
+    passwordResetService,
+    recaptchaVerifier,
+    registrationService,
+    sessionService,
+    toAuthUser,
   }
 }
 
-module.exports = { createAuthModule }
+module.exports = { createAuthServices }

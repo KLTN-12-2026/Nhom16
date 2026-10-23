@@ -1,5 +1,5 @@
 const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
-const { ApiError } = require('../../util/api-error')
+const { ApiError } = require('../../util')
 
 const createRegistrationService = ({
   transactionManager,
