@@ -1,4 +1,4 @@
-const createAuthRepositories = ({ AuthIdentity, EmployerProfile, Role, User, UserRole }) => ({
+const createAuthRepositories = ({ AuthIdentity, AuthSession, EmployerProfile, Role, User, UserRole }) => ({
   userRepository: {
     findByEmail(email, options = {}) {
       return User.findOne({ where: { email }, transaction: options.transaction })
@@ -45,6 +45,23 @@ const createAuthRepositories = ({ AuthIdentity, EmployerProfile, Role, User, Use
     },
     create(data, options = {}) {
       return AuthIdentity.create(data, { transaction: options.transaction })
+    },
+  },
+  sessionRepository: {
+    create(data, options = {}) {
+      return AuthSession.create(data, { transaction: options.transaction })
+    },
+    findByIdForUpdate(id, options = {}) {
+      return AuthSession.findByPk(id, {
+        transaction: options.transaction,
+        lock: options.transaction?.LOCK?.UPDATE,
+      })
+    },
+    revoke(id, replacedBySessionId = null, options = {}) {
+      return AuthSession.update(
+        { revokedAt: new Date(), replacedBySessionId },
+        { where: { id }, transaction: options.transaction },
+      )
     },
   },
 })

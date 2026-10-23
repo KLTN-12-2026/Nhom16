@@ -1,6 +1,11 @@
 const { sendSuccess } = require('../../util/response.helper')
+const { REFRESH_COOKIE } = require('../../constants')
+const { readCookie } = require('../../util/cookie.helper')
+const { toAuthUser } = require('../../service/auth/authentication.service')
 
-const createAuthController = ({ authenticationService, authCookie, googleAuthService, registrationService }) => ({
+const requestContext = (request) => ({ ip: request.ip, userAgent: request.get('user-agent') })
+
+const createAuthController = ({ authCookie, googleAuthService, registrationService, sessionService }) => ({
   async register(request, response) {
     const user = await registrationService.register(request.validatedBody)
     return sendSuccess(response, {
@@ -10,18 +15,24 @@ const createAuthController = ({ authenticationService, authCookie, googleAuthSer
     })
   },
   async login(request, response) {
-    authCookie.set(response, authenticationService.createAccessToken(request.user))
+    authCookie.set(response, await sessionService.issue(request.user, requestContext(request)))
     return sendSuccess(response, { data: { user: request.user }, message: 'Đăng nhập thành công.' })
   },
   async google(request, response) {
-    const result = await googleAuthService.authenticate(request.validatedBody, { ip: request.ip })
-    authCookie.set(response, result.accessToken)
-    return sendSuccess(response, { data: { user: result.user }, message: 'Đăng nhập Google thành công.' })
+    const user = await googleAuthService.authenticate(request.validatedBody, { ip: request.ip })
+    authCookie.set(response, await sessionService.issue(user, requestContext(request)))
+    return sendSuccess(response, { data: { user }, message: 'Đăng nhập Google thành công.' })
+  },
+  async refresh(request, response) {
+    const result = await sessionService.rotate(readCookie(request, REFRESH_COOKIE), requestContext(request))
+    authCookie.set(response, result.tokens)
+    return sendSuccess(response, { data: { user: toAuthUser(result.user) }, message: 'Làm mới phiên đăng nhập thành công.' })
   },
   async me(request, response) {
     return sendSuccess(response, { data: { user: request.user } })
   },
-  logout(request, response) {
+  async logout(request, response) {
+    await sessionService.revoke(readCookie(request, REFRESH_COOKIE))
     authCookie.clear(response)
     return sendSuccess(response, { message: 'Đăng xuất thành công.' })
   },

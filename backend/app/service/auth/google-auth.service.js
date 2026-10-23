@@ -4,7 +4,7 @@ const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
 const { ApiError } = require('../../util/api-error')
 const { toAuthUser } = require('./authentication.service')
 
-const createGoogleAuthService = ({ clientId, transactionManager, userRepository, roleRepository, identityRepository, recaptchaVerifier, tokenService }) => {
+const createGoogleAuthService = ({ clientId, transactionManager, userRepository, roleRepository, identityRepository, recaptchaVerifier }) => {
   const client = new OAuth2Client(clientId)
   return {
     async authenticate(payload, context = {}) {
@@ -60,7 +60,7 @@ const createGoogleAuthService = ({ clientId, transactionManager, userRepository,
         throw new ApiError(403, 'Tài khoản hiện không thể đăng nhập.', 'ACCOUNT_UNAVAILABLE')
       }
       await userRepository.updateLastLogin(user.id)
-      return { user: toAuthUser(user), accessToken: tokenService.sign(user.id) }
+      return toAuthUser(user)
     },
   }
 }

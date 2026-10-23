@@ -1,4 +1,5 @@
 module.exports = {
+  ...require('./session.service'),
   ...require('./auth.module'),
   ...require('./authentication.service'),
   ...require('./google-auth.service'),

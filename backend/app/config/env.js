@@ -33,6 +33,7 @@ const env = Object.freeze({
   },
   auth: {
     accessSecret: process.env.JWT_ACCESS_SECRET || '',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_ACCESS_SECRET || '',
     accessTokenExpiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || '15m',
     refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
     loginRateLimitWindowMs: toNumber(process.env.LOGIN_RATE_LIMIT_WINDOW_MS, 900000),

@@ -12,6 +12,7 @@ const { createGoogleAuthService } = require('./google-auth.service')
 const { createPasswordService } = require('./password.service')
 const { createRecaptchaVerifier } = require('./recaptcha.service')
 const { createRegistrationService } = require('./registration.service')
+const { createSessionService } = require('./session.service')
 const { createTokenService } = require('./token.service')
 
 const createAuthModule = ({ database, redis }) => {
@@ -22,16 +23,22 @@ const createAuthModule = ({ database, redis }) => {
     allowedHostnames: ['localhost', '127.0.0.1'],
   })
   const passwordService = createPasswordService()
-  const tokenService = createTokenService({ secret: env.auth.accessSecret, expiresIn: env.auth.accessTokenExpiresIn })
+  const tokenService = createTokenService({
+    accessSecret: env.auth.accessSecret,
+    accessExpiresIn: env.auth.accessTokenExpiresIn,
+    refreshSecret: env.auth.refreshSecret,
+    refreshExpiresIn: env.auth.refreshTokenExpiresIn,
+  })
   const registrationService = createRegistrationService({
     transactionManager: database,
     ...repositories,
     passwordService,
   })
   const authenticationService = createAuthenticationService({ ...repositories, passwordService, tokenService })
-  const googleAuthService = createGoogleAuthService({ ...repositories, clientId: env.googleClientId, recaptchaVerifier, tokenService, transactionManager: database })
+  const googleAuthService = createGoogleAuthService({ ...repositories, clientId: env.googleClientId, recaptchaVerifier, transactionManager: database })
+  const sessionService = createSessionService({ ...repositories, tokenService, transactionManager: database })
   const authCookie = createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' })
-  const authController = createAuthController({ authenticationService, authCookie, googleAuthService, registrationService })
+  const authController = createAuthController({ authCookie, googleAuthService, registrationService, sessionService })
   const authMiddleware = createPassportMiddleware({ authenticationService, jwtSecret: env.auth.accessSecret })
   const verifyRecaptcha = createRecaptchaMiddleware({ recaptchaVerifier })
   const rateLimiters = createAuthRateLimiters({

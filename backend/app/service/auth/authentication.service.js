@@ -25,7 +25,7 @@ const createAuthenticationService = ({ userRepository, passwordService, tokenSer
     return toAuthUser(user)
   },
   createAccessToken(user) {
-    return tokenService.sign(user.id)
+    return tokenService.signAccess(user.id)
   },
   async getCurrentUserFromPayload(payload) {
     if (!payload?.sub || payload.type !== 'access') {

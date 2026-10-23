@@ -24,12 +24,13 @@ const createAuthRouter = ({ authController, authMiddleware, rateLimiters, valida
     validateBody(validators.google),
     asyncHandler(authController.google),
   )
+  router.post('/refresh', rateLimiters.refresh, asyncHandler(authController.refresh))
   router.get(
     '/me',
     authMiddleware.authenticateJwt,
     asyncHandler(authController.me),
   )
-  router.post('/logout', authController.logout)
+  router.post('/logout', asyncHandler(authController.logout))
 
   return router
 }
