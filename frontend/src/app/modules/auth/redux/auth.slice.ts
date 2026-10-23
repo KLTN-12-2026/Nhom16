@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 
-import type { AuthUser, ForgotPasswordPayload, GoogleChallenge, GoogleCompletePayload, GoogleStartPayload, LoginPayload, RegisterPayload, ResendVerificationPayload, ResetPasswordPayload, VerifyEmailPayload } from '../../../model/auth.model'
+import type { AuthUser, ForgotPasswordPayload, GoogleChallenge, GoogleCompletePayload, GoogleResendPayload, GoogleStartPayload, LoginPayload, RegisterPayload, ResendVerificationPayload, ResetPasswordPayload, VerifyEmailPayload } from '../../../model/auth.model'
 
 interface AuthState {
   user: AuthUser | null
@@ -24,6 +24,8 @@ const authSlice = createSlice({
     googleStartRequested(state, _action: PayloadAction<GoogleStartPayload>) { state.submitting = true; state.error = ''; state.message = ''; state.googleChallenge = null },
     googleStartSucceeded(state, action: PayloadAction<GoogleChallenge>) { state.submitting = false; state.googleChallenge = action.payload; state.error = '' },
     googleCompleteRequested(state, _action: PayloadAction<GoogleCompletePayload>) { state.submitting = true; state.error = ''; state.message = '' },
+    googleResendRequested(state, _action: PayloadAction<GoogleResendPayload>) { state.submitting = true; state.error = ''; state.message = '' },
+    googleResendSucceeded(state, action: PayloadAction<string>) { state.submitting = false; state.error = ''; state.message = action.payload },
     forgotPasswordRequested(state, _action: PayloadAction<ForgotPasswordPayload>) { state.submitting = true; state.error = ''; state.message = '' },
     resetPasswordRequested(state, _action: PayloadAction<ResetPasswordPayload>) { state.submitting = true; state.error = ''; state.message = '' },
     verifyEmailRequested(state, _action: PayloadAction<VerifyEmailPayload>) { state.submitting = true; state.error = ''; state.message = '' },

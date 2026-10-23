@@ -1,10 +1,10 @@
 import type { PayloadAction } from '@reduxjs/toolkit'
 import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
 
-import { forgotPasswordApi, getCurrentUserApi, googleCompleteApi, googleStartApi, loginApi, logoutApi, registerApi, resendVerificationApi, resetPasswordApi, verifyEmailApi } from '../../../apis/auth'
+import { forgotPasswordApi, getCurrentUserApi, googleCompleteApi, googleResendApi, googleStartApi, loginApi, logoutApi, registerApi, resendVerificationApi, resetPasswordApi, verifyEmailApi } from '../../../apis/auth'
 import { ApiClientError } from '../../../apis/fetch-api'
 import type { ApiResponse } from '../../../model/api.model'
-import type { AuthUser, ForgotPasswordPayload, GoogleChallenge, GoogleCompletePayload, GoogleStartPayload, LoginPayload, RegisterPayload, ResendVerificationPayload, ResetPasswordPayload, VerifyEmailPayload } from '../../../model/auth.model'
+import type { AuthUser, ForgotPasswordPayload, GoogleChallenge, GoogleCompletePayload, GoogleResendPayload, GoogleStartPayload, LoginPayload, RegisterPayload, ResendVerificationPayload, ResetPasswordPayload, VerifyEmailPayload } from '../../../model/auth.model'
 import { authActions } from './auth.slice'
 
 const errorMessage = (error: unknown) => error instanceof ApiClientError ? error.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.'
@@ -41,6 +41,13 @@ function* googleCompleteWorker(action: PayloadAction<GoogleCompletePayload>) {
   try {
     const response: ApiResponse<{ user: AuthUser }> = yield call(googleCompleteApi, action.payload)
     yield put(authActions.authSucceeded({ user: response.data.user, message: response.message }))
+  } catch (error) { yield put(authActions.authFailed(errorMessage(error))) }
+}
+
+function* googleResendWorker(action: PayloadAction<GoogleResendPayload>) {
+  try {
+    const response: ApiResponse<{ cooldownSeconds: number }> = yield call(googleResendApi, action.payload)
+    yield put(authActions.googleResendSucceeded(response.message || 'Mã xác minh mới đã được gửi.'))
   } catch (error) { yield put(authActions.authFailed(errorMessage(error))) }
 }
 
@@ -82,6 +89,7 @@ export function* authSaga() {
   yield takeLatest(authActions.registerRequested.type, registerWorker)
   yield takeLatest(authActions.googleStartRequested.type, googleStartWorker)
   yield takeLatest(authActions.googleCompleteRequested.type, googleCompleteWorker)
+  yield takeLatest(authActions.googleResendRequested.type, googleResendWorker)
   yield takeLatest(authActions.forgotPasswordRequested.type, forgotPasswordWorker)
   yield takeLatest(authActions.resetPasswordRequested.type, resetPasswordWorker)
   yield takeLatest(authActions.verifyEmailRequested.type, verifyEmailWorker)

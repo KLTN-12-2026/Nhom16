@@ -18,15 +18,27 @@ const initialForm: FormState = {
 
 export default function GoogleCompletePage() {
   const [form, setForm] = useState(initialForm)
+  const [resendCountdown, setResendCountdown] = useState(15)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-  const { error, googleChallenge, submitting, user } = useAppSelector((state) => state.auth)
+  const { error, googleChallenge, message, submitting, user } = useAppSelector((state) => state.auth)
   const update = <K extends keyof FormState>(field: K, value: FormState[K]) => setForm((current) => ({ ...current, [field]: value }))
   const isNew = Boolean(googleChallenge?.requiresProfile)
   const canSubmit = Boolean(googleChallenge && /^\d{6}$/.test(form.code) && (!isNew || form.termsAccepted) && !submitting)
 
   useEffect(() => { dispatch(authActions.feedbackCleared()) }, [dispatch])
   useEffect(() => { if (user) navigate(ROUTE.HOME, { replace: true }) }, [navigate, user])
+  useEffect(() => {
+    if (resendCountdown <= 0) return undefined
+    const timer = window.setInterval(() => setResendCountdown((value) => Math.max(0, value - 1)), 1000)
+    return () => window.clearInterval(timer)
+  }, [resendCountdown])
+
+  const resendCode = () => {
+    if (!googleChallenge || resendCountdown > 0 || submitting) return
+    setResendCountdown(15)
+    dispatch(authActions.googleResendRequested({ challengeId: googleChallenge.challengeId }))
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -55,8 +67,12 @@ export default function GoogleCompletePage() {
 
   return <AuthShell title="Xác minh đăng nhập Google" description={`Mã gồm 6 chữ số đã được gửi đến ${googleChallenge.email}.`}>
     {error && <div className="auth-alert" role="alert">{error}</div>}
+    {message && <div className="auth-alert auth-alert--success" role="status">{message}</div>}
     <form className="auth-form" onSubmit={submit}>
       <label>Mã xác minh<input inputMode="numeric" maxLength={6} value={form.code} onChange={(event) => update('code', event.target.value.replace(/\D/g, ''))} autoComplete="one-time-code" placeholder="000000" required /></label>
+      <button className="auth-resend" type="button" onClick={resendCode} disabled={resendCountdown > 0 || submitting}>
+        {resendCountdown > 0 ? `Gửi lại mã sau ${resendCountdown}s` : 'Gửi lại mã xác minh'}
+      </button>
       {isNew && <>
         <div className="role-picker" role="radiogroup" aria-label="Loại tài khoản">
           <button type="button" className={form.role === ROLE.CANDIDATE ? 'active' : ''} onClick={() => update('role', ROLE.CANDIDATE)}><i className="bi bi-person" /><span><strong>Tôi đang tìm việc</strong><small>Tạo hồ sơ ứng viên</small></span></button>

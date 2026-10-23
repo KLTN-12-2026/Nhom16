@@ -37,6 +37,8 @@
 .auth-form__options a, .auth-switch a { color: #2563eb; font-weight: 650; text-decoration: none; }
 .auth-submit { min-height: 43px; border: 0; border-radius: 9px; font-size: .9rem; font-weight: 700; }
 .auth-submit:disabled { color: #8491a3; background: #e7ebf1; opacity: 1; cursor: not-allowed; box-shadow: none; }
+.auth-resend { justify-self: end; padding: 0; border: 0; color: #2563eb; background: transparent; font-size: .8rem; font-weight: 650; cursor: pointer; }
+.auth-resend:disabled { color: #98a2b3; cursor: not-allowed; }
 .auth-switch { margin: 1rem 0 0; text-align: center; font-size: .82rem; }
 .auth-alert { margin-bottom: 1rem; padding: .8rem 1rem; border-radius: 10px; color: #b42318; background: #fef3f2; font-size: .88rem; }
 .auth-alert--success { color: #087443; background: #ecfdf3; }

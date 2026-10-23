@@ -60,6 +60,8 @@ export interface GoogleCompletePayload {
   representativePosition?: string
 }
 
+export interface GoogleResendPayload { challengeId: string }
+
 export interface ForgotPasswordPayload { email: string }
 
 export interface ResetPasswordPayload {
