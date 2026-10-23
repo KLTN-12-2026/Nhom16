@@ -26,6 +26,14 @@ const env = Object.freeze({
     url: process.env.REDIS_URL || 'redis://127.0.0.1:6379',
     keyPrefix: process.env.REDIS_KEY_PREFIX || 'tuyen_dung_ai:development:',
   },
+  mail: {
+    host: process.env.SMTP_HOST || '',
+    port: toNumber(process.env.SMTP_PORT, 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER || '',
+    password: process.env.SMTP_PASSWORD || '',
+    from: process.env.MAIL_FROM || 'Tuyển Dụng Thông Minh <no-reply@example.com>',
+  },
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   recaptcha: {
     secretKey: process.env.RECAPTCHA_SECRET_KEY || '',

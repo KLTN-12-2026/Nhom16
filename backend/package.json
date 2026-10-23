@@ -10,6 +10,8 @@
     "build": "yarn run clean && babel app --out-dir dist && ncp app/template dist/template",
     "start": "env-cmd nodemon --delay 500ms --trace-warnings --exec babel-node app/server.js",
     "serve": "node dist/server.js",
+    "worker": "env-cmd nodemon --delay 500ms --trace-warnings --exec babel-node app/worker.js",
+    "worker:serve": "node dist/worker.js",
     "db:migrate": "sequelize-cli db:migrate",
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "sequelize-cli db:seed:all",
