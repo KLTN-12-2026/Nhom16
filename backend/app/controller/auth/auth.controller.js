@@ -2,9 +2,9 @@ const { REFRESH_COOKIE } = require('../../constants')
 const { createLoginSession } = require('../../service')
 const { readCookie, sendSuccess } = require('../../util')
 
-const getRequestContext = (request) => ({
-  ip: request.ip,
-  userAgent: request.get('user-agent'),
+const getRequestContext = (req) => ({
+  ip: req.ip,
+  userAgent: req.get('user-agent'),
 })
 
 const initAuthEmailController = (authEmail, dependencies) => {
@@ -27,13 +27,13 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/register',
     validateBody(validators.register),
     verifyRecaptcha('register'),
-    (request, response, next) => registrationService
-      .register(request.validatedBody)
+    (req, res, next) => registrationService
+      .register(req.validatedBody)
       .then(async (user) => {
         await emailVerificationService.issue(user)
         return user
       })
-      .then((user) => sendSuccess(response, {
+      .then((user) => sendSuccess(res, {
         statusCode: 201,
         data: { user },
         message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
@@ -47,11 +47,11 @@ const initAuthEmailController = (authEmail, dependencies) => {
     validateBody(validators.login),
     verifyRecaptcha('login'),
     authMiddleware.authenticateLocal,
-    (request, response, next) => createLoginSession(sessionService, request.user, getRequestContext(request))
+    (req, res, next) => createLoginSession(sessionService, req.user, getRequestContext(req))
       .then((tokens) => {
-        authCookie.set(response, tokens)
-        return sendSuccess(response, {
-          data: { user: request.user },
+        authCookie.set(res, tokens)
+        return sendSuccess(res, {
+          data: { user: req.user },
           message: 'Đăng nhập thành công.',
         })
       })
@@ -61,9 +61,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
   authEmail.post(
     '/verify-email',
     validateBody(validators.verifyEmail),
-    (request, response, next) => emailVerificationService
-      .verify(request.validatedBody.token)
-      .then(() => sendSuccess(response, {
+    (req, res, next) => emailVerificationService
+      .verify(req.validatedBody.token)
+      .then(() => sendSuccess(res, {
         message: 'Xác minh email thành công. Bạn có thể đăng nhập.',
       }))
       .catch(next),
@@ -73,9 +73,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/resend-verification',
     rateLimiters.emailVerification,
     validateBody(validators.resendVerification),
-    (request, response, next) => emailVerificationService
-      .resend(request.validatedBody.email)
-      .then(() => sendSuccess(response, {
+    (req, res, next) => emailVerificationService
+      .resend(req.validatedBody.email)
+      .then(() => sendSuccess(res, {
         message: 'Nếu tài khoản đang chờ xác minh, email mới sẽ được gửi trong ít phút.',
       }))
       .catch(next),
@@ -85,9 +85,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/google/start',
     rateLimiters.login,
     validateBody(validators.googleStart),
-    (request, response, next) => googleAuthService
-      .start(request.validatedBody, { ip: request.ip })
-      .then((challenge) => sendSuccess(response, {
+    (req, res, next) => googleAuthService
+      .start(req.validatedBody, { ip: req.ip })
+      .then((challenge) => sendSuccess(res, {
         data: challenge,
         message: 'Mã xác minh đã được gửi đến Gmail của bạn.',
       }))
@@ -98,15 +98,15 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/google/complete',
     rateLimiters.login,
     validateBody(validators.googleComplete),
-    (request, response, next) => googleAuthService
-      .complete(request.validatedBody)
+    (req, res, next) => googleAuthService
+      .complete(req.validatedBody)
       .then(async (user) => ({
-        tokens: await sessionService.issue(user, getRequestContext(request)),
+        tokens: await sessionService.issue(user, getRequestContext(req)),
         user,
       }))
       .then(({ tokens, user }) => {
-        authCookie.set(response, tokens)
-        return sendSuccess(response, {
+        authCookie.set(res, tokens)
+        return sendSuccess(res, {
           data: { user },
           message: 'Xác minh và đăng nhập Google thành công.',
         })
@@ -118,9 +118,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/google/resend',
     rateLimiters.login,
     validateBody(validators.googleResend),
-    (request, response, next) => googleAuthService
-      .resend(request.validatedBody)
-      .then((result) => sendSuccess(response, {
+    (req, res, next) => googleAuthService
+      .resend(req.validatedBody)
+      .then((result) => sendSuccess(res, {
         data: result,
         message: 'Mã xác minh mới đã được gửi đến Gmail của bạn.',
       }))
@@ -130,11 +130,11 @@ const initAuthEmailController = (authEmail, dependencies) => {
   authEmail.post(
     '/refresh',
     rateLimiters.refresh,
-    (request, response, next) => sessionService
-      .rotate(readCookie(request, REFRESH_COOKIE), getRequestContext(request))
+    (req, res, next) => sessionService
+      .rotate(readCookie(req, REFRESH_COOKIE), getRequestContext(req))
       .then((result) => {
-        authCookie.set(response, result.tokens)
-        return sendSuccess(response, {
+        authCookie.set(res, result.tokens)
+        return sendSuccess(res, {
           data: { user: toAuthUser(result.user) },
           message: 'Làm mới phiên đăng nhập thành công.',
         })
@@ -146,9 +146,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
     '/forgot-password',
     rateLimiters.forgotPassword,
     validateBody(validators.forgotPassword),
-    (request, response, next) => passwordResetService
-      .request(request.validatedBody.email)
-      .then(() => sendSuccess(response, {
+    (req, res, next) => passwordResetService
+      .request(req.validatedBody.email)
+      .then(() => sendSuccess(res, {
         message: 'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi trong ít phút.',
       }))
       .catch(next),
@@ -157,11 +157,11 @@ const initAuthEmailController = (authEmail, dependencies) => {
   authEmail.post(
     '/reset-password',
     validateBody(validators.resetPassword),
-    (request, response, next) => passwordResetService
-      .reset(request.validatedBody)
+    (req, res, next) => passwordResetService
+      .reset(req.validatedBody)
       .then(() => {
-        authCookie.clear(response)
-        return sendSuccess(response, {
+        authCookie.clear(res)
+        return sendSuccess(res, {
           message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
         })
       })
@@ -171,18 +171,18 @@ const initAuthEmailController = (authEmail, dependencies) => {
   authEmail.get(
     '/me',
     authMiddleware.authenticateJwt,
-    (request, response) => sendSuccess(response, {
-      data: { user: request.user },
+    (req, res) => sendSuccess(res, {
+      data: { user: req.user },
     }),
   )
 
   authEmail.post(
     '/logout',
-    (request, response, next) => sessionService
-      .revoke(readCookie(request, REFRESH_COOKIE))
+    (req, res, next) => sessionService
+      .revoke(readCookie(req, REFRESH_COOKIE))
       .then(() => {
-        authCookie.clear(response)
-        return sendSuccess(response, {
+        authCookie.clear(res)
+        return sendSuccess(res, {
           message: 'Đăng xuất thành công.',
         })
       })
