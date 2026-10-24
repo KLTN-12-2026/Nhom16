@@ -58,7 +58,6 @@ const createAuthServices = ({ database, emailQueue, models, redis }) => {
     passwordService,
     recaptchaVerifier,
     sessionService,
-    userRepository: repositories.userRepository,
   })
   return {
     authCookie: createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' }),

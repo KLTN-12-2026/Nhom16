@@ -1,4 +1,5 @@
 const { ROLE_PERMISSIONS } = require('../../constants')
+const { db } = require('../../db')
 const { ApiError } = require('../../util')
 
 let userSignInDependencies
@@ -15,8 +16,15 @@ const toAuthUser = (user) => {
   }
 }
 
-const authenticateCredentials = async ({ passwordService, userRepository }, { email, password }) => {
-  const user = await userRepository.findByEmailWithRoles(email.trim().toLowerCase())
+const authenticateCredentials = async ({ passwordService }, { email, password }) => {
+  const user = await db.User.findOne({
+    where: { email: email.trim().toLowerCase() },
+    include: [{
+      model: db.Role,
+      as: 'roles',
+      through: { attributes: [] },
+    }],
+  })
   const passwordValid = user?.passwordHash && await passwordService.compare(password, user.passwordHash)
 
   if (!passwordValid) {
@@ -29,7 +37,7 @@ const authenticateCredentials = async ({ passwordService, userRepository }, { em
     throw new ApiError(403, 'Vui lòng xác minh email trước khi đăng nhập.', 'EMAIL_NOT_VERIFIED')
   }
 
-  await userRepository.updateLastLogin(user.id)
+  await user.update({ lastLoginAt: new Date() })
   return toAuthUser(user)
 }
 
@@ -46,7 +54,6 @@ const userSignIn = async ({ email, password, recaptchaToken }, context = {}) => 
     passwordService,
     recaptchaVerifier,
     sessionService,
-    userRepository,
   } = userSignInDependencies
 
   await recaptchaVerifier.verify({
@@ -60,7 +67,7 @@ const userSignIn = async ({ email, password, recaptchaToken }, context = {}) => 
   }
 
   const user = await authenticateCredentials(
-    { passwordService, userRepository },
+    { passwordService },
     { email, password },
   )
   const tokens = await sessionService.issue(user, context)
@@ -70,7 +77,7 @@ const userSignIn = async ({ email, password, recaptchaToken }, context = {}) => 
 
 const createAuthenticationService = ({ userRepository, passwordService, tokenService }) => ({
   async authenticateLocal(payload) {
-    return authenticateCredentials({ passwordService, userRepository }, payload)
+    return authenticateCredentials({ passwordService }, payload)
   },
   createAccessToken(user) {
     return tokenService.signAccess(user.id)
