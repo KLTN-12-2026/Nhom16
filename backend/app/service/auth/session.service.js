@@ -2,6 +2,8 @@ const crypto = require('node:crypto')
 
 const { ApiError } = require('../../util')
 
+let sessionService
+
 const createSessionService = ({ sessionRepository, tokenService, transactionManager, userRepository }) => {
   const createSessionData = (userId, context = {}) => {
     const id = crypto.randomUUID()
@@ -62,4 +64,19 @@ const createSessionService = ({ sessionRepository, tokenService, transactionMana
   }
 }
 
-module.exports = { createSessionService }
+const initSessionService = (dependencies) => {
+  sessionService = createSessionService(dependencies)
+  return sessionService
+}
+
+const issueSession = (user, context) => sessionService.issue(user, context)
+const refreshSession = (refreshToken, context) => sessionService.rotate(refreshToken, context)
+const revokeSession = (refreshToken) => sessionService.revoke(refreshToken)
+
+module.exports = {
+  createSessionService,
+  initSessionService,
+  issueSession,
+  refreshSession,
+  revokeSession,
+}

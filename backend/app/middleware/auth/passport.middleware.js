@@ -5,6 +5,8 @@ const { Strategy: LocalStrategy } = require('passport-local')
 const { ACCESS_COOKIE } = require('../../constants')
 const { ApiError, readCookie, unauthorizedError } = require('../../util')
 
+let passportMiddleware
+
 const createPassportMiddleware = ({ authenticationService, jwtSecret }) => {
   const passport = new Passport()
 
@@ -49,4 +51,19 @@ const createPassportMiddleware = ({ authenticationService, jwtSecret }) => {
   }
 }
 
-module.exports = { createPassportMiddleware }
+const initPassportMiddleware = (dependencies) => {
+  passportMiddleware = createPassportMiddleware(dependencies)
+  return passportMiddleware
+}
+
+const initializePassport = (req, res, next) => passportMiddleware.initialize(req, res, next)
+const authenticateLocal = (req, res, next) => passportMiddleware.authenticateLocal(req, res, next)
+const authenticateJwt = (req, res, next) => passportMiddleware.authenticateJwt(req, res, next)
+
+module.exports = {
+  authenticateJwt,
+  authenticateLocal,
+  createPassportMiddleware,
+  initializePassport,
+  initPassportMiddleware,
+}

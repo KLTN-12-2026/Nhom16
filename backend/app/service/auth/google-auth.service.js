@@ -7,6 +7,8 @@ const { EMAIL_JOBS } = require('../../queue')
 const { ApiError } = require('../../util')
 const { toAuthUser } = require('./authentication.service')
 
+let googleAuthService
+
 const maskEmail = (email) => {
   const [name, domain] = email.split('@')
   return `${name.slice(0, 2)}${'*'.repeat(Math.max(2, name.length - 2))}@${domain}`
@@ -178,4 +180,19 @@ const createGoogleAuthService = ({ clientId, emailQueue, employerProfileReposito
   }
 }
 
-module.exports = { createGoogleAuthService }
+const initGoogleAuthService = (dependencies) => {
+  googleAuthService = createGoogleAuthService(dependencies)
+  return googleAuthService
+}
+
+const startGoogleAuth = (payload, context) => googleAuthService.start(payload, context)
+const completeGoogleAuth = (payload) => googleAuthService.complete(payload)
+const resendGoogleAuthCode = (payload) => googleAuthService.resend(payload)
+
+module.exports = {
+  completeGoogleAuth,
+  createGoogleAuthService,
+  initGoogleAuthService,
+  resendGoogleAuthCode,
+  startGoogleAuth,
+}

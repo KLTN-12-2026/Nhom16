@@ -1,18 +1,24 @@
-const { DataTypes } = require('sequelize')
-
-const { defineAuthIdentity, defineAuthSession, defineEmailVerificationToken, definePasswordResetToken, defineRole, defineUserRole } = require('./auth')
-const { defineUser } = require('./user')
-const { defineEmployerProfile } = require('./employer')
+const { initAuthModel } = require('./auth')
+const { initEmployerModel } = require('./employer')
+const { initUserModel } = require('./user')
 
 const initializeModels = (sequelize) => {
-  const User = defineUser(sequelize, DataTypes)
-  const Role = defineRole(sequelize, DataTypes)
-  const UserRole = defineUserRole(sequelize, DataTypes)
-  const AuthIdentity = defineAuthIdentity(sequelize, DataTypes)
-  const AuthSession = defineAuthSession(sequelize, DataTypes)
-  const EmailVerificationToken = defineEmailVerificationToken(sequelize, DataTypes)
-  const PasswordResetToken = definePasswordResetToken(sequelize, DataTypes)
-  const EmployerProfile = defineEmployerProfile(sequelize, DataTypes)
+  const models = {
+    ...initUserModel(sequelize),
+    ...initAuthModel(sequelize),
+    ...initEmployerModel(sequelize),
+  }
+
+  const {
+    AuthIdentity,
+    AuthSession,
+    EmailVerificationToken,
+    EmployerProfile,
+    PasswordResetToken,
+    Role,
+    User,
+    UserRole,
+  } = models
 
   const userForeignKey = { name: 'userId', field: 'user_id' }
   const roleForeignKey = { name: 'roleId', field: 'role_id' }
@@ -30,7 +36,7 @@ const initializeModels = (sequelize) => {
   User.hasOne(EmployerProfile, { foreignKey: userForeignKey, as: 'employerProfile' })
   EmployerProfile.belongsTo(User, { foreignKey: userForeignKey, as: 'user' })
 
-  return { AuthIdentity, AuthSession, EmailVerificationToken, EmployerProfile, PasswordResetToken, Role, User, UserRole }
+  return models
 }
 
 module.exports = { initializeModels }

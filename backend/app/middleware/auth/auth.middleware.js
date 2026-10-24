@@ -1,15 +1,14 @@
 const { env } = require('../../config')
-const { createAuthRateLimiters } = require('../rate-limit')
-const { validateBody } = require('../validation')
-const { createPassportMiddleware } = require('./passport.middleware')
-const { createRecaptchaMiddleware } = require('./recaptcha.middleware')
+const { initAuthRateLimiters } = require('../rate-limit')
+const { initPassportMiddleware } = require('./passport.middleware')
+const { initRecaptchaMiddleware } = require('./recaptcha.middleware')
 
 const createAuthMiddleware = ({ authenticationService, recaptchaVerifier, redis }) => {
-  const authMiddleware = createPassportMiddleware({
+  const authMiddleware = initPassportMiddleware({
     authenticationService,
     jwtSecret: env.auth.accessSecret,
   })
-  const rateLimiters = createAuthRateLimiters({
+  const rateLimiters = initAuthRateLimiters({
     redis,
     config: {
       loginWindowMs: env.auth.loginRateLimitWindowMs,
@@ -22,12 +21,12 @@ const createAuthMiddleware = ({ authenticationService, recaptchaVerifier, redis 
       emailVerificationMax: env.auth.emailVerificationRateLimitMax,
     },
   })
+  const verifyRecaptcha = initRecaptchaMiddleware({ recaptchaVerifier })
 
   return {
     authMiddleware,
     rateLimiters,
-    validateBody,
-    verifyRecaptcha: createRecaptchaMiddleware({ recaptchaVerifier }),
+    verifyRecaptcha,
   }
 }
 

@@ -1,6 +1,8 @@
 const { PUBLIC_REGISTRATION_ROLES, ROLES } = require('../../constants')
 const { ApiError } = require('../../util')
 
+let registrationService
+
 const createRegistrationService = ({
   transactionManager,
   userRepository,
@@ -83,4 +85,11 @@ const createRegistrationService = ({
   },
 })
 
-module.exports = { createRegistrationService }
+const initRegistrationService = (dependencies) => {
+  registrationService = createRegistrationService(dependencies)
+  return registrationService
+}
+
+const registerUser = (payload) => registrationService.register(payload)
+
+module.exports = { createRegistrationService, initRegistrationService, registerUser }

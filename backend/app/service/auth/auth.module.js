@@ -1,14 +1,13 @@
 const { env } = require('../../config')
 const { createAuthRepositories } = require('../../db')
-const { createAuthCookieHelper } = require('../../util')
-const { createAuthenticationService, initUserSignIn, toAuthUser } = require('./authentication.service')
-const { createEmailVerificationService } = require('./email-verification.service')
-const { createGoogleAuthService } = require('./google-auth.service')
+const { createAuthenticationService, initUserSignIn } = require('./authentication.service')
+const { initEmailVerificationService } = require('./email-verification.service')
+const { initGoogleAuthService } = require('./google-auth.service')
 const { createPasswordService } = require('./password.service')
-const { createPasswordResetService } = require('./password-reset.service')
+const { initPasswordResetService } = require('./password-reset.service')
 const { createRecaptchaVerifier } = require('./recaptcha.service')
-const { createRegistrationService } = require('./registration.service')
-const { createSessionService } = require('./session.service')
+const { initRegistrationService } = require('./registration.service')
+const { initSessionService } = require('./session.service')
 const { createTokenService } = require('./token.service')
 
 const createAuthServices = ({ database, emailQueue, models, redis }) => {
@@ -25,19 +24,19 @@ const createAuthServices = ({ database, emailQueue, models, redis }) => {
     refreshSecret: env.auth.refreshSecret,
     refreshExpiresIn: env.auth.refreshTokenExpiresIn,
   })
-  const registrationService = createRegistrationService({
+  initRegistrationService({
     transactionManager: database,
     ...repositories,
     passwordService,
   })
-  const emailVerificationService = createEmailVerificationService({
+  initEmailVerificationService({
     ...repositories,
     emailQueue,
     frontendOrigin: env.frontendOrigin,
     transactionManager: database,
   })
   const authenticationService = createAuthenticationService({ ...repositories, passwordService, tokenService })
-  const googleAuthService = createGoogleAuthService({
+  initGoogleAuthService({
     ...repositories,
     clientId: env.googleClientId,
     emailQueue,
@@ -46,8 +45,8 @@ const createAuthServices = ({ database, emailQueue, models, redis }) => {
     redis,
     transactionManager: database,
   })
-  const sessionService = createSessionService({ ...repositories, tokenService, transactionManager: database })
-  const passwordResetService = createPasswordResetService({
+  const sessionService = initSessionService({ ...repositories, tokenService, transactionManager: database })
+  initPasswordResetService({
     ...repositories,
     emailQueue,
     frontendOrigin: env.frontendOrigin,
@@ -60,15 +59,8 @@ const createAuthServices = ({ database, emailQueue, models, redis }) => {
     sessionService,
   })
   return {
-    authCookie: createAuthCookieHelper({ isProduction: env.nodeEnv === 'production' }),
     authenticationService,
-    emailVerificationService,
-    googleAuthService,
-    passwordResetService,
     recaptchaVerifier,
-    registrationService,
-    sessionService,
-    toAuthUser,
   }
 }
 

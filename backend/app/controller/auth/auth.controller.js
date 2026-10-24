@@ -1,36 +1,58 @@
 const { REFRESH_COOKIE } = require('../../constants')
-const { userSignIn } = require('../../service')
+const { clearAuthCookie, setAuthCookie } = require('../../middleware/auth/auth-cookie.middleware')
+const { authenticateJwt } = require('../../middleware/auth/passport.middleware')
+const { verifyRecaptcha } = require('../../middleware/auth/recaptcha.middleware')
+const {
+  emailVerificationRateLimit,
+  forgotPasswordRateLimit,
+  loginRateLimit,
+  refreshRateLimit,
+} = require('../../middleware/rate-limit/auth-rate-limit.middleware')
+const { validateBody } = require('../../middleware/validation/validate.middleware')
+const { toAuthUser, userSignIn } = require('../../service/auth/authentication.service')
+const {
+  issueEmailVerification,
+  resendEmailVerification,
+  verifyEmail,
+} = require('../../service/auth/email-verification.service')
+const {
+  completeGoogleAuth,
+  resendGoogleAuthCode,
+  startGoogleAuth,
+} = require('../../service/auth/google-auth.service')
+const { requestPasswordReset, resetPassword } = require('../../service/auth/password-reset.service')
+const { registerUser } = require('../../service/auth/registration.service')
+const { issueSession, refreshSession, revokeSession } = require('../../service/auth/session.service')
 const { readCookie, sendSuccess } = require('../../util')
+const {
+  validateResendVerificationPayload,
+  validateVerifyEmailPayload,
+} = require('../../validator/auth/email-verification.validator')
+const {
+  validateGoogleCompletePayload,
+  validateGoogleResendPayload,
+  validateGoogleStartPayload,
+} = require('../../validator/auth/google.validator')
+const { validateLoginPayload } = require('../../validator/auth/login.validator')
+const {
+  validateForgotPasswordPayload,
+  validateResetPasswordPayload,
+} = require('../../validator/auth/password-reset.validator')
+const { validateRegisterPayload } = require('../../validator/auth/register.validator')
 
 const getRequestContext = (req) => ({
   ip: req.ip,
   userAgent: req.get('user-agent'),
 })
 
-const initAuthEmailController = (authEmail, dependencies) => {
-  const {
-    authCookie,
-    authMiddleware,
-    emailVerificationService,
-    googleAuthService,
-    passwordResetService,
-    rateLimiters,
-    registrationService,
-    sessionService,
-    toAuthUser,
-    validateBody,
-    validators,
-    verifyRecaptcha,
-  } = dependencies
-
+const initAuthEmailController = (authEmail) => {
   authEmail.post(
     '/register',
-    validateBody(validators.register),
+    validateBody(validateRegisterPayload),
     verifyRecaptcha('register'),
-    (req, res, next) => registrationService
-      .register(req.validatedBody)
+    (req, res, next) => registerUser(req.validatedBody)
       .then(async (user) => {
-        await emailVerificationService.issue(user)
+        await issueEmailVerification(user)
         return user
       })
       .then((user) => sendSuccess(res, {
@@ -43,11 +65,11 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/login',
-    rateLimiters.login,
-    validateBody(validators.login),
+    loginRateLimit,
+    validateBody(validateLoginPayload),
     (req, res, next) => userSignIn(req.body, getRequestContext(req))
       .then(({ tokens, user }) => {
-        authCookie.set(res, tokens)
+        setAuthCookie(res, tokens)
         return sendSuccess(res, {
           data: { user },
           message: 'Đăng nhập thành công.',
@@ -58,9 +80,8 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/verify-email',
-    validateBody(validators.verifyEmail),
-    (req, res, next) => emailVerificationService
-      .verify(req.validatedBody.token)
+    validateBody(validateVerifyEmailPayload),
+    (req, res, next) => verifyEmail(req.validatedBody.token)
       .then(() => sendSuccess(res, {
         message: 'Xác minh email thành công. Bạn có thể đăng nhập.',
       }))
@@ -69,10 +90,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/resend-verification',
-    rateLimiters.emailVerification,
-    validateBody(validators.resendVerification),
-    (req, res, next) => emailVerificationService
-      .resend(req.validatedBody.email)
+    emailVerificationRateLimit,
+    validateBody(validateResendVerificationPayload),
+    (req, res, next) => resendEmailVerification(req.validatedBody.email)
       .then(() => sendSuccess(res, {
         message: 'Nếu tài khoản đang chờ xác minh, email mới sẽ được gửi trong ít phút.',
       }))
@@ -81,10 +101,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/google/start',
-    rateLimiters.login,
-    validateBody(validators.googleStart),
-    (req, res, next) => googleAuthService
-      .start(req.validatedBody, { ip: req.ip })
+    loginRateLimit,
+    validateBody(validateGoogleStartPayload),
+    (req, res, next) => startGoogleAuth(req.validatedBody, { ip: req.ip })
       .then((challenge) => sendSuccess(res, {
         data: challenge,
         message: 'Mã xác minh đã được gửi đến Gmail của bạn.',
@@ -94,16 +113,15 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/google/complete',
-    rateLimiters.login,
-    validateBody(validators.googleComplete),
-    (req, res, next) => googleAuthService
-      .complete(req.validatedBody)
+    loginRateLimit,
+    validateBody(validateGoogleCompletePayload),
+    (req, res, next) => completeGoogleAuth(req.validatedBody)
       .then(async (user) => ({
-        tokens: await sessionService.issue(user, getRequestContext(req)),
+        tokens: await issueSession(user, getRequestContext(req)),
         user,
       }))
       .then(({ tokens, user }) => {
-        authCookie.set(res, tokens)
+        setAuthCookie(res, tokens)
         return sendSuccess(res, {
           data: { user },
           message: 'Xác minh và đăng nhập Google thành công.',
@@ -114,10 +132,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/google/resend',
-    rateLimiters.login,
-    validateBody(validators.googleResend),
-    (req, res, next) => googleAuthService
-      .resend(req.validatedBody)
+    loginRateLimit,
+    validateBody(validateGoogleResendPayload),
+    (req, res, next) => resendGoogleAuthCode(req.validatedBody)
       .then((result) => sendSuccess(res, {
         data: result,
         message: 'Mã xác minh mới đã được gửi đến Gmail của bạn.',
@@ -127,11 +144,10 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/refresh',
-    rateLimiters.refresh,
-    (req, res, next) => sessionService
-      .rotate(readCookie(req, REFRESH_COOKIE), getRequestContext(req))
+    refreshRateLimit,
+    (req, res, next) => refreshSession(readCookie(req, REFRESH_COOKIE), getRequestContext(req))
       .then((result) => {
-        authCookie.set(res, result.tokens)
+        setAuthCookie(res, result.tokens)
         return sendSuccess(res, {
           data: { user: toAuthUser(result.user) },
           message: 'Làm mới phiên đăng nhập thành công.',
@@ -142,10 +158,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/forgot-password',
-    rateLimiters.forgotPassword,
-    validateBody(validators.forgotPassword),
-    (req, res, next) => passwordResetService
-      .request(req.validatedBody.email)
+    forgotPasswordRateLimit,
+    validateBody(validateForgotPasswordPayload),
+    (req, res, next) => requestPasswordReset(req.validatedBody.email)
       .then(() => sendSuccess(res, {
         message: 'Nếu email tồn tại, hướng dẫn đặt lại mật khẩu sẽ được gửi trong ít phút.',
       }))
@@ -154,11 +169,10 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/reset-password',
-    validateBody(validators.resetPassword),
-    (req, res, next) => passwordResetService
-      .reset(req.validatedBody)
+    validateBody(validateResetPasswordPayload),
+    (req, res, next) => resetPassword(req.validatedBody)
       .then(() => {
-        authCookie.clear(res)
+        clearAuthCookie(res)
         return sendSuccess(res, {
           message: 'Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.',
         })
@@ -168,7 +182,7 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.get(
     '/me',
-    authMiddleware.authenticateJwt,
+    authenticateJwt,
     (req, res) => sendSuccess(res, {
       data: { user: req.user },
     }),
@@ -176,10 +190,9 @@ const initAuthEmailController = (authEmail, dependencies) => {
 
   authEmail.post(
     '/logout',
-    (req, res, next) => sessionService
-      .revoke(readCookie(req, REFRESH_COOKIE))
+    (req, res, next) => revokeSession(readCookie(req, REFRESH_COOKIE))
       .then(() => {
-        authCookie.clear(res)
+        clearAuthCookie(res)
         return sendSuccess(res, {
           message: 'Đăng xuất thành công.',
         })

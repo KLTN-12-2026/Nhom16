@@ -1,25 +1,21 @@
 const express = require('express')
 
 const { createAuthMiddleware } = require('../../middleware')
+const { initializePassport } = require('../../middleware/auth/passport.middleware')
 const { createAuthServices } = require('../../service')
-const { authValidators } = require('../../validator')
 const { initAuthEmailController } = require('./auth.controller')
 
 const initAuthController = (app, dependencies) => {
   const services = createAuthServices(dependencies)
-  const middleware = createAuthMiddleware({
+  createAuthMiddleware({
     authenticationService: services.authenticationService,
     recaptchaVerifier: services.recaptchaVerifier,
     redis: dependencies.redis,
   })
   const authEmail = express.Router()
-  initAuthEmailController(authEmail, {
-    ...services,
-    ...middleware,
-    validators: authValidators,
-  })
+  initAuthEmailController(authEmail)
 
-  app.use(middleware.authMiddleware.initialize)
+  app.use(initializePassport)
   app.use('/api/auth', authEmail)
 }
 

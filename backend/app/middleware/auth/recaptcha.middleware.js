@@ -11,4 +11,13 @@ const createRecaptchaMiddleware = ({ recaptchaVerifier }) => (action) => async (
   }
 }
 
-module.exports = { createRecaptchaMiddleware }
+let recaptchaMiddleware
+
+const initRecaptchaMiddleware = (dependencies) => {
+  recaptchaMiddleware = createRecaptchaMiddleware(dependencies)
+  return recaptchaMiddleware
+}
+
+const verifyRecaptcha = (action) => (req, res, next) => recaptchaMiddleware(action)(req, res, next)
+
+module.exports = { createRecaptchaMiddleware, initRecaptchaMiddleware, verifyRecaptcha }

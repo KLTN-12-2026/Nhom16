@@ -3,6 +3,8 @@ const crypto = require('node:crypto')
 const { EMAIL_JOBS } = require('../../queue')
 const { ApiError } = require('../../util')
 
+let passwordResetService
+
 const createPasswordResetService = ({ emailQueue, frontendOrigin, passwordResetRepository, passwordService, sessionRepository, transactionManager, userRepository }) => ({
   async request(email) {
     const user = await userRepository.findByEmail(email.trim().toLowerCase())
@@ -39,4 +41,17 @@ const createPasswordResetService = ({ emailQueue, frontendOrigin, passwordResetR
   },
 })
 
-module.exports = { createPasswordResetService }
+const initPasswordResetService = (dependencies) => {
+  passwordResetService = createPasswordResetService(dependencies)
+  return passwordResetService
+}
+
+const requestPasswordReset = (email) => passwordResetService.request(email)
+const resetPassword = (payload) => passwordResetService.reset(payload)
+
+module.exports = {
+  createPasswordResetService,
+  initPasswordResetService,
+  requestPasswordReset,
+  resetPassword,
+}

@@ -3,6 +3,8 @@ const crypto = require('node:crypto')
 const { EMAIL_JOBS } = require('../../queue')
 const { ApiError } = require('../../util')
 
+let emailVerificationService
+
 const createEmailVerificationService = ({ emailQueue, emailVerificationRepository, frontendOrigin, transactionManager, userRepository }) => {
   const issue = async (user) => {
     if (!user || user.status !== 'PENDING_VERIFICATION') return
@@ -45,4 +47,19 @@ const createEmailVerificationService = ({ emailQueue, emailVerificationRepositor
   }
 }
 
-module.exports = { createEmailVerificationService }
+const initEmailVerificationService = (dependencies) => {
+  emailVerificationService = createEmailVerificationService(dependencies)
+  return emailVerificationService
+}
+
+const issueEmailVerification = (user) => emailVerificationService.issue(user)
+const resendEmailVerification = (email) => emailVerificationService.resend(email)
+const verifyEmail = (token) => emailVerificationService.verify(token)
+
+module.exports = {
+  createEmailVerificationService,
+  initEmailVerificationService,
+  issueEmailVerification,
+  resendEmailVerification,
+  verifyEmail,
+}

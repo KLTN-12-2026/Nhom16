@@ -3,6 +3,8 @@ const { RedisStore } = require('rate-limit-redis')
 
 const { ApiError } = require('../../util')
 
+let authRateLimiters
+
 const createLimiter = ({ redis, prefix, windowMs, limit, message }) => rateLimit({
   windowMs,
   limit,
@@ -46,4 +48,21 @@ const createAuthRateLimiters = ({ redis, config }) => ({
   }),
 })
 
-module.exports = { createAuthRateLimiters }
+const initAuthRateLimiters = (dependencies) => {
+  authRateLimiters = createAuthRateLimiters(dependencies)
+  return authRateLimiters
+}
+
+const loginRateLimit = (req, res, next) => authRateLimiters.login(req, res, next)
+const refreshRateLimit = (req, res, next) => authRateLimiters.refresh(req, res, next)
+const forgotPasswordRateLimit = (req, res, next) => authRateLimiters.forgotPassword(req, res, next)
+const emailVerificationRateLimit = (req, res, next) => authRateLimiters.emailVerification(req, res, next)
+
+module.exports = {
+  createAuthRateLimiters,
+  emailVerificationRateLimit,
+  forgotPasswordRateLimit,
+  initAuthRateLimiters,
+  loginRateLimit,
+  refreshRateLimit,
+}
