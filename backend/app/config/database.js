@@ -1,4 +1,5 @@
 const { Sequelize } = require('sequelize')
+const mysql2 = require('mysql2')
 
 const { env } = require('./env')
 
@@ -6,6 +7,7 @@ const database = new Sequelize(env.database.name, env.database.user, env.databas
   host: env.database.host,
   port: env.database.port,
   dialect: 'mysql',
+  dialectModule: mysql2,
   logging: env.nodeEnv === 'development' ? console.log : false,
   pool: {
     max: env.database.poolMax,
