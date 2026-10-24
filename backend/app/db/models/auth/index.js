@@ -1,19 +1,17 @@
-const { DataTypes } = require('sequelize')
-
-const { defineAuthIdentity } = require('./auth-identity.model')
-const { defineAuthSession } = require('./auth-session.model')
-const { defineEmailVerificationToken } = require('./email-verification-token.model')
-const { definePasswordResetToken } = require('./password-reset-token.model')
-const { defineRole } = require('./role.model')
-const { defineUserRole } = require('./user-role.model')
+const AuthIdentity = require('./auth-identity.model')
+const AuthSession = require('./auth-session.model')
+const EmailVerificationToken = require('./email-verification-token.model')
+const PasswordResetToken = require('./password-reset-token.model')
+const Role = require('./role.model')
+const UserRole = require('./user-role.model')
 
 const initAuthModel = (sequelize) => ({
-  AuthIdentity: defineAuthIdentity(sequelize, DataTypes),
-  AuthSession: defineAuthSession(sequelize, DataTypes),
-  EmailVerificationToken: defineEmailVerificationToken(sequelize, DataTypes),
-  PasswordResetToken: definePasswordResetToken(sequelize, DataTypes),
-  Role: defineRole(sequelize, DataTypes),
-  UserRole: defineUserRole(sequelize, DataTypes),
+  AuthIdentity: AuthIdentity.init(sequelize),
+  AuthSession: AuthSession.init(sequelize),
+  EmailVerificationToken: EmailVerificationToken.init(sequelize),
+  PasswordResetToken: PasswordResetToken.init(sequelize),
+  Role: Role.init(sequelize),
+  UserRole: UserRole.init(sequelize),
 })
 
 module.exports = { initAuthModel }

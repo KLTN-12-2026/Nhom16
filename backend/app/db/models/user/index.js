@@ -1,9 +1,7 @@
-const { DataTypes } = require('sequelize')
-
-const { defineUser } = require('./user.model')
+const User = require('./user.model')
 
 const initUserModel = (sequelize) => ({
-  User: defineUser(sequelize, DataTypes),
+  User: User.init(sequelize),
 })
 
 module.exports = { initUserModel }

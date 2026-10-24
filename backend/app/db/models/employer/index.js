@@ -1,9 +1,7 @@
-const { DataTypes } = require('sequelize')
-
-const { defineEmployerProfile } = require('./employer-profile.model')
+const EmployerProfile = require('./employer-profile.model')
 
 const initEmployerModel = (sequelize) => ({
-  EmployerProfile: defineEmployerProfile(sequelize, DataTypes),
+  EmployerProfile: EmployerProfile.init(sequelize),
 })
 
 module.exports = { initEmployerModel }
