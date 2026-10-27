@@ -16,6 +16,11 @@
 .auth-form label { display: grid; align-content: start; gap: .35rem; color: #344054; font-size: .8rem; font-weight: 650; }
 .auth-form input:not([type='checkbox']) { width: 100%; height: 42px; padding: 0 .8rem; border: 1px solid #d9e0e9; border-radius: 9px; outline: 0; font-size: .88rem; transition: border-color .2s, box-shadow .2s; }
 .auth-form input:focus { border-color: #6b9cff; box-shadow: 0 0 0 3px rgba(37,99,235,.11); }
+.auth-password-field { position: relative; display: block; width: 100%; }
+.auth-form .auth-password-field input { padding-right: 2.8rem; }
+.auth-password-field__toggle { position: absolute; top: 50%; right: .35rem; display: grid; place-items: center; width: 2.2rem; height: 2.2rem; padding: 0; transform: translateY(-50%); border: 0; border-radius: 7px; color: #667085; background: transparent; cursor: pointer; }
+.auth-password-field__toggle:hover { color: #175cd3; background: #f1f5ff; }
+.auth-password-field__toggle:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
 .auth-form__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: .7rem; }
 .auth-form__section { display: grid; gap: .8rem; padding-top: .4rem; }
 .auth-form__section h3 { margin: 0; color: #172033; font-size: 1rem; }

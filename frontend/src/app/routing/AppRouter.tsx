@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { PERMISSION } from '../constants/permission.constant'
 import { ROLE } from '../constants/role.constant'
@@ -15,6 +15,7 @@ import RegisterPage from '../pages/auth/register'
 import ResetPasswordPage from '../pages/auth/reset-password'
 import VerifyEmailPage from '../pages/auth/verify-email'
 import CandidateHomePage from '../pages/candidate/CandidateHomePage'
+import CandidateJobsPage from '../pages/candidate/CandidateJobsPage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
 import EmployerHomePage from '../pages/employer/EmployerHomePage'
 import HomePage from '../pages/home/HomePage'
@@ -36,6 +37,15 @@ function HomeEntry() {
   return <Navigate to="/admin/dashboard" replace />
 }
 
+function JobsEntry() {
+  const { user } = useAuth()
+  const location = useLocation()
+  if (user?.role === ROLE.CANDIDATE) {
+    return <Navigate to={`/candidate/jobs${location.search}`} replace />
+  }
+  return <JobsPage />
+}
+
 export function AppRouter() {
   const { isLoading } = useAuth()
   if (isLoading) return <FullPageLoader />
@@ -44,7 +54,7 @@ export function AppRouter() {
     <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<HomeEntry />} />
-        <Route path="jobs" element={<JobsPage />} />
+        <Route path="jobs" element={<JobsEntry />} />
         <Route path="cv-analysis" element={<CvAnalysisPage />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="for-employers" element={<ForEmployersPage />} />
@@ -57,6 +67,7 @@ export function AppRouter() {
       </Route>
       <Route path="candidate" element={<RequireAuth><RequireRole role={ROLE.CANDIDATE}><CandidateLayout /></RequireRole></RequireAuth>}>
         <Route index element={<CandidateHomePage />} />
+        <Route path="jobs" element={<CandidateJobsPage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
       <Route path="employer" element={<RequireAuth><RequireRole role={ROLE.EMPLOYER}><EmployerLayout /></RequireRole></RequireAuth>}>

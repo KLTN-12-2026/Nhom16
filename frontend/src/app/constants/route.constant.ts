@@ -11,6 +11,7 @@ export const ROUTE = {
   VERIFY_EMAIL: '/verify-email',
   GOOGLE_COMPLETE: '/auth/google-complete',
   CANDIDATE_HOME: '/candidate',
+  CANDIDATE_JOBS: '/candidate/jobs',
   EMPLOYER_HOME: '/employer',
   ADMIN_HOME: '/admin/dashboard',
 } as const

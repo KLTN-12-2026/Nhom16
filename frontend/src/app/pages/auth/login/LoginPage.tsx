@@ -8,6 +8,7 @@ import { useRecaptcha } from '../../../provider/external-auth-provider'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { AuthShell } from '../components/auth-shell'
 import { GoogleAuthButton } from '../components/google-auth-button'
+import { PasswordInput } from '../components/password-input'
 
 export default function LoginPage() {
   const { register, handleSubmit, watch } = useForm<{ email: string; password: string; remember: boolean }>({ defaultValues: { email: '', password: '', remember: false } })
@@ -55,7 +56,7 @@ export default function LoginPage() {
     {error && <div className="auth-alert" role="alert">{error}</div>}
     <form className="auth-form" onSubmit={handleSubmit(submit)}>
       <label>Email<input type="email" {...register('email', { required: true })} autoComplete="email" required /></label>
-      <label>Mật khẩu<input type="password" {...register('password', { required: true })} autoComplete="current-password" required /></label>
+      <label>Mật khẩu<PasswordInput registration={register('password', { required: true })} autoComplete="current-password" /></label>
       <div className="auth-form__options"><label><input type="checkbox" {...register('remember')} /> Ghi nhớ đăng nhập</label><Link to={ROUTE.FORGOT_PASSWORD}>Quên mật khẩu?</Link></div>
       <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
     </form>

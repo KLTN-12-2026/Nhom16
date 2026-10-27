@@ -9,6 +9,7 @@ import { authActions } from '../../../modules/auth/redux'
 import { useRecaptcha } from '../../../provider/external-auth-provider'
 import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { AuthShell } from '../components/auth-shell'
+import { PasswordInput } from '../components/password-input'
 import { PasswordStrength } from '../components/password-strength'
 
 const initialForm: Omit<RegisterPayload, 'recaptchaToken'> = {
@@ -49,7 +50,7 @@ export default function RegisterPage() {
     <form className="auth-form" onSubmit={handleSubmit(submit)}>
       <label>Họ và tên<input {...register('fullName', { required: true })} autoComplete="name" required /></label>
       <label>Email<input type="email" {...register('email', { required: true })} autoComplete="email" required /></label>
-      <div className="auth-form__row"><label>Mật khẩu<input type="password" {...register('password', { required: true })} autoComplete="new-password" required /><PasswordStrength password={password} /></label><label>Xác nhận mật khẩu<input type="password" {...register('confirmPassword', { required: true })} autoComplete="new-password" required /></label></div>
+      <div className="auth-form__row"><label>Mật khẩu<PasswordInput registration={register('password', { required: true })} autoComplete="new-password" /><PasswordStrength password={password} /></label><label>Xác nhận mật khẩu<PasswordInput registration={register('confirmPassword', { required: true })} autoComplete="new-password" /></label></div>
       {role === ROLE.EMPLOYER && <div className="auth-form__section">
         <h3>Thông tin xác minh doanh nghiệp</h3>
         <label>Tên doanh nghiệp<input {...register('companyName', { required: role === ROLE.EMPLOYER })} required /></label>

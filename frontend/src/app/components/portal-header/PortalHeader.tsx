@@ -6,7 +6,7 @@ import { useAuth } from '../../provider/auth-provider'
 
 const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
   [ROLE.CANDIDATE]: [
-    { label: 'Tìm việc', to: '/jobs' },
+    { label: 'Tìm việc', to: ROUTE.CANDIDATE_JOBS },
     { label: 'CV của tôi', to: '/candidate/cv' },
     { label: 'Việc đã ứng tuyển', to: '/candidate/applications' },
     { label: 'Việc đã lưu', to: '/candidate/saved-jobs' },
