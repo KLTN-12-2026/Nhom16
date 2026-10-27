@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { ROLE } from '../../../constants/role.constant'
@@ -17,14 +18,16 @@ const initialForm: FormState = {
 }
 
 export default function GoogleCompletePage() {
-  const [form, setForm] = useState(initialForm)
+  const { register, handleSubmit, setValue, watch } = useForm<FormState>({ defaultValues: initialForm })
+  const code = watch('code')
+  const role = watch('role')
+  const termsAccepted = watch('termsAccepted')
   const [resendCountdown, setResendCountdown] = useState(15)
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
   const { error, googleChallenge, message, submitting, user } = useAppSelector((state) => state.auth)
-  const update = <K extends keyof FormState>(field: K, value: FormState[K]) => setForm((current) => ({ ...current, [field]: value }))
   const isNew = Boolean(googleChallenge?.requiresProfile)
-  const canSubmit = Boolean(googleChallenge && /^\d{6}$/.test(form.code) && (!isNew || form.termsAccepted) && !submitting)
+  const canSubmit = Boolean(googleChallenge && /^\d{6}$/.test(code || '') && (!isNew || termsAccepted) && !submitting)
 
   useEffect(() => { dispatch(authActions.feedbackCleared()) }, [dispatch])
   useEffect(() => { if (user) navigate(ROUTE.HOME, { replace: true }) }, [navigate, user])
@@ -40,8 +43,7 @@ export default function GoogleCompletePage() {
     dispatch(authActions.googleResendRequested({ challengeId: googleChallenge.challengeId }))
   }
 
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
+  const submit = (form: FormState) => {
     if (!googleChallenge || !canSubmit) return
     dispatch(authActions.googleCompleteRequested({
       ...form,
@@ -68,26 +70,26 @@ export default function GoogleCompletePage() {
   return <AuthShell title="Xác minh đăng nhập Google" description={`Mã gồm 6 chữ số đã được gửi đến ${googleChallenge.email}.`}>
     {error && <div className="auth-alert" role="alert">{error}</div>}
     {message && <div className="auth-alert auth-alert--success" role="status">{message}</div>}
-    <form className="auth-form" onSubmit={submit}>
-      <label>Mã xác minh<input inputMode="numeric" maxLength={6} value={form.code} onChange={(event) => update('code', event.target.value.replace(/\D/g, ''))} autoComplete="one-time-code" placeholder="000000" required /></label>
+    <form className="auth-form" onSubmit={handleSubmit(submit)}>
+      <label>Mã xác minh<input inputMode="numeric" maxLength={6} {...register('code', { required: true, pattern: /^\d{6}$/, onChange: (event) => setValue('code', event.target.value.replace(/\D/g, '')) })} autoComplete="one-time-code" placeholder="000000" required /></label>
       <button className="auth-resend" type="button" onClick={resendCode} disabled={resendCountdown > 0 || submitting}>
         {resendCountdown > 0 ? `Gửi lại mã sau ${resendCountdown}s` : 'Gửi lại mã xác minh'}
       </button>
       {isNew && <>
         <div className="role-picker" role="radiogroup" aria-label="Loại tài khoản">
-          <button type="button" className={form.role === ROLE.CANDIDATE ? 'active' : ''} onClick={() => update('role', ROLE.CANDIDATE)}><i className="bi bi-person" /><span><strong>Tôi đang tìm việc</strong><small>Tạo hồ sơ ứng viên</small></span></button>
-          <button type="button" className={form.role === ROLE.EMPLOYER ? 'active' : ''} onClick={() => update('role', ROLE.EMPLOYER)}><i className="bi bi-building" /><span><strong>Tôi cần tuyển người</strong><small>Đăng ký doanh nghiệp</small></span></button>
+          <button type="button" className={role === ROLE.CANDIDATE ? 'active' : ''} onClick={() => setValue('role', ROLE.CANDIDATE)}><i className="bi bi-person" /><span><strong>Tôi đang tìm việc</strong><small>Tạo hồ sơ ứng viên</small></span></button>
+          <button type="button" className={role === ROLE.EMPLOYER ? 'active' : ''} onClick={() => setValue('role', ROLE.EMPLOYER)}><i className="bi bi-building" /><span><strong>Tôi cần tuyển người</strong><small>Đăng ký doanh nghiệp</small></span></button>
         </div>
-        {form.role === ROLE.EMPLOYER && <div className="auth-form__section">
+        {role === ROLE.EMPLOYER && <div className="auth-form__section">
           <h3>Thông tin xác minh doanh nghiệp</h3>
-          <label>Tên doanh nghiệp<input value={form.companyName} onChange={(event) => update('companyName', event.target.value)} required /></label>
-          <div className="auth-form__row"><label>Mã số thuế<input inputMode="numeric" value={form.taxCode} onChange={(event) => update('taxCode', event.target.value)} required /></label><label>Số giấy phép kinh doanh<input value={form.businessLicenseNumber} onChange={(event) => update('businessLicenseNumber', event.target.value)} required /></label></div>
-          <div className="auth-form__row"><label>Điện thoại doanh nghiệp<input type="tel" value={form.companyPhone} onChange={(event) => update('companyPhone', event.target.value)} required /></label><label>Website<input type="url" value={form.companyWebsite || ''} onChange={(event) => update('companyWebsite', event.target.value)} placeholder="https://doanhnghiep.vn" /></label></div>
-          <label>Địa chỉ trụ sở<input value={form.companyAddress} onChange={(event) => update('companyAddress', event.target.value)} required /></label>
-          <div className="auth-form__row"><label>Người đại diện<input value={form.representativeName} onChange={(event) => update('representativeName', event.target.value)} required /></label><label>Chức vụ<input value={form.representativePosition} onChange={(event) => update('representativePosition', event.target.value)} required /></label></div>
+          <label>Tên doanh nghiệp<input {...register('companyName', { required: isNew && role === ROLE.EMPLOYER })} required /></label>
+          <div className="auth-form__row"><label>Mã số thuế<input inputMode="numeric" {...register('taxCode', { required: isNew && role === ROLE.EMPLOYER })} required /></label><label>Số giấy phép kinh doanh<input {...register('businessLicenseNumber', { required: isNew && role === ROLE.EMPLOYER })} required /></label></div>
+          <div className="auth-form__row"><label>Điện thoại doanh nghiệp<input type="tel" {...register('companyPhone', { required: isNew && role === ROLE.EMPLOYER })} required /></label><label>Website<input type="url" {...register('companyWebsite')} placeholder="https://doanhnghiep.vn" /></label></div>
+          <label>Địa chỉ trụ sở<input {...register('companyAddress', { required: isNew && role === ROLE.EMPLOYER })} required /></label>
+          <div className="auth-form__row"><label>Người đại diện<input {...register('representativeName', { required: isNew && role === ROLE.EMPLOYER })} required /></label><label>Chức vụ<input {...register('representativePosition', { required: isNew && role === ROLE.EMPLOYER })} required /></label></div>
           <p className="auth-config-note">Hồ sơ doanh nghiệp sẽ được quản trị viên kiểm tra trước khi mở đầy đủ tính năng tuyển dụng.</p>
         </div>}
-        <label className="auth-consent"><input type="checkbox" checked={form.termsAccepted} onChange={(event) => update('termsAccepted', event.target.checked)} /> Tôi đồng ý với điều khoản sử dụng và chính sách bảo mật.</label>
+        <label className="auth-consent"><input type="checkbox" {...register('termsAccepted', { required: isNew })} /> Tôi đồng ý với điều khoản sử dụng và chính sách bảo mật.</label>
       </>}
       <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang xác minh...' : 'Xác minh và tiếp tục'}</button>
     </form>

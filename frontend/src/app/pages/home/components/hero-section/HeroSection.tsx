@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { ROUTE } from '../../../../constants/route.constant'
@@ -6,30 +6,29 @@ import { trustStats } from '../../home.data'
 
 function JobSearchForm() {
   const navigate = useNavigate()
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const values = new FormData(event.currentTarget)
+  const { register, handleSubmit } = useForm<{ keyword: string; location: string }>({ defaultValues: { keyword: '', location: '' } })
+  const submit = (values: { keyword: string; location: string }) => {
     const search = new URLSearchParams()
-    const keyword = String(values.get('keyword') || '').trim()
-    const location = String(values.get('location') || '').trim()
+    const keyword = values.keyword.trim()
+    const location = values.location.trim()
     if (keyword) search.set('keyword', keyword)
     if (location) search.set('location', location)
     navigate(`${ROUTE.JOBS}${search.size ? `?${search}` : ''}`)
   }
   return (
-    <form className="job-search" role="search" onSubmit={handleSubmit}>
+    <form className="job-search" role="search" onSubmit={handleSubmit(submit)}>
       <div className="search-field search-field--keyword">
         <label htmlFor="home-keyword">Vị trí hoặc kỹ năng</label>
         <div className="search-input">
           <i className="bi bi-search" aria-hidden="true" />
-          <input id="home-keyword" name="keyword" placeholder="Ví dụ: ReactJS, Business Analyst" />
+          <input id="home-keyword" {...register('keyword')} placeholder="Ví dụ: ReactJS, Business Analyst" />
         </div>
       </div>
       <div className="search-field">
         <label htmlFor="home-location">Địa điểm</label>
         <div className="search-input">
           <i className="bi bi-geo-alt" aria-hidden="true" />
-          <select id="home-location" name="location" defaultValue="">
+          <select id="home-location" {...register('location')}>
             <option value="">Tất cả địa điểm</option>
             <option value="da-nang">Đà Nẵng</option>
             <option value="ho-chi-minh">Hồ Chí Minh</option>

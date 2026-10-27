@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { ROUTE } from '../../../constants/route.constant'
@@ -7,7 +8,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks'
 import { AuthShell } from '../components/auth-shell'
 
 export default function VerifyEmailPage() {
-  const [email, setEmail] = useState('')
+  const { register, handleSubmit, watch } = useForm<{ email: string }>({ defaultValues: { email: '' } })
   const [searchParams] = useSearchParams()
   const started = useRef(false)
   const dispatch = useAppDispatch()
@@ -21,8 +22,7 @@ export default function VerifyEmailPage() {
     if (token) dispatch(authActions.verifyEmailRequested({ token }))
   }, [dispatch, token])
 
-  const resend = (event: FormEvent) => {
-    event.preventDefault()
+  const resend = ({ email }: { email: string }) => {
     if (email.trim() && !submitting) dispatch(authActions.resendVerificationRequested({ email }))
   }
 
@@ -33,9 +33,9 @@ export default function VerifyEmailPage() {
     {!token && <div className="auth-alert" role="alert">Liên kết xác minh không có token hoặc không hợp lệ.</div>}
     {token && message
       ? <p className="auth-switch"><Link to={ROUTE.LOGIN}>Đi đến đăng nhập</Link></p>
-      : <form className="auth-form" onSubmit={resend}>
-          <label>Gửi lại email xác minh<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" placeholder="email@example.com" required /></label>
-          <button className="btn btn-primary auth-submit" type="submit" disabled={!email.trim() || submitting}>{submitting ? 'Đang gửi...' : 'Gửi lại email'}</button>
+      : <form className="auth-form" onSubmit={handleSubmit(resend)}>
+          <label>Gửi lại email xác minh<input type="email" {...register('email', { required: true })} autoComplete="email" placeholder="email@example.com" required /></label>
+          <button className="btn btn-primary auth-submit" type="submit" disabled={!watch('email')?.trim() || submitting}>{submitting ? 'Đang gửi...' : 'Gửi lại email'}</button>
         </form>}
   </AuthShell>
 }

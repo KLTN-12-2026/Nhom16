@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect } from 'react'
+import { useForm } from 'react-hook-form'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import { ROUTE } from '../../../constants/route.constant'
@@ -9,14 +10,13 @@ import { AuthShell } from '../components/auth-shell'
 import { GoogleAuthButton } from '../components/google-auth-button'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const { register, handleSubmit, watch } = useForm<{ email: string; password: string; remember: boolean }>({ defaultValues: { email: '', password: '', remember: false } })
   const dispatch = useAppDispatch()
   const { error, googleChallenge, submitting, user } = useAppSelector((state) => state.auth)
   const executeRecaptcha = useRecaptcha()
   const navigate = useNavigate()
   const location = useLocation()
-  const canSubmit = email.trim().length > 0 && password.length > 0 && !submitting
+  const canSubmit = Boolean(watch('email')?.trim() && watch('password') && !submitting)
 
   useEffect(() => {
     dispatch(authActions.feedbackCleared())
@@ -32,9 +32,7 @@ export default function LoginPage() {
     if (googleChallenge) navigate(ROUTE.GOOGLE_COMPLETE)
   }, [googleChallenge, navigate])
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault()
-    if (!canSubmit) return
+  const submit = async ({ email, password }: { email: string; password: string }) => {
     try {
       const token = await executeRecaptcha('login')
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng nhập.')
@@ -55,10 +53,10 @@ export default function LoginPage() {
   return <AuthShell title="Chào mừng bạn trở lại" description="Đăng nhập để tiếp tục công việc đang theo dõi.">
     <GoogleAuthButton onCredential={handleGoogle} /><div className="auth-divider"><span>hoặc dùng email</span></div>
     {error && <div className="auth-alert" role="alert">{error}</div>}
-    <form className="auth-form" onSubmit={handleSubmit}>
-      <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
-      <label>Mật khẩu<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /></label>
-      <div className="auth-form__options"><label><input type="checkbox" /> Ghi nhớ đăng nhập</label><Link to={ROUTE.FORGOT_PASSWORD}>Quên mật khẩu?</Link></div>
+    <form className="auth-form" onSubmit={handleSubmit(submit)}>
+      <label>Email<input type="email" {...register('email', { required: true })} autoComplete="email" required /></label>
+      <label>Mật khẩu<input type="password" {...register('password', { required: true })} autoComplete="current-password" required /></label>
+      <div className="auth-form__options"><label><input type="checkbox" {...register('remember')} /> Ghi nhớ đăng nhập</label><Link to={ROUTE.FORGOT_PASSWORD}>Quên mật khẩu?</Link></div>
       <button className="btn btn-primary auth-submit" type="submit" disabled={!canSubmit}>{submitting ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
     </form>
     <p className="auth-switch">Chưa có tài khoản? <Link to={ROUTE.REGISTER}>Đăng ký ngay</Link></p>
