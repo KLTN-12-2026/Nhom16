@@ -3,7 +3,7 @@ const { Worker } = require('bullmq')
 const { createQueueRedis, env } = require('../../config')
 const { EMAIL_JOBS, EMAIL_QUEUE } = require('../../queue')
 const { createEmailService } = require('../../service')
-const { createEmailVerificationEmail, createGoogleOtpEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template')
+const { createEmailVerificationEmail, createEmployerReviewEmail, createGoogleOtpEmail, createGoogleWelcomeEmail, createPasswordResetEmail } = require('../../template')
 
 const createEmailWorker = () => {
   const connection = createQueueRedis()
@@ -20,6 +20,9 @@ const createEmailWorker = () => {
     }
     if (job.name === EMAIL_JOBS.GOOGLE_OTP) {
       return emailService.send({ to: job.data.email, ...createGoogleOtpEmail(job.data) })
+    }
+    if (job.name === EMAIL_JOBS.EMPLOYER_REVIEW) {
+      return emailService.send({ to: job.data.email, ...createEmployerReviewEmail(job.data) })
     }
     throw new Error(`Unsupported email job: ${job.name}`)
   }, {

@@ -1,4 +1,4 @@
-const { REFRESH_COOKIE } = require('../../constants')
+const { REFRESH_COOKIE, ROLES } = require('../../constants')
 const { clearAuthCookie, setAuthCookie } = require('../../middleware/auth/auth-cookie.middleware')
 const { authenticateJwt } = require('../../middleware/auth/passport.middleware')
 const { verifyRecaptcha } = require('../../middleware/auth/recaptcha.middleware')
@@ -58,7 +58,9 @@ const initAuthEmailController = (authEmail) => {
       .then((user) => sendSuccess(res, {
         statusCode: 201,
         data: { user },
-        message: 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
+        message: user.role === ROLES.EMPLOYER
+          ? 'Đã gửi hồ sơ đăng ký doanh nghiệp của bạn và đang chờ admin xét duyệt. Vui lòng kiểm tra email để xác thực tài khoản.'
+          : 'Đăng ký thành công. Vui lòng kiểm tra email để xác thực tài khoản.',
       }))
       .catch(next),
   )

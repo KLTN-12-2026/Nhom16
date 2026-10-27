@@ -8,6 +8,7 @@ import { hasAnyPermission, hasPermission } from '../../utils/permission'
 const adminMenu: { label: string; icon: string; to: string; permission: Permission }[] = [
   { label: 'Tổng quan', icon: 'bi-grid', to: '/admin/dashboard', permission: PERMISSION.ADMIN_STATISTICS_VIEW },
   { label: 'Người dùng', icon: 'bi-people', to: '/admin/users', permission: PERMISSION.ADMIN_USER_MANAGE },
+  { label: 'Duyệt doanh nghiệp', icon: 'bi-building-check', to: '/admin/employers', permission: PERMISSION.ADMIN_USER_MANAGE },
   { label: 'Tin tuyển dụng', icon: 'bi-briefcase', to: '/admin/jobs', permission: PERMISSION.ADMIN_JOB_MANAGE },
   { label: 'Danh mục', icon: 'bi-tags', to: '/admin/categories', permission: PERMISSION.ADMIN_CATEGORY_MANAGE },
   { label: 'Báo cáo', icon: 'bi-flag', to: '/admin/reports', permission: PERMISSION.ADMIN_REPORT_MANAGE },

@@ -7,6 +7,7 @@ import { CandidateLayout } from '../layouts/candidate-layout'
 import { EmployerLayout } from '../layouts/employer-layout'
 import { PublicLayout } from '../layouts/public-layout'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
+import EmployerReviewPage from '../pages/admin/EmployerReviewPage'
 import LoginPage from '../pages/auth/login'
 import ForgotPasswordPage from '../pages/auth/forgot-password'
 import GoogleCompletePage from '../pages/auth/google-complete'
@@ -64,6 +65,7 @@ export function AppRouter() {
       </Route>
       <Route path="admin" element={<RequireAuth><RequireRole role={ROLE.ADMIN}><AdminLayout /></RequireRole></RequireAuth>}>
         <Route path="dashboard" element={<RequirePermission permission={PERMISSION.ADMIN_STATISTICS_VIEW}><AdminDashboardPage /></RequirePermission>} />
+        <Route path="employers" element={<RequirePermission permission={PERMISSION.ADMIN_USER_MANAGE}><EmployerReviewPage /></RequirePermission>} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

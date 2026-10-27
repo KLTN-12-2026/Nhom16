@@ -8,6 +8,7 @@ const EMAIL_JOBS = Object.freeze({
   PASSWORD_RESET: 'password-reset',
   GOOGLE_WELCOME: 'google-welcome',
   GOOGLE_OTP: 'google-otp',
+  EMPLOYER_REVIEW: 'employer-review',
 })
 
 const createEmailQueue = () => {
