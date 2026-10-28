@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require('sequelize')
+﻿const { DataTypes, Model } = require('sequelize')
 
 class EmployerProfile extends Model {
   static init(sequelize, opts = {}) {
@@ -7,11 +7,14 @@ class EmployerProfile extends Model {
         id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
         userId: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, unique: true, field: 'user_id' },
         companyName: { type: DataTypes.STRING(200), allowNull: false, field: 'company_name' },
+        logo: { type: DataTypes.STRING(500), allowNull: true },
         taxCode: { type: DataTypes.STRING(30), allowNull: false, unique: true, field: 'tax_code' },
         businessLicenseNumber: { type: DataTypes.STRING(50), allowNull: false, field: 'business_license_number' },
         companyPhone: { type: DataTypes.STRING(20), allowNull: false, field: 'company_phone' },
         companyAddress: { type: DataTypes.STRING(500), allowNull: false, field: 'company_address' },
         companyWebsite: { type: DataTypes.STRING(255), allowNull: true, field: 'company_website' },
+        companySize: { type: DataTypes.STRING(50), allowNull: true, field: 'company_size' },
+        description: { type: DataTypes.TEXT, allowNull: true },
         representativeName: { type: DataTypes.STRING(150), allowNull: false, field: 'representative_name' },
         representativePosition: { type: DataTypes.STRING(100), allowNull: false, field: 'representative_position' },
         verificationStatus: {

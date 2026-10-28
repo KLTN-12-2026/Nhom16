@@ -7,7 +7,15 @@ import type { ApiResponse } from '../../../model/api.model'
 import type { AuthUser, ForgotPasswordPayload, GoogleChallenge, GoogleCompletePayload, GoogleResendPayload, GoogleStartPayload, LoginPayload, RegisterPayload, ResendVerificationPayload, ResetPasswordPayload, VerifyEmailPayload } from '../../../model/auth.model'
 import { authActions } from './auth.slice'
 
-const errorMessage = (error: unknown) => error instanceof ApiClientError ? error.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+const errorMessage = (error: unknown) => {
+  if (error instanceof ApiClientError) {
+    if (error.details && Object.keys(error.details).length > 0) {
+      return error.message + ': ' + Object.values(error.details).join('; ')
+    }
+    return error.message
+  }
+  return 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+}
 
 function* bootstrapWorker() {
   try {

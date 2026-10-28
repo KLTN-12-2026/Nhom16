@@ -1,4 +1,4 @@
-const { DataTypes, Model } = require('sequelize')
+﻿const { DataTypes, Model } = require('sequelize')
 
 class User extends Model {
   static init(sequelize, opts = {}) {
@@ -39,6 +39,7 @@ class User extends Model {
     this.hasMany(models.EmailVerificationToken, { foreignKey: userForeignKey, as: 'emailVerificationTokens' })
     this.hasMany(models.PasswordResetToken, { foreignKey: userForeignKey, as: 'passwordResetTokens' })
     this.hasOne(models.EmployerProfile, { foreignKey: userForeignKey, as: 'employerProfile' })
+    this.hasOne(models.CandidateProfile, { foreignKey: userForeignKey, as: 'candidateProfile' })
   }
 
   toJSON() {

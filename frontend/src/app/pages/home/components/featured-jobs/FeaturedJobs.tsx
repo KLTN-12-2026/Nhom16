@@ -1,3 +1,4 @@
+﻿import { Link } from 'react-router-dom'
 import { featuredJobs, type FeaturedJob } from '../../home.data'
 
 function JobCard({ job }: { job: FeaturedJob }) {
@@ -7,7 +8,10 @@ function JobCard({ job }: { job: FeaturedJob }) {
         <span className={`job-logo ${job.logoClass}`} aria-hidden="true">{job.logo}</span>
         <button className="save-job" type="button" aria-label={`Lưu việc làm ${job.role}`}><i className="bi bi-bookmark" /></button>
       </div>
-      <div className="job-card__heading"><p>{job.company}</p><h3><a href={`#job-${job.id}`}>{job.role}</a></h3></div>
+      <div className="job-card__heading">
+        <p>{job.company}</p>
+        <h3><Link to={`/jobs/${job.id}`}>{job.role}</Link></h3>
+      </div>
       <div className="job-meta">
         <span><i className="bi bi-geo-alt" />{job.location}</span><span><i className="bi bi-briefcase" />{job.workMode}</span><span><i className="bi bi-cash-stack" />{job.salary}</span>
       </div>
@@ -26,7 +30,7 @@ export function FeaturedJobs() {
       <div className="container">
         <div className="section-heading section-heading--row">
           <div><span className="section-kicker">Cơ hội dành cho bạn</span><h2 id="jobs-title">Việc làm nổi bật</h2><p>Khám phá những vị trí mới nhất được tuyển chọn từ các doanh nghiệp.</p></div>
-          <a className="section-link" href="#all-jobs">Xem tất cả việc làm <i className="bi bi-arrow-right" /></a>
+          <Link className="section-link" to="/jobs">Xem tất cả việc làm <i className="bi bi-arrow-right" /></Link>
         </div>
         <div className="row g-4">
           {featuredJobs.map((job) => <div className="col-md-6 col-xl-4" key={job.id}><JobCard job={job} /></div>)}

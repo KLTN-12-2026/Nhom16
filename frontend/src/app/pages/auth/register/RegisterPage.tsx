@@ -32,7 +32,15 @@ export default function RegisterPage() {
     event.preventDefault()
     if (!canSubmit) return
     try {
-      const token = await executeRecaptcha('register')
+      let token: string | null = null
+      try {
+        token = await executeRecaptcha('register')
+      } catch {
+        // reCAPTCHA execution error fallback
+      }
+      if (!token && import.meta.env.DEV) {
+        token = 'dev-mock-recaptcha-token'
+      }
       if (!token) throw new Error('Vui lòng cấu hình reCAPTCHA trước khi đăng ký.')
       dispatch(authActions.registerRequested({ ...form, recaptchaToken: token }))
     } catch (caught) { dispatch(authActions.authFailed((caught as Error).message)) }

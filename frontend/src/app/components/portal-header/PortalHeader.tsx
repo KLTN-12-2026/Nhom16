@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+﻿import { NavLink, useNavigate } from 'react-router-dom'
 
 import { ROLE, type Role } from '../../constants/role.constant'
 import { ROUTE } from '../../constants/route.constant'
@@ -7,15 +7,16 @@ import { useAuth } from '../../provider/auth-provider'
 const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
   [ROLE.CANDIDATE]: [
     { label: 'Tìm việc', to: '/jobs' },
+    { label: 'Hồ sơ cá nhân', to: '/candidate/profile' },
     { label: 'CV của tôi', to: '/candidate/cv' },
     { label: 'Việc đã ứng tuyển', to: '/candidate/applications' },
     { label: 'Việc đã lưu', to: '/candidate/saved-jobs' },
   ],
   [ROLE.EMPLOYER]: [
     { label: 'Tin tuyển dụng', to: '/employer/jobs' },
+    { label: 'Hồ sơ doanh nghiệp', to: '/employer/company' },
     { label: 'Hồ sơ ứng tuyển', to: '/employer/applications' },
     { label: 'Ứng viên phù hợp', to: '/employer/recommendations' },
-    { label: 'Doanh nghiệp', to: '/employer/company' },
   ],
 }
 
