@@ -42,6 +42,10 @@ const env = Object.freeze({
     secretKey: process.env.RECAPTCHA_SECRET_KEY || '',
     minimumScore: toNumber(process.env.RECAPTCHA_MIN_SCORE, 0.5),
   },
+  upload: {
+    rootDirectory: path.resolve(__dirname, '../../uploads'),
+    cvMaxBytes: toNumber(process.env.CV_UPLOAD_MAX_BYTES, 5 * 1024 * 1024),
+  },
   auth: {
     accessSecret: process.env.JWT_ACCESS_SECRET || '',
     refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_ACCESS_SECRET || '',

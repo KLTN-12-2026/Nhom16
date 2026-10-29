@@ -24,6 +24,47 @@
 .role-home__grid i { font-size: 1.5rem; color: #2563eb; }
 .role-home__grid strong, .role-home__grid span { display: block; }
 .role-home__grid span { margin-top: .2rem; color: #718096; font-size: .9rem; }
+.candidate-cv-page { padding-block: 2.5rem 5rem; }
+.candidate-cv-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
+.candidate-cv-heading h1 { margin: .35rem 0 .45rem; font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -.04em; }
+.candidate-cv-heading p { max-width: 680px; margin: 0; color: #64748b; }
+.candidate-cv-count { flex: 0 0 auto; padding: .55rem .85rem; border-radius: 999px; color: #1d4ed8; background: #eaf1ff; font-weight: 700; }
+.cv-upload-card { display: grid; grid-template-columns: minmax(250px, .8fr) minmax(420px, 1.2fr); gap: 2rem; padding: 1.5rem; border: 1px solid #e2e8f0; border-radius: 20px; background: #fff; box-shadow: 0 10px 30px rgba(15,23,42,.05); }
+.cv-upload-card__intro { display: flex; align-items: flex-start; gap: 1rem; }
+.cv-upload-card__intro h2 { margin: 0 0 .35rem; font-size: 1.2rem; }
+.cv-upload-card__intro p { margin: 0; color: #64748b; font-size: .92rem; }
+.cv-upload-card__icon { width: 46px; height: 46px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 13px; color: #2563eb; background: #eaf1ff; font-size: 1.35rem; }
+.cv-upload-card form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, .65fr) auto; align-items: end; gap: .75rem; }
+.cv-file-picker { min-height: 46px; display: flex; align-items: center; gap: .65rem; padding: .7rem .85rem; border: 1px dashed #9db5dc; border-radius: 11px; color: #385273; background: #f8fbff; cursor: pointer; overflow: hidden; }
+.cv-file-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.cv-file-picker span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cv-display-name { display: grid; gap: .35rem; color: #334155; font-size: .82rem; font-weight: 650; }
+.cv-display-name input, .cv-rename-form input { min-height: 46px; padding: .7rem .8rem; border: 1px solid #cbd5e1; border-radius: 10px; outline: 0; }
+.cv-display-name input:focus, .cv-rename-form input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.11); }
+.cv-form-error { grid-column: 1 / -1; color: #b42318; }
+.candidate-cv-list { display: grid; gap: .85rem; margin-top: 1.25rem; }
+.candidate-cv-card { display: flex; align-items: flex-start; gap: 1rem; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 17px; background: #fff; }
+.candidate-cv-card__file { width: 52px; height: 52px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 14px; font-size: 1.55rem; }
+.candidate-cv-card__file.is-pdf { color: #dc2626; background: #fff1f2; }
+.candidate-cv-card__file.is-docx { color: #2563eb; background: #eff6ff; }
+.candidate-cv-card__content { min-width: 0; flex: 1; }
+.candidate-cv-card__title { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; }
+.candidate-cv-card__title h2 { margin: 0; overflow-wrap: anywhere; font-size: 1.08rem; }
+.candidate-cv-card__title span { padding: .24rem .55rem; border-radius: 999px; color: #8a5b08; background: #fff7dc; font-size: .74rem; font-weight: 700; }
+.candidate-cv-card__content > p { margin: .3rem 0 .8rem; color: #718096; font-size: .86rem; overflow-wrap: anywhere; }
+.candidate-cv-card__actions { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .9rem; }
+.cv-action { padding: .25rem 0; border: 0; color: #365d91; background: transparent; font-size: .86rem; font-weight: 650; }
+.cv-action:hover { color: #1d4ed8; }
+.cv-action:disabled { opacity: .45; cursor: not-allowed; }
+.cv-action--danger { color: #b42318; }
+.cv-rename-form { position: relative; display: flex; align-items: center; gap: .35rem; }
+.cv-rename-form input { min-height: 34px; width: min(260px, 45vw); padding: .35rem .55rem; }
+.cv-rename-form button { width: 32px; height: 32px; border: 0; border-radius: 8px; color: #1d4ed8; background: #eaf1ff; }
+.cv-rename-form small { position: absolute; top: calc(100% + .15rem); left: 0; color: #b42318; white-space: nowrap; }
+.cv-empty { min-height: 260px; display: grid; place-content: center; justify-items: center; padding: 2rem; border: 1px dashed #cbd5e1; border-radius: 18px; color: #64748b; background: #fff; text-align: center; }
+.cv-empty > i { color: #2563eb; font-size: 2.25rem; }
+.cv-empty h2 { margin: .8rem 0 .25rem; color: #172033; font-size: 1.25rem; }
+.cv-empty p { margin: 0; }
 .admin-shell { min-height: 100vh; display: grid; grid-template-columns: 270px 1fr; background: #f5f7fb; }
 .admin-sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 1.25rem; color: #dbe5f5; background: #172033; }
 .admin-sidebar__brand { display: flex; align-items: center; gap: .75rem; padding: .8rem; color: #fff; text-decoration: none; font-weight: 750; }
@@ -50,5 +91,6 @@
 .coming-soon { min-height: 60vh; display: grid; place-content: center; justify-items: center; text-align: center; color: #64748b; }
 .coming-soon i { color: #2563eb; font-size: 2rem; }
 .coming-soon h1 { margin: 1rem 0 .5rem; color: #172033; }
-@media (max-width: 992px) { .portal-nav { display: none; } .portal-account { margin-left: auto; } .role-home__grid { grid-template-columns: 1fr; } .admin-shell { grid-template-columns: 86px 1fr; } .admin-sidebar span, .admin-sidebar__account strong, .admin-sidebar__account button { font-size: 0; } .admin-sidebar__brand, .admin-sidebar nav a { justify-content: center; } .admin-metrics { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .portal-account__name { display: none; } .role-home__welcome { align-items: flex-start; flex-direction: column; padding: 2rem 1.25rem; } .admin-content { padding: 1.5rem; } }
+@media (max-width: 992px) { .portal-nav { display: none; } .portal-account { margin-left: auto; } .role-home__grid { grid-template-columns: 1fr; } .cv-upload-card { grid-template-columns: 1fr; } .admin-shell { grid-template-columns: 86px 1fr; } .admin-sidebar span, .admin-sidebar__account strong, .admin-sidebar__account button { font-size: 0; } .admin-sidebar__brand, .admin-sidebar nav a { justify-content: center; } .admin-metrics { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .candidate-cv-heading { align-items: flex-start; flex-direction: column; gap: 1rem; } .cv-upload-card form { grid-template-columns: 1fr; } .cv-form-error { grid-column: auto; } }
+@media (max-width: 640px) { .portal-account__name { display: none; } .role-home__welcome { align-items: flex-start; flex-direction: column; padding: 2rem 1.25rem; } .candidate-cv-page { padding-block: 1.5rem 3rem; } .candidate-cv-card { padding: 1rem; } .candidate-cv-card__actions { align-items: flex-start; flex-direction: column; } .admin-content { padding: 1.5rem; } }

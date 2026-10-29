@@ -17,5 +17,6 @@ frontend/build/
 backend/dist/
 backend/logs/
 backend/public/temp/
+backend/uploads/
 ~$*.docx
 *.docx

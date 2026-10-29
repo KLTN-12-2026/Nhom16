@@ -8,7 +8,7 @@ const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
   [ROLE.CANDIDATE]: [
     { label: 'Tìm việc', to: ROUTE.CANDIDATE_JOBS },
     { label: 'Hồ sơ cá nhân', to: '/candidate/profile' },
-    { label: 'CV của tôi', to: '/candidate/cv' },
+    { label: 'CV của tôi', to: ROUTE.CANDIDATE_CVS },
     { label: 'Việc đã ứng tuyển', to: '/candidate/applications' },
     { label: 'Việc đã lưu', to: '/candidate/saved-jobs' },
   ],

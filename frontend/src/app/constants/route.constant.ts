@@ -12,6 +12,7 @@ export const ROUTE = {
   GOOGLE_COMPLETE: '/auth/google-complete',
   CANDIDATE_HOME: '/candidate',
   CANDIDATE_JOBS: '/candidate/jobs',
+  CANDIDATE_CVS: '/candidate/cv',
   EMPLOYER_HOME: '/employer',
   ADMIN_HOME: '/admin/dashboard',
 } as const

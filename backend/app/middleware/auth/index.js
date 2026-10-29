@@ -3,4 +3,5 @@ module.exports = {
   ...require('./auth.middleware'),
   ...require('./passport.middleware'),
   ...require('./recaptcha.middleware'),
+  ...require('./require-role.middleware'),
 }

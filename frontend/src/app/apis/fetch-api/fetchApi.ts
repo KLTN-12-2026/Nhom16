@@ -2,6 +2,8 @@ import type { ApiErrorBody, ApiResponse } from '../../model/api.model'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api').replace(/\/$/, '')
 
+export const getApiUrl = (path: string) => `${API_BASE_URL}${path}`
+
 export class ApiClientError extends Error {
   status: number
   code: string
@@ -29,7 +31,7 @@ export async function fetchApi<T>(path: string, options: FetchApiOptions = {}): 
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
+    const response = await fetch(getApiUrl(path), {
       ...requestOptions,
       body,
       credentials: 'include',

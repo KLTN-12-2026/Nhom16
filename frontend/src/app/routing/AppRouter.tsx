@@ -16,6 +16,7 @@ import RegisterPage from '../pages/auth/register'
 import ResetPasswordPage from '../pages/auth/reset-password'
 import VerifyEmailPage from '../pages/auth/verify-email'
 import CandidateHomePage from '../pages/candidate/CandidateHomePage'
+import CandidateCvPage from '../pages/candidate/CandidateCvPage'
 import CandidateJobsPage from '../pages/candidate/CandidateJobsPage'
 import CandidateProfilePage from '../pages/candidate/CandidateProfilePage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
@@ -74,6 +75,7 @@ export function AppRouter() {
       <Route path="candidate" element={<RequireAuth><RequireRole role={ROLE.CANDIDATE}><CandidateLayout /></RequireRole></RequireAuth>}>
         <Route index element={<CandidateHomePage />} />
         <Route path="jobs" element={<CandidateJobsPage />} />
+        <Route path="cv" element={<RequirePermission permission={PERMISSION.CV_MANAGE}><CandidateCvPage /></RequirePermission>} />
         <Route path="profile" element={<CandidateProfilePage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
