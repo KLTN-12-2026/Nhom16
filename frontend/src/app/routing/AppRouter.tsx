@@ -8,6 +8,7 @@ import { EmployerLayout } from '../layouts/employer-layout'
 import { PublicLayout } from '../layouts/public-layout'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import EmployerReviewPage from '../pages/admin/EmployerReviewPage'
+import AdminUsersPage from '../pages/admin/AdminUsersPage'
 import LoginPage from '../pages/auth/login'
 import ForgotPasswordPage from '../pages/auth/forgot-password'
 import GoogleCompletePage from '../pages/auth/google-complete'
@@ -16,13 +17,16 @@ import ResetPasswordPage from '../pages/auth/reset-password'
 import VerifyEmailPage from '../pages/auth/verify-email'
 import CandidateHomePage from '../pages/candidate/CandidateHomePage'
 import CandidateJobsPage from '../pages/candidate/CandidateJobsPage'
+import CandidateProfilePage from '../pages/candidate/CandidateProfilePage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
 import EmployerHomePage from '../pages/employer/EmployerHomePage'
+import EmployerProfilePage from '../pages/employer/EmployerProfilePage'
 import HomePage from '../pages/home/HomePage'
 import CategoriesPage from '../pages/public/CategoriesPage'
 import CvAnalysisPage from '../pages/public/CvAnalysisPage'
 import ForEmployersPage from '../pages/public/ForEmployersPage'
 import JobsPage from '../pages/public/JobsPage'
+import JobDetailPage from '../pages/public/JobDetailPage'
 import { useAuth } from '../provider/auth-provider'
 import { FullPageLoader } from './FullPageLoader'
 import { RequireAuth } from './RequireAuth'
@@ -55,6 +59,7 @@ export function AppRouter() {
       <Route element={<PublicLayout />}>
         <Route index element={<HomeEntry />} />
         <Route path="jobs" element={<JobsEntry />} />
+        <Route path="jobs/:id" element={<JobDetailPage />} />
         <Route path="cv-analysis" element={<CvAnalysisPage />} />
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="for-employers" element={<ForEmployersPage />} />
@@ -65,20 +70,28 @@ export function AppRouter() {
         <Route path="reset-password" element={<ResetPasswordPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
       </Route>
+
       <Route path="candidate" element={<RequireAuth><RequireRole role={ROLE.CANDIDATE}><CandidateLayout /></RequireRole></RequireAuth>}>
         <Route index element={<CandidateHomePage />} />
         <Route path="jobs" element={<CandidateJobsPage />} />
+        <Route path="profile" element={<CandidateProfilePage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
+
       <Route path="employer" element={<RequireAuth><RequireRole role={ROLE.EMPLOYER}><EmployerLayout /></RequireRole></RequireAuth>}>
         <Route index element={<EmployerHomePage />} />
+        <Route path="company" element={<EmployerProfilePage />} />
+        <Route path="profile" element={<EmployerProfilePage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
+
       <Route path="admin" element={<RequireAuth><RequireRole role={ROLE.ADMIN}><AdminLayout /></RequireRole></RequireAuth>}>
         <Route path="dashboard" element={<RequirePermission permission={PERMISSION.ADMIN_STATISTICS_VIEW}><AdminDashboardPage /></RequirePermission>} />
         <Route path="employers" element={<RequirePermission permission={PERMISSION.ADMIN_USER_MANAGE}><EmployerReviewPage /></RequirePermission>} />
+        <Route path="users" element={<RequirePermission permission={PERMISSION.ADMIN_USER_MANAGE}><AdminUsersPage /></RequirePermission>} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
