@@ -155,12 +155,12 @@ export default function CandidateCvPage() {
         <div className="candidate-cv-card__content">
           <div className="candidate-cv-card__title"><h2>{cv.displayName}</h2>{cv.isDefault && <span><i className="bi bi-star-fill" /> Mặc định</span>}</div>
           <div className="candidate-cv-card__profile">
-            <strong>{cv.candidateName || 'Chưa xác định được họ tên'}</strong>
+            <strong>{cv.extractionStatus === 'failed' ? 'Không nhận diện được nội dung CV' : cv.candidateName || 'Chưa xác định được họ tên'}</strong>
             {cv.headline && <span>{cv.headline}</span>}
             <div>
               {cv.candidateEmail && <span><i className="bi bi-envelope" /> {cv.candidateEmail}</span>}
               {cv.candidatePhone && <span><i className="bi bi-telephone" /> {cv.candidatePhone}</span>}
-              {!cv.candidateEmail && !cv.candidatePhone && <span><i className="bi bi-info-circle" /> Chưa đọc được thông tin liên hệ trong CV</span>}
+              {!cv.candidateEmail && !cv.candidatePhone && <span><i className="bi bi-info-circle" /> {cv.extractionStatus === 'failed' ? 'File không có đủ dấu hiệu của một CV' : 'Chưa đọc được thông tin liên hệ trong CV'}</span>}
             </div>
           </div>
           <p>{cv.originalName} · {formatBytes(cv.sizeBytes)} · Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</p>

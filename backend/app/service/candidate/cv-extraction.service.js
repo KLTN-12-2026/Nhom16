@@ -10,6 +10,7 @@ const { env } = require('../../config')
 
 const avatarDirectory = path.resolve(env.upload.rootDirectory, 'cv-avatars')
 const ignoredHeadings = /^(curriculum vitae|resume|cv|profile|contact|personal information|thông tin cá nhân|hồ sơ|mục tiêu nghề nghiệp)$/i
+const cvSectionPattern = /\b(kinh nghiệm|học vấn|kỹ năng|mục tiêu nghề nghiệp|chứng chỉ|dự án|work experience|education|skills|career objective|certifications?|projects?)\b/gi
 
 const normalizeText = (value) => value.replace(/\u0000/g, '').replace(/[ \t]+/g, ' ').trim()
 
@@ -19,6 +20,13 @@ const extractBasicInformation = (text) => {
   const candidateEmail = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]?.toLowerCase() || null
   const rawPhone = normalized.match(/(?:\+?84|0)(?:[ .-]?\d){9,10}/)?.[0] || null
   const candidatePhone = rawPhone?.replace(/[ .-]/g, '') || null
+  const sectionMatches = normalized.match(cvSectionPattern) || []
+  const isLikelyCv = Boolean(candidateEmail || candidatePhone || new Set(sectionMatches.map((value) => value.toLowerCase())).size >= 2)
+
+  if (!isLikelyCv) {
+    return { candidateName: null, candidateEmail: null, candidatePhone: null, headline: null, isLikelyCv: false }
+  }
+
   const nameIndex = lines.findIndex((line) => {
     const words = line.split(/\s+/)
     return line.length <= 80
@@ -37,7 +45,7 @@ const extractBasicInformation = (text) => {
       && !ignoredHeadings.test(line)
   ))?.slice(0, 255) || null
 
-  return { candidateName, candidateEmail, candidatePhone, headline }
+  return { candidateName, candidateEmail, candidatePhone, headline, isLikelyCv: true }
 }
 
 const saveBestAvatar = async (images) => {
@@ -84,9 +92,14 @@ const extractCvData = async (absolutePath, mimeType) => {
       : await extractDocx(absolutePath)
     const basicInformation = extractBasicInformation(extracted.text)
     return {
-      ...basicInformation,
+      candidateName: basicInformation.candidateName,
+      candidateEmail: basicInformation.candidateEmail,
+      candidatePhone: basicInformation.candidatePhone,
+      headline: basicInformation.headline,
       avatarAbsolutePath: extracted.avatarAbsolutePath,
-      extractionStatus: basicInformation.candidateName && (basicInformation.candidateEmail || basicInformation.candidatePhone)
+      extractionStatus: !basicInformation.isLikelyCv
+        ? 'failed'
+        : basicInformation.candidateName && (basicInformation.candidateEmail || basicInformation.candidatePhone)
         ? 'completed'
         : 'partial',
     }
