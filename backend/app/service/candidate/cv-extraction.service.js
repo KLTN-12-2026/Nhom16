@@ -81,8 +81,52 @@ const extractDocx = async (absolutePath) => {
 
 const extractPdf = async (absolutePath) => {
   const buffer = await fs.readFile(absolutePath)
-  const result = await pdfParse(buffer)
-  return { text: result.text, avatarAbsolutePath: null }
+  const [result, images] = await Promise.all([
+    pdfParse(buffer),
+    extractPdfImages(buffer),
+  ])
+  return { text: result.text, avatarAbsolutePath: await saveBestAvatar(images) }
+}
+
+const extractPdfImages = async (buffer) => {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+  const document = await pdfjs.getDocument({ data: new Uint8Array(buffer), disableWorker: true }).promise
+  const images = []
+
+  try {
+    const pageLimit = Math.min(document.numPages, 2)
+    for (let pageNumber = 1; pageNumber <= pageLimit; pageNumber += 1) {
+      const page = await document.getPage(pageNumber)
+      const operatorList = await page.getOperatorList()
+      const imageReferences = []
+
+      operatorList.fnArray.forEach((operator, index) => {
+        if (operator === pdfjs.OPS.paintImageXObject || operator === pdfjs.OPS.paintInlineImageXObject) {
+          imageReferences.push(operatorList.argsArray[index][0])
+        }
+      })
+
+      for (const reference of [...new Set(imageReferences)]) {
+        const image = typeof reference === 'string'
+          ? await new Promise((resolve) => page.objs.get(reference, resolve))
+          : reference
+        if (!image?.data || !image.width || !image.height) continue
+
+        const channels = image.kind === pdfjs.ImageKind.RGB_24BPP
+          ? 3
+          : image.kind === pdfjs.ImageKind.RGBA_32BPP ? 4 : 0
+        if (!channels) continue
+
+        const pngBuffer = await sharp(Buffer.from(image.data), {
+          raw: { width: image.width, height: image.height, channels },
+        }).png().toBuffer()
+        images.push({ buffer: pngBuffer, contentType: 'image/png' })
+      }
+    }
+    return images
+  } finally {
+    await document.destroy()
+  }
 }
 
 const extractCvData = async (absolutePath, mimeType) => {
