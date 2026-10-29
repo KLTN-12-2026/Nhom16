@@ -4,9 +4,11 @@ const path = require('node:path')
 const { env } = require('../../config')
 const { db } = require('../../db')
 const { ApiError } = require('../../util')
+const { extractCvData } = require('./cv-extraction.service')
 
 const backendRoot = path.resolve(__dirname, '../../..')
 const cvRoot = path.resolve(env.upload.rootDirectory, 'cv')
+const avatarRoot = path.resolve(env.upload.rootDirectory, 'cv-avatars')
 
 const toCandidateCv = (cv) => ({
   id: Number(cv.id),
@@ -15,13 +17,19 @@ const toCandidateCv = (cv) => ({
   mimeType: cv.mimeType,
   sizeBytes: Number(cv.sizeBytes),
   isDefault: Boolean(cv.isDefault),
+  candidateName: cv.candidateName,
+  candidateEmail: cv.candidateEmail,
+  candidatePhone: cv.candidatePhone,
+  headline: cv.headline,
+  hasAvatar: Boolean(cv.avatarPath),
+  extractionStatus: cv.extractionStatus,
   createdAt: cv.createdAt,
   updatedAt: cv.updatedAt,
 })
 
-const resolveStoredPath = (storagePath) => {
+const resolveStoredPath = (storagePath, allowedRoot = cvRoot) => {
   const absolutePath = path.resolve(backendRoot, storagePath)
-  if (absolutePath !== cvRoot && !absolutePath.startsWith(`${cvRoot}${path.sep}`)) {
+  if (absolutePath !== allowedRoot && !absolutePath.startsWith(`${allowedRoot}${path.sep}`)) {
     throw new ApiError(500, 'Đường dẫn CV không hợp lệ.', 'INVALID_CV_STORAGE_PATH')
   }
   return absolutePath
@@ -51,6 +59,8 @@ const createCandidateCv = async (userId, file, displayName) => {
   }
 
   const storagePath = path.relative(backendRoot, file.path)
+  const extracted = await extractCvData(file.path, file.mimetype)
+  const avatarPath = extracted.avatarAbsolutePath ? path.relative(backendRoot, extracted.avatarAbsolutePath) : null
   try {
     return await db.sequelize.transaction(async (transaction) => {
       const existingCount = await db.CandidateCv.count({ where: { userId }, transaction })
@@ -63,11 +73,18 @@ const createCandidateCv = async (userId, file, displayName) => {
         mimeType: file.mimetype,
         sizeBytes: file.size,
         isDefault: existingCount === 0,
+        candidateName: extracted.candidateName,
+        candidateEmail: extracted.candidateEmail,
+        candidatePhone: extracted.candidatePhone,
+        headline: extracted.headline,
+        avatarPath,
+        extractionStatus: extracted.extractionStatus,
       }, { transaction })
       return toCandidateCv(cv)
     })
   } catch (error) {
     await fs.unlink(file.path).catch(() => undefined)
+    if (extracted.avatarAbsolutePath) await fs.unlink(extracted.avatarAbsolutePath).catch(() => undefined)
     throw error
   }
 }
@@ -88,7 +105,11 @@ const setDefaultCandidateCv = async (userId, id) => db.sequelize.transaction(asy
 const deleteCandidateCv = async (userId, id) => {
   const deleted = await db.sequelize.transaction(async (transaction) => {
     const cv = await findOwnedCv(userId, id, { transaction, lock: transaction.LOCK.UPDATE })
-    const result = { path: resolveStoredPath(cv.storagePath), wasDefault: cv.isDefault }
+    const result = {
+      path: resolveStoredPath(cv.storagePath),
+      avatarPath: cv.avatarPath ? resolveStoredPath(cv.avatarPath, avatarRoot) : null,
+      wasDefault: cv.isDefault,
+    }
     await cv.destroy({ transaction })
 
     if (result.wasDefault) {
@@ -106,6 +127,11 @@ const deleteCandidateCv = async (userId, id) => {
   await fs.unlink(deleted.path).catch((error) => {
     if (error.code !== 'ENOENT') throw error
   })
+  if (deleted.avatarPath) {
+    await fs.unlink(deleted.avatarPath).catch((error) => {
+      if (error.code !== 'ENOENT') throw error
+    })
+  }
   return { id: Number(id) }
 }
 
@@ -117,10 +143,47 @@ const getCandidateCvDownload = async (userId, id) => {
   }
 }
 
+const getCandidateCvAvatar = async (userId, id) => {
+  const cv = await findOwnedCv(userId, id)
+  if (!cv.avatarPath) throw new ApiError(404, 'CV không có ảnh đại diện.', 'CV_AVATAR_NOT_FOUND')
+  return resolveStoredPath(cv.avatarPath, avatarRoot)
+}
+
+const extractCandidateCv = async (userId, id) => {
+  const cv = await findOwnedCv(userId, id)
+  const absolutePath = resolveStoredPath(cv.storagePath)
+  const extracted = await extractCvData(absolutePath, cv.mimeType)
+  const avatarPath = extracted.avatarAbsolutePath ? path.relative(backendRoot, extracted.avatarAbsolutePath) : null
+  const previousAvatarPath = cv.avatarPath ? resolveStoredPath(cv.avatarPath, avatarRoot) : null
+
+  try {
+    await cv.update({
+      candidateName: extracted.candidateName,
+      candidateEmail: extracted.candidateEmail,
+      candidatePhone: extracted.candidatePhone,
+      headline: extracted.headline,
+      avatarPath,
+      extractionStatus: extracted.extractionStatus,
+    })
+  } catch (error) {
+    if (extracted.avatarAbsolutePath) await fs.unlink(extracted.avatarAbsolutePath).catch(() => undefined)
+    throw error
+  }
+
+  if (previousAvatarPath && previousAvatarPath !== extracted.avatarAbsolutePath) {
+    await fs.unlink(previousAvatarPath).catch((error) => {
+      if (error.code !== 'ENOENT') throw error
+    })
+  }
+  return toCandidateCv(cv)
+}
+
 module.exports = {
   createCandidateCv,
   deleteCandidateCv,
   getCandidateCvDownload,
+  getCandidateCvAvatar,
+  extractCandidateCv,
   listCandidateCvs,
   renameCandidateCv,
   setDefaultCandidateCv,

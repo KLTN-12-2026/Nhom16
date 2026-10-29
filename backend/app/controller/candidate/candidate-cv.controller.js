@@ -8,7 +8,9 @@ const { validateBody } = require('../../middleware/validation/validate.middlewar
 const {
   createCandidateCv,
   deleteCandidateCv,
+  extractCandidateCv,
   getCandidateCvDownload,
+  getCandidateCvAvatar,
   listCandidateCvs,
   renameCandidateCv,
   setDefaultCandidateCv,
@@ -37,8 +39,18 @@ const initCandidateCvController = (app) => {
     .then((cv) => sendSuccess(res, { data: { cv }, message: 'Đã đặt CV mặc định.' }))
     .catch(next))
 
+  router.put('/:id/extraction', (req, res, next) => extractCandidateCv(req.user.id, req.params.id)
+    .then((cv) => sendSuccess(res, { data: { cv }, message: 'Đã đọc lại thông tin CV.' }))
+    .catch(next))
+
   router.get('/:id/download', (req, res, next) => getCandidateCvDownload(req.user.id, req.params.id)
     .then(({ absolutePath, downloadName }) => res.download(absolutePath, downloadName, (error) => {
+      if (error && !res.headersSent) next(error)
+    }))
+    .catch(next))
+
+  router.get('/:id/avatar', (req, res, next) => getCandidateCvAvatar(req.user.id, req.params.id)
+    .then((absolutePath) => res.sendFile(absolutePath, (error) => {
       if (error && !res.headersSent) next(error)
     }))
     .catch(next))

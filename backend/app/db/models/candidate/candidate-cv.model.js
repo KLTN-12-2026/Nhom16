@@ -13,6 +13,17 @@ class CandidateCv extends Model {
         mimeType: { type: DataTypes.STRING(150), allowNull: false, field: 'mime_type' },
         sizeBytes: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, field: 'size_bytes' },
         isDefault: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_default' },
+        candidateName: { type: DataTypes.STRING(180), allowNull: true, field: 'candidate_name' },
+        candidateEmail: { type: DataTypes.STRING(254), allowNull: true, field: 'candidate_email' },
+        candidatePhone: { type: DataTypes.STRING(30), allowNull: true, field: 'candidate_phone' },
+        headline: { type: DataTypes.STRING(255), allowNull: true },
+        avatarPath: { type: DataTypes.STRING(700), allowNull: true, field: 'avatar_path' },
+        extractionStatus: {
+          type: DataTypes.ENUM('completed', 'partial', 'failed'),
+          allowNull: false,
+          defaultValue: 'partial',
+          field: 'extraction_status',
+        },
       },
       {
         tableName: 'candidate_cvs',
@@ -34,6 +45,7 @@ class CandidateCv extends Model {
     const values = { ...this.get() }
     delete values.storedName
     delete values.storagePath
+    delete values.avatarPath
     return values
   }
 }

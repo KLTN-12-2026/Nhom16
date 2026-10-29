@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form'
 import {
   deleteCandidateCvApi,
   downloadCandidateCvApi,
+  extractCandidateCvApi,
+  getCandidateCvAvatarUrl,
   listCandidateCvsApi,
   renameCandidateCvApi,
   setDefaultCandidateCvApi,
@@ -27,6 +29,17 @@ const formatBytes = (bytes: number) => {
 }
 
 const getErrorMessage = (cause: unknown, fallback: string) => cause instanceof ApiClientError ? cause.message : fallback
+
+function CvAvatar({ cv }: { cv: CandidateCv }) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const showImage = cv.hasAvatar && !imageFailed
+
+  return <span className={`candidate-cv-card__avatar ${showImage ? 'has-image' : ''}`} aria-label={showImage ? 'Ảnh đại diện trong CV' : 'Ảnh đại diện mặc định'}>
+    {showImage
+      ? <img src={getCandidateCvAvatarUrl(cv.id)} alt={`Ảnh đại diện của ${cv.candidateName || cv.displayName}`} onError={() => setImageFailed(true)} />
+      : <i className="bi bi-person-fill" aria-hidden="true" />}
+  </span>
+}
 
 function RenameCv({ cv, onSaved, onError }: { cv: CandidateCv; onSaved: (updated: CandidateCv) => void; onError: (message: string) => void }) {
   const [editing, setEditing] = useState(false)
@@ -138,9 +151,18 @@ export default function CandidateCvPage() {
       {loading && <div className="cv-empty"><span className="spinner-border text-primary" /><p>Đang tải danh sách CV...</p></div>}
       {!loading && cvs.length === 0 && <div className="cv-empty"><i className="bi bi-file-earmark-person" /><h2>Bạn chưa có CV</h2><p>Tải CV đầu tiên để chuẩn bị cho bước phân tích và ứng tuyển.</p></div>}
       {!loading && cvs.map((cv) => <article className="candidate-cv-card" key={cv.id}>
-        <span className={`candidate-cv-card__file ${cv.mimeType === 'application/pdf' ? 'is-pdf' : 'is-docx'}`}><i className={`bi ${cv.mimeType === 'application/pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word'}`} /></span>
+        <CvAvatar cv={cv} />
         <div className="candidate-cv-card__content">
           <div className="candidate-cv-card__title"><h2>{cv.displayName}</h2>{cv.isDefault && <span><i className="bi bi-star-fill" /> Mặc định</span>}</div>
+          <div className="candidate-cv-card__profile">
+            <strong>{cv.candidateName || 'Chưa xác định được họ tên'}</strong>
+            {cv.headline && <span>{cv.headline}</span>}
+            <div>
+              {cv.candidateEmail && <span><i className="bi bi-envelope" /> {cv.candidateEmail}</span>}
+              {cv.candidatePhone && <span><i className="bi bi-telephone" /> {cv.candidatePhone}</span>}
+              {!cv.candidateEmail && !cv.candidatePhone && <span><i className="bi bi-info-circle" /> Chưa đọc được thông tin liên hệ trong CV</span>}
+            </div>
+          </div>
           <p>{cv.originalName} · {formatBytes(cv.sizeBytes)} · Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</p>
           <div className="candidate-cv-card__actions">
             <button type="button" className="cv-action" onClick={() => downloadCandidateCvApi(cv).catch((cause) => setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể tải CV.') }))}><i className="bi bi-download" /> Tải xuống</button>
@@ -149,6 +171,16 @@ export default function CandidateCvPage() {
               onSaved={(updated) => { replaceCv(updated); setFeedback({ type: 'success', message: 'Đổi tên CV thành công.' }) }}
               onError={(message) => setFeedback({ type: 'error', message })}
             />
+            <button type="button" className="cv-action" disabled={busyId !== null} onClick={async () => {
+              setBusyId(cv.id)
+              try {
+                const response = await extractCandidateCvApi(cv.id)
+                replaceCv(response.data.cv)
+                setFeedback({ type: 'success', message: 'Đã đọc lại thông tin và ảnh trong CV.' })
+              } catch (cause) {
+                setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể đọc thông tin CV.') })
+              } finally { setBusyId(null) }
+            }}><i className="bi bi-arrow-repeat" /> Đọc lại thông tin</button>
             {!cv.isDefault && <button type="button" className="cv-action" disabled={busyId !== null} onClick={async () => {
               setBusyId(cv.id)
               try {

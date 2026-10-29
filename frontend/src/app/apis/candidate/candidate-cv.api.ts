@@ -7,11 +7,19 @@ export interface CandidateCv {
   mimeType: string
   sizeBytes: number
   isDefault: boolean
+  candidateName: string | null
+  candidateEmail: string | null
+  candidatePhone: string | null
+  headline: string | null
+  hasAvatar: boolean
+  extractionStatus: 'completed' | 'partial' | 'failed'
   createdAt: string
   updatedAt: string
 }
 
 export const listCandidateCvsApi = () => fetchApi<{ cvs: CandidateCv[] }>('/candidate/cvs')
+
+export const getCandidateCvAvatarUrl = (id: number) => getApiUrl(`/candidate/cvs/${id}/avatar`)
 
 export const uploadCandidateCvApi = (file: File, displayName: string) => {
   const body = new FormData()
@@ -27,6 +35,11 @@ export const renameCandidateCvApi = (id: number, displayName: string) => fetchAp
 
 export const setDefaultCandidateCvApi = (id: number) => fetchApi<{ cv: CandidateCv }>(`/candidate/cvs/${id}/default`, {
   method: 'PUT',
+})
+
+export const extractCandidateCvApi = (id: number) => fetchApi<{ cv: CandidateCv }>(`/candidate/cvs/${id}/extraction`, {
+  method: 'PUT',
+  timeoutMs: 30000,
 })
 
 export const deleteCandidateCvApi = (id: number) => fetchApi<{ id: number }>(`/candidate/cvs/${id}`, {
