@@ -12,7 +12,7 @@ export interface CandidateCv {
   candidatePhone: string | null
   headline: string | null
   hasAvatar: boolean
-  extractionStatus: 'completed' | 'partial' | 'failed'
+  extractionStatus: 'pending' | 'processing' | 'completed' | 'partial' | 'failed'
   createdAt: string
   updatedAt: string
 }

@@ -34,7 +34,14 @@ const upload = multer({
 }).single('file')
 
 const uploadCandidateCv = (req, res, next) => upload(req, res, (error) => {
-  if (!error) return next()
+  if (!error) {
+    if (!req.file) return next(new ApiError(400, 'Vui lòng chọn file CV.', 'CV_FILE_REQUIRED'))
+    if (req.body.displayName?.trim().length > 180) {
+      fs.unlink(req.file.path, () => undefined)
+      return next(new ApiError(400, 'Tên CV không được vượt quá 180 ký tự.', 'INVALID_CV_DISPLAY_NAME'))
+    }
+    return next()
+  }
   if (error instanceof multer.MulterError && error.code === 'LIMIT_FILE_SIZE') {
     return next(new ApiError(413, `CV không được vượt quá ${Math.floor(env.upload.cvMaxBytes / 1024 / 1024)} MB.`, 'CV_FILE_TOO_LARGE'))
   }

@@ -8,17 +8,17 @@ const { validateBody } = require('../../middleware/validation/validate.middlewar
 const {
   createCandidateCv,
   deleteCandidateCv,
-  extractCandidateCv,
   getCandidateCvDownload,
   getCandidateCvAvatar,
   listCandidateCvs,
+  queueCandidateCvExtraction,
   renameCandidateCv,
   setDefaultCandidateCv,
 } = require('../../service/candidate/candidate-cv.service')
 const { sendSuccess } = require('../../util')
 const { validateRenameCandidateCv } = require('../../validator/candidate/candidate-cv.validator')
 
-const initCandidateCvController = (app) => {
+const initCandidateCvController = (app, { cvQueue }) => {
   const router = express.Router()
 
   router.use(authenticateJwt, requireRole(ROLES.CANDIDATE))
@@ -27,8 +27,8 @@ const initCandidateCvController = (app) => {
     .then((cvs) => sendSuccess(res, { data: { cvs } }))
     .catch(next))
 
-  router.post('/', uploadCandidateCv, (req, res, next) => createCandidateCv(req.user.id, req.file, req.body.displayName)
-    .then((cv) => sendSuccess(res, { data: { cv }, message: 'Tải CV lên thành công.', statusCode: 201 }))
+  router.post('/', uploadCandidateCv, (req, res, next) => createCandidateCv(req.user.id, req.file, req.body.displayName, cvQueue)
+    .then((cv) => sendSuccess(res, { data: { cv }, message: 'CV đã tải lên và đang được xử lý.', statusCode: 201 }))
     .catch(next))
 
   router.patch('/:id', validateBody(validateRenameCandidateCv), (req, res, next) => renameCandidateCv(req.user.id, req.params.id, req.validatedBody.displayName)
@@ -39,8 +39,8 @@ const initCandidateCvController = (app) => {
     .then((cv) => sendSuccess(res, { data: { cv }, message: 'Đã đặt CV mặc định.' }))
     .catch(next))
 
-  router.put('/:id/extraction', (req, res, next) => extractCandidateCv(req.user.id, req.params.id)
-    .then((cv) => sendSuccess(res, { data: { cv }, message: 'Đã đọc lại thông tin CV.' }))
+  router.put('/:id/extraction', (req, res, next) => queueCandidateCvExtraction(req.user.id, req.params.id, cvQueue)
+    .then((cv) => sendSuccess(res, { data: { cv }, message: 'CV đã được đưa vào hàng đợi xử lý.' }))
     .catch(next))
 
   router.get('/:id/download', (req, res, next) => getCandidateCvDownload(req.user.id, req.params.id)

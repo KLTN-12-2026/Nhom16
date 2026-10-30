@@ -49,7 +49,7 @@ const listCandidateCvs = async (userId) => {
   return cvs.map(toCandidateCv)
 }
 
-const createCandidateCv = async (userId, file, displayName) => {
+const createCandidateCv = async (userId, file, displayName, cvQueue) => {
   if (!file) throw new ApiError(400, 'Vui lòng chọn file CV.', 'CV_FILE_REQUIRED')
 
   const normalizedDisplayName = displayName?.trim() || path.parse(file.originalname).name
@@ -59,12 +59,11 @@ const createCandidateCv = async (userId, file, displayName) => {
   }
 
   const storagePath = path.relative(backendRoot, file.path)
-  const extracted = await extractCvData(file.path, file.mimetype)
-  const avatarPath = extracted.avatarAbsolutePath ? path.relative(backendRoot, extracted.avatarAbsolutePath) : null
+  let cv
   try {
-    return await db.sequelize.transaction(async (transaction) => {
+    cv = await db.sequelize.transaction(async (transaction) => {
       const existingCount = await db.CandidateCv.count({ where: { userId }, transaction })
-      const cv = await db.CandidateCv.create({
+      return db.CandidateCv.create({
         userId,
         displayName: normalizedDisplayName,
         originalName: file.originalname,
@@ -73,18 +72,14 @@ const createCandidateCv = async (userId, file, displayName) => {
         mimeType: file.mimetype,
         sizeBytes: file.size,
         isDefault: existingCount === 0,
-        candidateName: extracted.candidateName,
-        candidateEmail: extracted.candidateEmail,
-        candidatePhone: extracted.candidatePhone,
-        headline: extracted.headline,
-        avatarPath,
-        extractionStatus: extracted.extractionStatus,
+        extractionStatus: 'pending',
       }, { transaction })
-      return toCandidateCv(cv)
     })
+    await cvQueue.addExtraction(Number(cv.id))
+    return toCandidateCv(cv)
   } catch (error) {
+    if (cv) await cv.destroy().catch(() => undefined)
     await fs.unlink(file.path).catch(() => undefined)
-    if (extracted.avatarAbsolutePath) await fs.unlink(extracted.avatarAbsolutePath).catch(() => undefined)
     throw error
   }
 }
@@ -149,8 +144,10 @@ const getCandidateCvAvatar = async (userId, id) => {
   return resolveStoredPath(cv.avatarPath, avatarRoot)
 }
 
-const extractCandidateCv = async (userId, id) => {
-  const cv = await findOwnedCv(userId, id)
+const processCandidateCv = async (id) => {
+  const cv = await db.CandidateCv.findByPk(id)
+  if (!cv) return { skipped: true }
+  await cv.update({ extractionStatus: 'processing' })
   const absolutePath = resolveStoredPath(cv.storagePath)
   const extracted = await extractCvData(absolutePath, cv.mimeType)
   const avatarPath = extracted.avatarAbsolutePath ? path.relative(backendRoot, extracted.avatarAbsolutePath) : null
@@ -178,13 +175,21 @@ const extractCandidateCv = async (userId, id) => {
   return toCandidateCv(cv)
 }
 
+const queueCandidateCvExtraction = async (userId, id, cvQueue) => {
+  const cv = await findOwnedCv(userId, id)
+  await cv.update({ extractionStatus: 'pending' })
+  await cvQueue.addExtraction(Number(cv.id))
+  return toCandidateCv(cv)
+}
+
 module.exports = {
   createCandidateCv,
   deleteCandidateCv,
   getCandidateCvDownload,
   getCandidateCvAvatar,
-  extractCandidateCv,
   listCandidateCvs,
+  processCandidateCv,
+  queueCandidateCvExtraction,
   renameCandidateCv,
   setDefaultCandidateCv,
 }

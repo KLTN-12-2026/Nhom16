@@ -19,9 +19,9 @@ class CandidateCv extends Model {
         headline: { type: DataTypes.STRING(255), allowNull: true },
         avatarPath: { type: DataTypes.STRING(700), allowNull: true, field: 'avatar_path' },
         extractionStatus: {
-          type: DataTypes.ENUM('completed', 'partial', 'failed'),
+          type: DataTypes.STRING(20),
           allowNull: false,
-          defaultValue: 'partial',
+          defaultValue: 'pending',
           field: 'extraction_status',
         },
       },

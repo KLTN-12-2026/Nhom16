@@ -17,6 +17,7 @@ const initApplication = async () => {
   ])
   const queue = initQueue()
   const dependencies = {
+    cvQueue: queue.cvQueue,
     database,
     emailQueue: queue.emailQueue,
     models,
