@@ -12,7 +12,7 @@ export interface CandidateCv {
   candidatePhone: string | null
   headline: string | null
   hasAvatar: boolean
-  extractionStatus: 'pending' | 'processing' | 'completed' | 'partial' | 'failed'
+  extractionStatus: 'completed' | 'partial' | 'failed'
   createdAt: string
   updatedAt: string
 }
@@ -21,34 +21,11 @@ export const listCandidateCvsApi = () => fetchApi<{ cvs: CandidateCv[] }>('/cand
 
 export const getCandidateCvAvatarUrl = (id: number) => getApiUrl(`/candidate/cvs/${id}/avatar`)
 
-interface PresignedUpload {
-  upload: { url: string; fields: Record<string, string> }
-  key: string
-  expiresIn: number
-}
-
-export const uploadCandidateCvApi = async (file: File, displayName: string) => {
-  const prepared = await fetchApi<PresignedUpload>('/candidate/cvs/uploads/presign', {
-    method: 'POST',
-    body: JSON.stringify({ fileName: file.name, contentType: file.type, sizeBytes: file.size }),
-  })
-  const form = new FormData()
-  Object.entries(prepared.data.upload.fields).forEach(([key, value]) => form.append(key, value))
-  form.append('file', file)
-  const uploaded = await fetch(prepared.data.upload.url, { method: 'POST', body: form })
-  if (!uploaded.ok) {
-    throw new ApiClientError(uploaded.status, { code: 'CV_UPLOAD_FAILED', message: 'Không thể tải CV lên kho lưu trữ.' })
-  }
-  return fetchApi<{ cv: CandidateCv }>('/candidate/cvs/uploads/confirm', {
-    method: 'POST',
-    body: JSON.stringify({
-      objectKey: prepared.data.key,
-      fileName: file.name,
-      contentType: file.type,
-      sizeBytes: file.size,
-      displayName: displayName.trim() || null,
-    }),
-  })
+export const uploadCandidateCvApi = (file: File, displayName: string) => {
+  const body = new FormData()
+  body.append('file', file)
+  if (displayName.trim()) body.append('displayName', displayName.trim())
+  return fetchApi<{ cv: CandidateCv }>('/candidate/cvs', { method: 'POST', body, timeoutMs: 30000 })
 }
 
 export const renameCandidateCvApi = (id: number, displayName: string) => fetchApi<{ cv: CandidateCv }>(`/candidate/cvs/${id}`, {

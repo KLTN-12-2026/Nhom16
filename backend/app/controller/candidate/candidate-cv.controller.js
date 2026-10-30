@@ -3,26 +3,22 @@ const express = require('express')
 const { ROLES } = require('../../constants')
 const { authenticateJwt } = require('../../middleware/auth/passport.middleware')
 const { requireRole } = require('../../middleware/auth/require-role.middleware')
+const { uploadCandidateCv } = require('../../middleware/upload/cv-upload.middleware')
 const { validateBody } = require('../../middleware/validation/validate.middleware')
 const {
-  confirmCandidateCvUpload,
-  createCandidateCvUpload,
+  createCandidateCv,
   deleteCandidateCv,
+  extractCandidateCv,
   getCandidateCvDownload,
   getCandidateCvAvatar,
   listCandidateCvs,
-  queueCandidateCvExtraction,
   renameCandidateCv,
   setDefaultCandidateCv,
 } = require('../../service/candidate/candidate-cv.service')
 const { sendSuccess } = require('../../util')
-const {
-  validateConfirmCandidateCv,
-  validatePresignCandidateCv,
-  validateRenameCandidateCv,
-} = require('../../validator/candidate/candidate-cv.validator')
+const { validateRenameCandidateCv } = require('../../validator/candidate/candidate-cv.validator')
 
-const initCandidateCvController = (app, { cvQueue }) => {
+const initCandidateCvController = (app) => {
   const router = express.Router()
 
   router.use(authenticateJwt, requireRole(ROLES.CANDIDATE))
@@ -31,12 +27,8 @@ const initCandidateCvController = (app, { cvQueue }) => {
     .then((cvs) => sendSuccess(res, { data: { cvs } }))
     .catch(next))
 
-  router.post('/uploads/presign', validateBody(validatePresignCandidateCv), (req, res, next) => createCandidateCvUpload(req.user.id, req.validatedBody)
-    .then((upload) => sendSuccess(res, { data: upload }))
-    .catch(next))
-
-  router.post('/uploads/confirm', validateBody(validateConfirmCandidateCv), (req, res, next) => confirmCandidateCvUpload(req.user.id, req.validatedBody, cvQueue)
-    .then((cv) => sendSuccess(res, { data: { cv }, message: 'CV đã tải lên và đang được xử lý.', statusCode: 201 }))
+  router.post('/', uploadCandidateCv, (req, res, next) => createCandidateCv(req.user.id, req.file, req.body.displayName)
+    .then((cv) => sendSuccess(res, { data: { cv }, message: 'Tải CV lên thành công.', statusCode: 201 }))
     .catch(next))
 
   router.patch('/:id', validateBody(validateRenameCandidateCv), (req, res, next) => renameCandidateCv(req.user.id, req.params.id, req.validatedBody.displayName)
@@ -47,26 +39,20 @@ const initCandidateCvController = (app, { cvQueue }) => {
     .then((cv) => sendSuccess(res, { data: { cv }, message: 'Đã đặt CV mặc định.' }))
     .catch(next))
 
-  router.put('/:id/extraction', (req, res, next) => queueCandidateCvExtraction(req.user.id, req.params.id, cvQueue)
-    .then((cv) => sendSuccess(res, { data: { cv }, message: 'CV đã được đưa vào hàng đợi xử lý.' }))
+  router.put('/:id/extraction', (req, res, next) => extractCandidateCv(req.user.id, req.params.id)
+    .then((cv) => sendSuccess(res, { data: { cv }, message: 'Đã đọc lại thông tin CV.' }))
     .catch(next))
 
   router.get('/:id/download', (req, res, next) => getCandidateCvDownload(req.user.id, req.params.id)
-    .then(({ absolutePath, redirectUrl, downloadName }) => {
-      if (redirectUrl) return res.redirect(redirectUrl)
-      return res.download(absolutePath, downloadName, (error) => {
-        if (error && !res.headersSent) next(error)
-      })
-    })
+    .then(({ absolutePath, downloadName }) => res.download(absolutePath, downloadName, (error) => {
+      if (error && !res.headersSent) next(error)
+    }))
     .catch(next))
 
   router.get('/:id/avatar', (req, res, next) => getCandidateCvAvatar(req.user.id, req.params.id)
-    .then(({ absolutePath, redirectUrl }) => {
-      if (redirectUrl) return res.redirect(redirectUrl)
-      return res.sendFile(absolutePath, (error) => {
-        if (error && !res.headersSent) next(error)
-      })
-    })
+    .then((absolutePath) => res.sendFile(absolutePath, (error) => {
+      if (error && !res.headersSent) next(error)
+    }))
     .catch(next))
 
   router.delete('/:id', (req, res, next) => deleteCandidateCv(req.user.id, req.params.id)
