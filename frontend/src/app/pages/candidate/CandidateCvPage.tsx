@@ -86,15 +86,21 @@ export default function CandidateCvPage() {
   })
   const selectedFile = watch('file')?.[0]
 
-  const loadCvs = useCallback(() => {
-    setLoading(true)
+  const loadCvs = useCallback((silent = false) => {
+    if (!silent) setLoading(true)
     return listCandidateCvsApi()
       .then((response) => setCvs(response.data.cvs))
       .catch((cause) => setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể tải danh sách CV.') }))
-      .finally(() => setLoading(false))
+      .finally(() => { if (!silent) setLoading(false) })
   }, [])
 
   useEffect(() => { void loadCvs() }, [loadCvs])
+
+  useEffect(() => {
+    if (!cvs.some((cv) => ['pending', 'processing'].includes(cv.extractionStatus))) return undefined
+    const timer = window.setInterval(() => { void loadCvs(true) }, 3000)
+    return () => window.clearInterval(timer)
+  }, [cvs, loadCvs])
 
   const replaceCv = (updated: CandidateCv) => setCvs((current) => current.map((cv) => cv.id === updated.id ? updated : cv))
 
@@ -155,12 +161,13 @@ export default function CandidateCvPage() {
         <div className="candidate-cv-card__content">
           <div className="candidate-cv-card__title"><h2>{cv.displayName}</h2>{cv.isDefault && <span><i className="bi bi-star-fill" /> Mặc định</span>}</div>
           <div className="candidate-cv-card__profile">
+            {['pending', 'processing'].includes(cv.extractionStatus) && <span><i className="bi bi-hourglass-split" /> Hệ thống đang đọc nội dung và ảnh trong CV</span>}
             <strong>{cv.extractionStatus === 'failed' ? 'Không nhận diện được nội dung CV' : cv.candidateName || 'Chưa xác định được họ tên'}</strong>
             {cv.headline && <span>{cv.headline}</span>}
             <div>
               {cv.candidateEmail && <span><i className="bi bi-envelope" /> {cv.candidateEmail}</span>}
               {cv.candidatePhone && <span><i className="bi bi-telephone" /> {cv.candidatePhone}</span>}
-              {!cv.candidateEmail && !cv.candidatePhone && <span><i className="bi bi-info-circle" /> {cv.extractionStatus === 'failed' ? 'File không có đủ dấu hiệu của một CV' : 'Chưa đọc được thông tin liên hệ trong CV'}</span>}
+              {!cv.candidateEmail && !cv.candidatePhone && !['pending', 'processing'].includes(cv.extractionStatus) && <span><i className="bi bi-info-circle" /> {cv.extractionStatus === 'failed' ? 'File không có đủ dấu hiệu của một CV' : 'Chưa đọc được thông tin liên hệ trong CV'}</span>}
             </div>
           </div>
           <p>{cv.originalName} · {formatBytes(cv.sizeBytes)} · Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</p>

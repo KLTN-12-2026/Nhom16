@@ -10,6 +10,8 @@ class CandidateCv extends Model {
         originalName: { type: DataTypes.STRING(255), allowNull: false, field: 'original_name' },
         storedName: { type: DataTypes.STRING(255), allowNull: false, unique: true, field: 'stored_name' },
         storagePath: { type: DataTypes.STRING(700), allowNull: false, field: 'storage_path' },
+        storageProvider: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'local', field: 'storage_provider' },
+        objectEtag: { type: DataTypes.STRING(255), allowNull: true, field: 'object_etag' },
         mimeType: { type: DataTypes.STRING(150), allowNull: false, field: 'mime_type' },
         sizeBytes: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, field: 'size_bytes' },
         isDefault: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_default' },
@@ -19,9 +21,9 @@ class CandidateCv extends Model {
         headline: { type: DataTypes.STRING(255), allowNull: true },
         avatarPath: { type: DataTypes.STRING(700), allowNull: true, field: 'avatar_path' },
         extractionStatus: {
-          type: DataTypes.ENUM('completed', 'partial', 'failed'),
+          type: DataTypes.STRING(20),
           allowNull: false,
-          defaultValue: 'partial',
+          defaultValue: 'pending',
           field: 'extraction_status',
         },
       },
@@ -45,6 +47,7 @@ class CandidateCv extends Model {
     const values = { ...this.get() }
     delete values.storedName
     delete values.storagePath
+    delete values.objectEtag
     delete values.avatarPath
     return values
   }

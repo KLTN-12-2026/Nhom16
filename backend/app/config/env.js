@@ -46,6 +46,16 @@ const env = Object.freeze({
     rootDirectory: path.resolve(__dirname, '../../uploads'),
     cvMaxBytes: toNumber(process.env.CV_UPLOAD_MAX_BYTES, 5 * 1024 * 1024),
   },
+  objectStorage: {
+    endpoint: process.env.OBJECT_STORAGE_ENDPOINT || '',
+    region: process.env.OBJECT_STORAGE_REGION || 'ap-southeast-1',
+    bucket: process.env.OBJECT_STORAGE_BUCKET || '',
+    accessKeyId: process.env.OBJECT_STORAGE_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.OBJECT_STORAGE_SECRET_ACCESS_KEY || '',
+    forcePathStyle: process.env.OBJECT_STORAGE_FORCE_PATH_STYLE === 'true',
+    publicBaseUrl: process.env.OBJECT_STORAGE_PUBLIC_BASE_URL || '',
+    presignedExpiresSeconds: toNumber(process.env.OBJECT_STORAGE_PRESIGNED_EXPIRES_SECONDS, 900),
+  },
   auth: {
     accessSecret: process.env.JWT_ACCESS_SECRET || '',
     refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_ACCESS_SECRET || '',
