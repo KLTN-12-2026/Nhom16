@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
+import { AppLogo } from '../../components/app-logo'
 import { ADMIN_PERMISSIONS, PERMISSION, type Permission } from '../../constants/permission.constant'
 import { ROUTE } from '../../constants/route.constant'
 import { useAuth } from '../../provider/auth-provider'
@@ -28,7 +29,7 @@ export function AdminLayout() {
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
-        <NavLink className="admin-sidebar__brand" to={ROUTE.ADMIN_HOME}><i className="bi bi-briefcase" /><span>Quản trị hệ thống</span></NavLink>
+        <NavLink className="admin-sidebar__brand" to={ROUTE.ADMIN_HOME}><AppLogo compact /><span>Quản trị TopCV</span></NavLink>
         <nav aria-label="Điều hướng quản trị">
           {adminMenu.filter((item) => hasPermission(user?.permissions, item.permission)).map((item) => (
             <NavLink key={item.to} to={item.to}><i className={`bi ${item.icon}`} /><span>{item.label}</span></NavLink>

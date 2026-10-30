@@ -40,3 +40,10 @@ a {
 .app-shell {
   min-height: 100vh;
 }
+.app-logo { display: inline-grid; align-items: start; gap: .22rem; color: #263445; line-height: 1; }
+.app-logo__word { display: inline-flex; align-items: baseline; letter-spacing: -.075em; font-size: 2rem; font-style: normal; font-weight: 900; }
+.app-logo__word b, .app-logo__word strong { font: inherit; }
+.app-logo__word strong { margin-left: .015em; color: #00b14f; }
+.app-logo small { color: #344054; letter-spacing: 0; font-size: .55rem; font-weight: 750; white-space: nowrap; }
+.app-logo--compact .app-logo__word { font-size: 1.45rem; }
+.app-logo--compact small { display: none; }

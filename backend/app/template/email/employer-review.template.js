@@ -10,8 +10,8 @@ const createEmployerReviewEmail = ({ fullName, companyName, verificationStatus, 
     : `Hồ sơ ${companyName} chưa được chấp thuận. Lý do: ${reason}`
   return {
     subject,
-    text: `Xin chào ${fullName},\n\n${message}\n\nTuyển Dụng Thông Minh`,
-    html: `<p>Xin chào ${escapeHtml(fullName)},</p><p>${escapeHtml(message)}</p><p>Tuyển Dụng Thông Minh</p>`,
+    text: `Xin chào ${fullName},\n\n${message}\n\nTopCV`,
+    html: `<p>Xin chào ${escapeHtml(fullName)},</p><p>${escapeHtml(message)}</p><p>TopCV</p>`,
   }
 }
 

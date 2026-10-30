@@ -35,7 +35,7 @@ const env = Object.freeze({
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER || '',
     password: process.env.SMTP_PASSWORD || '',
-    from: process.env.MAIL_FROM || 'Tuyển Dụng Thông Minh <no-reply@example.com>',
+    from: process.env.MAIL_FROM || 'TopCV <no-reply@example.com>',
   },
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   recaptcha: {

@@ -6,6 +6,8 @@
 .portal-header__inner { min-height: 72px; display: flex; align-items: center; gap: 2rem; }
 .portal-brand { display: inline-flex; align-items: center; gap: .7rem; color: #172033; font-weight: 750; text-decoration: none; white-space: nowrap; }
 .portal-brand__mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: #2563eb; }
+.admin-sidebar__brand .app-logo__word { color: #fff; }
+.admin-sidebar__brand .app-logo__word strong { color: #38d98b; }
 .portal-nav { display: flex; align-items: center; gap: 1.35rem; margin-inline: auto; }
 .portal-nav a { color: #526078; text-decoration: none; font-weight: 600; font-size: .94rem; }
 .portal-nav a.active, .portal-nav a:hover { color: #1d4ed8; }

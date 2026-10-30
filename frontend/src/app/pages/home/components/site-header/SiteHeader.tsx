@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 
+import { AppLogo } from '../../../../components/app-logo'
 import { ROLE } from '../../../../constants/role.constant'
 import { ROUTE } from '../../../../constants/route.constant'
 import { useAuth } from '../../../../provider/auth-provider'
@@ -16,14 +17,9 @@ function Brand() {
     <Link
       className="brand"
       to="/"
-      aria-label="Tuyển Dụng Thông Minh - Trang chủ"
+      aria-label="TopCV - Trang chủ"
     >
-      <span className="brand-mark" aria-hidden="true">
-        <i className="bi bi-stars" />
-      </span>
-      <span className="brand-name">
-        Tuyển Dụng <span>Thông Minh</span>
-      </span>
+      <AppLogo tagline />
     </Link>
   )
 }

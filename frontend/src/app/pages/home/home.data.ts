@@ -19,12 +19,11 @@ export const featuredJobs: FeaturedJob[] = [
 ]
 
 export const jobCategories = [
-  { name: 'Công nghệ thông tin', jobs: '1.248 việc làm', icon: 'bi-code-slash', tone: 'blue' },
-  { name: 'Kinh doanh', jobs: '864 việc làm', icon: 'bi-graph-up-arrow', tone: 'orange' },
-  { name: 'Marketing', jobs: '592 việc làm', icon: 'bi-megaphone', tone: 'purple' },
-  { name: 'Tài chính - Kế toán', jobs: '438 việc làm', icon: 'bi-calculator', tone: 'green' },
-  { name: 'Thiết kế', jobs: '326 việc làm', icon: 'bi-palette', tone: 'pink' },
-  { name: 'Nhân sự', jobs: '214 việc làm', icon: 'bi-people', tone: 'cyan' },
+  { code: '2512', name: 'Công nghệ thông tin', jobs: '4 việc làm', icon: 'bi-code-slash', tone: 'blue' },
+  { code: '2411', name: 'Kế toán', jobs: '3 việc làm', icon: 'bi-calculator', tone: 'green' },
+  { code: '2431', name: 'Marketing', jobs: '3 việc làm', icon: 'bi-megaphone', tone: 'purple' },
+  { code: '2421', name: 'Phân tích kinh doanh', jobs: '3 việc làm', icon: 'bi-graph-up-arrow', tone: 'orange' },
+  { code: '4222', name: 'Chăm sóc khách hàng', jobs: '3 việc làm', icon: 'bi-headset', tone: 'cyan' },
 ]
 
 export const trustStats = [

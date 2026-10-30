@@ -1,6 +1,5 @@
-import { FeaturedJobs } from '../home/components/featured-jobs'
-import '../home/home-page.scss'
+import { JobsExplorer } from '../jobs/JobsExplorer'
 
 export default function CandidateJobsPage() {
-  return <main className="home-page"><FeaturedJobs /></main>
+  return <JobsExplorer candidate />
 }

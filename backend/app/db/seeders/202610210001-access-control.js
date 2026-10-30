@@ -25,8 +25,8 @@ module.exports = {
       updated_at: now,
     }))
 
-    await queryInterface.bulkInsert('roles', roleRows)
-    await queryInterface.bulkInsert('permissions', permissionRows)
+    await queryInterface.bulkInsert('roles', roleRows, { ignoreDuplicates: true })
+    await queryInterface.bulkInsert('permissions', permissionRows, { ignoreDuplicates: true })
 
     const [permissions] = await queryInterface.sequelize.query('SELECT id, code FROM permissions')
     const permissionIds = new Map(permissions.map((permission) => [permission.code, permission.id]))
@@ -39,7 +39,10 @@ module.exports = {
       })),
     )
 
-    await queryInterface.bulkInsert('role_permissions', assignments)
+    const [existingRows] = await queryInterface.sequelize.query('SELECT role_id, permission_id FROM role_permissions')
+    const existing = new Set(existingRows.map((row) => `${row.role_id}:${row.permission_id}`))
+    const missingAssignments = assignments.filter((item) => !existing.has(`${item.role_id}:${item.permission_id}`))
+    if (missingAssignments.length) await queryInterface.bulkInsert('role_permissions', missingAssignments)
   },
 
   async down(queryInterface) {

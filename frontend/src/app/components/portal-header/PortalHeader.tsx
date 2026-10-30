@@ -1,5 +1,6 @@
 ﻿import { NavLink, useNavigate } from 'react-router-dom'
 
+import { AppLogo } from '../app-logo'
 import { ROLE, type Role } from '../../constants/role.constant'
 import { ROUTE } from '../../constants/route.constant'
 import { useAuth } from '../../provider/auth-provider'
@@ -33,8 +34,7 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
     <header className="portal-header">
       <div className="container portal-header__inner">
         <NavLink className="portal-brand" to={role === ROLE.CANDIDATE ? ROUTE.CANDIDATE_HOME : ROUTE.EMPLOYER_HOME}>
-          <span className="portal-brand__mark"><i className="bi bi-briefcase" /></span>
-          <span>Tuyển Dụng Thông Minh</span>
+          <AppLogo compact />
         </NavLink>
         <nav className="portal-nav" aria-label="Điều hướng tài khoản">
           {menus[role]?.map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}

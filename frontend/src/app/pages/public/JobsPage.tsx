@@ -1,6 +1,6 @@
-import { FeaturedJobs } from '../home/components/featured-jobs'
+import { JobsExplorer } from '../jobs/JobsExplorer'
 import { PublicPageShell } from './PublicPageShell'
 
 export default function JobsPage() {
-  return <PublicPageShell><FeaturedJobs /></PublicPageShell>
+  return <PublicPageShell><JobsExplorer /></PublicPageShell>
 }

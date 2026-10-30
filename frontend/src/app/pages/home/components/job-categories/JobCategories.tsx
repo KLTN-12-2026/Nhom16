@@ -10,7 +10,7 @@ export function JobCategories() {
         </div>
         <div className="category-grid">
           {jobCategories.map((category) => (
-            <a className="category-card" href={`#category-${category.tone}`} key={category.name}>
+            <a className="category-card" href={`/jobs?category=${category.code}`} key={category.code}>
               <span className={`category-icon category-icon--${category.tone}`}><i className={`bi ${category.icon}`} /></span>
               <span className="category-copy"><strong>{category.name}</strong><small>{category.jobs}</small></span>
               <i className="bi bi-arrow-up-right category-arrow" aria-hidden="true" />

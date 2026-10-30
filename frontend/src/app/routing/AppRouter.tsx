@@ -75,6 +75,7 @@ export function AppRouter() {
       <Route path="candidate" element={<RequireAuth><RequireRole role={ROLE.CANDIDATE}><CandidateLayout /></RequireRole></RequireAuth>}>
         <Route index element={<CandidateHomePage />} />
         <Route path="jobs" element={<CandidateJobsPage />} />
+        <Route path="jobs/:id" element={<JobDetailPage />} />
         <Route path="cv" element={<RequirePermission permission={PERMISSION.CV_MANAGE}><CandidateCvPage /></RequirePermission>} />
         <Route path="profile" element={<CandidateProfilePage />} />
         <Route path="*" element={<ComingSoonPage />} />

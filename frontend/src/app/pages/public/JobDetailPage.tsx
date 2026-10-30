@@ -1,28 +1,12 @@
 ﻿import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
+import { getPublicJobApi, type JobData } from '../../apis/job'
 import { ROUTE } from '../../constants/route.constant'
 import { useAuth } from '../../provider/auth-provider'
 
-interface JobData {
-  id: number
-  title: string
-  company: string
-  companyLogo?: string
-  companyLogoClass?: string
-  salary: string
-  location: string
-  workMode: string
-  postedAt: string
-  deadline: string
-  status: string
-  tags: string[]
-  description: string
-  requirements: string[]
-  benefits: string[]
-}
-
 export default function JobDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const location = useLocation()
   const { user } = useAuth()
   const [job, setJob] = useState<JobData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -30,13 +14,9 @@ export default function JobDetailPage() {
   const [applied, setApplied] = useState(false)
 
   useEffect(() => {
-    fetch(`http://localhost:4000/api/jobs/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Không tìm thấy việc làm hoặc tin đã đóng.')
-        return res.json()
-      })
-      .then((res) => {
-        setJob(res.data)
+    getPublicJobApi(id || '')
+      .then((response) => {
+        setJob(response.data)
         setLoading(false)
       })
       .catch((err) => {
@@ -44,6 +24,8 @@ export default function JobDetailPage() {
         setLoading(false)
       })
   }, [id])
+
+  const jobsPath = location.pathname.startsWith('/candidate/') ? ROUTE.CANDIDATE_JOBS : ROUTE.JOBS
 
   if (loading) {
     return (
@@ -62,7 +44,7 @@ export default function JobDetailPage() {
           {error || 'Tin tuyển dụng không tồn tại.'}
         </div>
         <div className="mt-4">
-          <Link to={ROUTE.JOBS} className="btn btn-outline-primary">
+          <Link to={jobsPath} className="btn btn-outline-primary">
             <i className="bi bi-arrow-left me-2" /> Quay lại danh sách việc làm
           </Link>
         </div>
@@ -75,7 +57,7 @@ export default function JobDetailPage() {
       <nav aria-label="breadcrumb" className="mb-4">
         <ol className="breadcrumb">
           <li className="breadcrumb-item"><Link to={ROUTE.HOME}>Trang chủ</Link></li>
-          <li className="breadcrumb-item"><Link to={ROUTE.JOBS}>Việc làm</Link></li>
+          <li className="breadcrumb-item"><Link to={jobsPath}>Việc làm</Link></li>
           <li className="breadcrumb-item active" aria-current="page">{job.title}</li>
         </ol>
       </nav>
@@ -107,7 +89,7 @@ export default function JobDetailPage() {
               </div>
               <div className="col-sm-6 col-md-3">
                 <small className="text-muted d-block">Hình thức</small>
-                <strong>{job.workMode}</strong>
+                <strong>{job.workModeLabel}</strong>
               </div>
               <div className="col-sm-6 col-md-3">
                 <small className="text-muted d-block">Hạn nộp hồ sơ</small>
