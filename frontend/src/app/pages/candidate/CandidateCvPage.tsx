@@ -41,6 +41,31 @@ function CvAvatar({ cv }: { cv: CandidateCv }) {
   </span>
 }
 
+const extractionLabels: Record<CandidateCv['extractionStatus'], { label: string; icon: string }> = {
+  pending: { label: 'Đang chờ phân tích', icon: 'bi-hourglass' },
+  processing: { label: 'Đang phân tích', icon: 'bi-arrow-repeat' },
+  completed: { label: 'Đã phân tích', icon: 'bi-check-circle-fill' },
+  partial: { label: 'Cần bổ sung', icon: 'bi-exclamation-circle' },
+  failed: { label: 'Không thể phân tích', icon: 'bi-x-circle' },
+}
+
+function CvDetailSection({ icon, title, items, emptyText, variant }: {
+  icon: string
+  title: string
+  items: string[]
+  emptyText: string
+  variant: 'skills' | 'certificates' | 'projects'
+}) {
+  return <section className={`cv-detail cv-detail--${variant}`}>
+    <h3><i className={`bi ${icon}`} /> {title}<span>{items.length}</span></h3>
+    {items.length > 0
+      ? variant === 'skills'
+        ? <div className="cv-skill-list">{items.map((item) => <span key={item}>{item}</span>)}</div>
+        : <ul>{items.map((item) => <li key={item}><i className="bi bi-check2" /> <span>{item}</span></li>)}</ul>
+      : <p className="cv-detail__empty">{emptyText}</p>}
+  </section>
+}
+
 function RenameCv({ cv, onSaved, onError }: { cv: CandidateCv; onSaved: (updated: CandidateCv) => void; onError: (message: string) => void }) {
   const [editing, setEditing] = useState(false)
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<RenameCvForm>({
@@ -103,23 +128,33 @@ export default function CandidateCvPage() {
   }, [cvs, loadCvs])
 
   const replaceCv = (updated: CandidateCv) => setCvs((current) => current.map((cv) => cv.id === updated.id ? updated : cv))
+  const analyzedCvs = cvs.filter((cv) => cv.extractionStatus === 'completed').length
+  const extractedSkills = new Set(cvs.flatMap((cv) => cv.skills || [])).size
+  const extractedProjects = cvs.reduce((total, cv) => total + (cv.projects?.length || 0), 0)
 
   return <main className="candidate-cv-page container">
     <header className="candidate-cv-heading">
       <div>
-        <span className="eyebrow">Hồ sơ ứng tuyển</span>
+        <span className="eyebrow">Trung tâm hồ sơ ứng tuyển</span>
         <h1>CV của tôi</h1>
-        <p>Tải lên và quản lý các CV dùng để phân tích hoặc ứng tuyển. Hỗ trợ PDF, DOCX tối đa 5 MB.</p>
+        <p>Quản lý CV, kiểm tra dữ liệu hệ thống đã nhận diện và chuẩn bị hồ sơ tốt hơn trước khi ứng tuyển.</p>
       </div>
       <span className="candidate-cv-count">{cvs.length} CV</span>
     </header>
+
+    <section className="cv-overview" aria-label="Tổng quan CV">
+      <article><span><i className="bi bi-file-earmark-check" /></span><div><strong>{analyzedCvs}/{cvs.length}</strong><small>CV đã phân tích</small></div></article>
+      <article><span><i className="bi bi-stars" /></span><div><strong>{extractedSkills}</strong><small>Kỹ năng được nhận diện</small></div></article>
+      <article><span><i className="bi bi-kanban" /></span><div><strong>{extractedProjects}</strong><small>Dự án trong hồ sơ</small></div></article>
+      <div className="cv-overview__note"><i className="bi bi-lightbulb" /><p><strong>Mẹo hoàn thiện CV</strong><span>Đặt tên rõ ràng cho từng mục Kỹ năng, Chứng chỉ và Dự án để hệ thống đọc chính xác hơn.</span></p></div>
+    </section>
 
     {feedback && <div className={`auth-alert ${feedback.type === 'success' ? 'auth-alert--success' : ''}`} role={feedback.type === 'error' ? 'alert' : 'status'}>{feedback.message}</div>}
 
     <section className="cv-upload-card" aria-labelledby="upload-cv-title">
       <div className="cv-upload-card__intro">
         <span className="cv-upload-card__icon"><i className="bi bi-cloud-arrow-up" /></span>
-        <div><h2 id="upload-cv-title">Tải CV mới</h2><p>File được lưu riêng và chỉ tài khoản của bạn có thể truy cập.</p></div>
+        <div><h2 id="upload-cv-title">Tải CV mới</h2><p>PDF hoặc DOCX tối đa 5 MB. Hệ thống tự động đọc ảnh, thông tin liên hệ và nội dung nghề nghiệp.</p></div>
       </div>
       <form onSubmit={handleSubmit(async ({ file, displayName }) => {
         setFeedback(null)
@@ -156,21 +191,31 @@ export default function CandidateCvPage() {
     <section className="candidate-cv-list" aria-label="Danh sách CV">
       {loading && <div className="cv-empty"><span className="spinner-border text-primary" /><p>Đang tải danh sách CV...</p></div>}
       {!loading && cvs.length === 0 && <div className="cv-empty"><i className="bi bi-file-earmark-person" /><h2>Bạn chưa có CV</h2><p>Tải CV đầu tiên để chuẩn bị cho bước phân tích và ứng tuyển.</p></div>}
-      {!loading && cvs.map((cv) => <article className="candidate-cv-card" key={cv.id}>
-        <CvAvatar cv={cv} />
+      {!loading && cvs.map((cv) => <article className={`candidate-cv-card candidate-cv-card--${cv.extractionStatus}`} key={cv.id}>
+        <div className="candidate-cv-card__topline">
+          <div className="candidate-cv-card__title"><h2>{cv.displayName}</h2>{cv.isDefault && <span><i className="bi bi-star-fill" /> CV mặc định</span>}</div>
+          <span className={`cv-analysis-status cv-analysis-status--${cv.extractionStatus}`}><i className={`bi ${extractionLabels[cv.extractionStatus].icon}`} /> {extractionLabels[cv.extractionStatus].label}</span>
+        </div>
         <div className="candidate-cv-card__content">
-          <div className="candidate-cv-card__title"><h2>{cv.displayName}</h2>{cv.isDefault && <span><i className="bi bi-star-fill" /> Mặc định</span>}</div>
-          <div className="candidate-cv-card__profile">
-            {['pending', 'processing'].includes(cv.extractionStatus) && <span><i className="bi bi-hourglass-split" /> Hệ thống đang đọc nội dung và ảnh trong CV</span>}
-            <strong>{cv.extractionStatus === 'failed' ? 'Không nhận diện được nội dung CV' : cv.candidateName || 'Chưa xác định được họ tên'}</strong>
-            {cv.headline && <span>{cv.headline}</span>}
-            <div>
-              {cv.candidateEmail && <span><i className="bi bi-envelope" /> {cv.candidateEmail}</span>}
-              {cv.candidatePhone && <span><i className="bi bi-telephone" /> {cv.candidatePhone}</span>}
-              {!cv.candidateEmail && !cv.candidatePhone && !['pending', 'processing'].includes(cv.extractionStatus) && <span><i className="bi bi-info-circle" /> {cv.extractionStatus === 'failed' ? 'File không có đủ dấu hiệu của một CV' : 'Chưa đọc được thông tin liên hệ trong CV'}</span>}
+          <div className="candidate-cv-card__identity">
+            <CvAvatar cv={cv} />
+            <div className="candidate-cv-card__profile">
+              {['pending', 'processing'].includes(cv.extractionStatus) && <span><i className="bi bi-hourglass-split" /> Hệ thống đang đọc nội dung và ảnh trong CV</span>}
+              <strong>{cv.extractionStatus === 'failed' ? 'Không nhận diện được nội dung CV' : cv.candidateName || 'Chưa xác định được họ tên'}</strong>
+              {cv.headline && <span className="candidate-cv-card__headline">{cv.headline}</span>}
+              <div>
+                {cv.candidateEmail && <span><i className="bi bi-envelope" /> {cv.candidateEmail}</span>}
+                {cv.candidatePhone && <span><i className="bi bi-telephone" /> {cv.candidatePhone}</span>}
+                {!cv.candidateEmail && !cv.candidatePhone && !['pending', 'processing'].includes(cv.extractionStatus) && <span><i className="bi bi-info-circle" /> {cv.extractionStatus === 'failed' ? 'File không có đủ dấu hiệu của một CV' : 'Chưa đọc được thông tin liên hệ trong CV'}</span>}
+              </div>
             </div>
           </div>
-          <p>{cv.originalName} · {formatBytes(cv.sizeBytes)} · Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</p>
+          <div className="candidate-cv-card__details">
+            <CvDetailSection icon="bi-lightning-charge" title="Kỹ năng" items={cv.skills || []} emptyText="Chưa nhận diện được kỹ năng trong CV." variant="skills" />
+            <CvDetailSection icon="bi-patch-check" title="Chứng chỉ" items={cv.certificates || []} emptyText="Chưa có thông tin chứng chỉ." variant="certificates" />
+            <CvDetailSection icon="bi-kanban" title="Dự án nổi bật" items={cv.projects || []} emptyText="Chưa nhận diện được dự án trong CV." variant="projects" />
+          </div>
+          <div className="candidate-cv-card__meta"><span><i className={`bi ${cv.mimeType.includes('pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word'}`} /> {cv.originalName}</span><span>{formatBytes(cv.sizeBytes)}</span><span>Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</span></div>
           <div className="candidate-cv-card__actions">
             <button type="button" className="cv-action" onClick={() => downloadCandidateCvApi(cv).catch((cause) => setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể tải CV.') }))}><i className="bi bi-download" /> Tải xuống</button>
             <RenameCv

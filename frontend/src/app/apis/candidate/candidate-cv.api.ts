@@ -11,6 +11,9 @@ export interface CandidateCv {
   candidateEmail: string | null
   candidatePhone: string | null
   headline: string | null
+  skills: string[]
+  certificates: string[]
+  projects: string[]
   hasAvatar: boolean
   extractionStatus: 'pending' | 'processing' | 'completed' | 'partial' | 'failed'
   createdAt: string

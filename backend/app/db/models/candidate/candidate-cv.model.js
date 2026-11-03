@@ -17,6 +17,9 @@ class CandidateCv extends Model {
         candidateEmail: { type: DataTypes.STRING(254), allowNull: true, field: 'candidate_email' },
         candidatePhone: { type: DataTypes.STRING(30), allowNull: true, field: 'candidate_phone' },
         headline: { type: DataTypes.STRING(255), allowNull: true },
+        skills: { type: DataTypes.JSON, allowNull: true },
+        certificates: { type: DataTypes.JSON, allowNull: true },
+        projects: { type: DataTypes.JSON, allowNull: true },
         avatarPath: { type: DataTypes.STRING(700), allowNull: true, field: 'avatar_path' },
         extractionStatus: {
           type: DataTypes.STRING(20),

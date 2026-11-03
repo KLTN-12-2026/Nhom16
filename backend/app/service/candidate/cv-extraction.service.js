@@ -11,8 +11,67 @@ const { env } = require('../../config')
 const avatarDirectory = path.resolve(env.upload.rootDirectory, 'cv-avatars')
 const ignoredHeadings = /^(curriculum vitae|resume|cv|profile|contact|personal information|thông tin cá nhân|hồ sơ|mục tiêu nghề nghiệp)$/i
 const cvSectionPattern = /\b(kinh nghiệm|học vấn|kỹ năng|mục tiêu nghề nghiệp|chứng chỉ|dự án|work experience|education|skills|career objective|certifications?|projects?)\b/gi
+const sectionDefinitions = Object.freeze({
+  skills: /^(kỹ năng|ky nang|skills?|technical skills?|core competencies)$/i,
+  certificates: /^(chứng chỉ|chung chi|certifications?|certificates?|awards?(?:\s*(?:&|and)\s*certifications?)?)$/i,
+  projects: /^(dự án|du an|projects?|personal projects?|academic projects?)$/i,
+})
+const anySectionHeading = /^(kinh nghiem(?: lam viec)?|work experience|experience|hoc van|education|ky nang|skills?|technical skills?|core competencies|muc tieu nghe nghiep|career objective|summary|profile|chung chi|certifications?|certificates?|awards?(?:\s*(?:&|and)\s*certifications?)?|du an|projects?|personal projects?|academic projects?|hoat dong|activities|ngon ngu|languages?|so thich|interests?|nguoi tham chieu|references?)$/i
 
 const normalizeText = (value) => value.replace(/\u0000/g, '').replace(/[ \t]+/g, ' ').trim()
+
+const normalizeHeading = (value) => value
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[•●▪■►▶◆◇★☆]/g, '')
+  .replace(/[:\-–—|]+$/g, '')
+  .replace(/\s+/g, ' ')
+  .trim()
+
+const cleanSectionItem = (value) => value
+  .replace(/^[\s•●▪■►▶◆◇★☆✓✔+\-*–—]+/, '')
+  .replace(/\s+/g, ' ')
+  .trim()
+
+const uniqueItems = (items, limit) => [...new Set(items
+  .map(cleanSectionItem)
+  .filter((item) => item.length >= 2 && item.length <= 260))].slice(0, limit)
+
+const getSectionName = (line) => {
+  const heading = normalizeHeading(line)
+  return Object.entries(sectionDefinitions).find(([, pattern]) => pattern.test(heading))?.[0] || null
+}
+
+const extractCareerSections = (text) => {
+  const lines = normalizeText(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
+  const sections = { skills: [], certificates: [], projects: [] }
+  let currentSection = null
+
+  for (const line of lines) {
+    const [possibleHeading, ...inlineParts] = line.split(':')
+    const sectionName = getSectionName(possibleHeading)
+    if (sectionName) {
+      currentSection = sectionName
+      const inlineValue = inlineParts.join(':').trim()
+      if (inlineValue) sections[currentSection].push(inlineValue)
+      continue
+    }
+
+    if (anySectionHeading.test(normalizeHeading(line))) {
+      currentSection = null
+      continue
+    }
+
+    if (currentSection) sections[currentSection].push(line)
+  }
+
+  const skillItems = sections.skills.flatMap((line) => line.split(/[,;|·•●▪]+/))
+  return {
+    skills: uniqueItems(skillItems, 16),
+    certificates: uniqueItems(sections.certificates, 8),
+    projects: uniqueItems(sections.projects, 10),
+  }
+}
 
 const extractBasicInformation = (text) => {
   const normalized = normalizeText(text)
@@ -135,11 +194,13 @@ const extractCvData = async (absolutePath, mimeType) => {
       ? await extractPdf(absolutePath)
       : await extractDocx(absolutePath)
     const basicInformation = extractBasicInformation(extracted.text)
+    const careerSections = extractCareerSections(extracted.text)
     return {
       candidateName: basicInformation.candidateName,
       candidateEmail: basicInformation.candidateEmail,
       candidatePhone: basicInformation.candidatePhone,
       headline: basicInformation.headline,
+      ...careerSections,
       avatarAbsolutePath: extracted.avatarAbsolutePath,
       extractionStatus: !basicInformation.isLikelyCv
         ? 'failed'
@@ -153,10 +214,13 @@ const extractCvData = async (absolutePath, mimeType) => {
       candidateEmail: null,
       candidatePhone: null,
       headline: null,
+      skills: [],
+      certificates: [],
+      projects: [],
       avatarAbsolutePath: null,
       extractionStatus: 'failed',
     }
   }
 }
 
-module.exports = { extractBasicInformation, extractCvData }
+module.exports = { extractBasicInformation, extractCareerSections, extractCvData }

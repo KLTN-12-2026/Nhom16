@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict')
 
-const { extractBasicInformation } = require('../../../app/service/candidate/cv-extraction.service')
+const { extractBasicInformation, extractCareerSections } = require('../../../app/service/candidate/cv-extraction.service')
 
 describe('CV extraction service', () => {
   it('extracts the candidate name, headline, email and Vietnamese phone number', () => {
@@ -31,5 +31,36 @@ describe('CV extraction service', () => {
     assert.equal(result.isLikelyCv, false)
     assert.equal(result.candidateName, null)
     assert.equal(result.headline, null)
+  })
+
+  it('extracts skills, certificates and projects from Vietnamese and English CV sections', () => {
+    const result = extractCareerSections(`
+      KỸ NĂNG
+      ReactJS, TypeScript | Node.js
+      Git; MySQL
+      CHỨNG CHỈ
+      TOEIC 850 - IIG Vietnam
+      AWS Certified Cloud Practitioner
+      DỰ ÁN
+      TopCV - Nền tảng tuyển dụng sử dụng React và Node.js
+      E-commerce API - REST API quản lý đơn hàng
+      HỌC VẤN
+      Đại học Công nghệ
+    `)
+
+    assert.deepEqual(result.skills, ['ReactJS', 'TypeScript', 'Node.js', 'Git', 'MySQL'])
+    assert.deepEqual(result.certificates, ['TOEIC 850 - IIG Vietnam', 'AWS Certified Cloud Practitioner'])
+    assert.deepEqual(result.projects, [
+      'TopCV - Nền tảng tuyển dụng sử dụng React và Node.js',
+      'E-commerce API - REST API quản lý đơn hàng',
+    ])
+  })
+
+  it('supports section content written on the same line as its heading', () => {
+    const result = extractCareerSections('Skills: JavaScript, React, Docker\nCertifications: IELTS 7.0\nProjects: Candidate matching system')
+
+    assert.deepEqual(result.skills, ['JavaScript', 'React', 'Docker'])
+    assert.deepEqual(result.certificates, ['IELTS 7.0'])
+    assert.deepEqual(result.projects, ['Candidate matching system'])
   })
 })
