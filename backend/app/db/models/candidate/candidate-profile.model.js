@@ -1,4 +1,4 @@
-﻿const { DataTypes, Model } = require('sequelize')
+const { DataTypes, Model } = require('sequelize')
 
 class CandidateProfile extends Model {
   static init(sequelize, opts = {}) {
@@ -6,6 +6,7 @@ class CandidateProfile extends Model {
       {
         id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
         userId: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false, unique: true, field: 'user_id' },
+        avatar: { type: DataTypes.STRING(500), allowNull: true },
         phone: { type: DataTypes.STRING(20), allowNull: true },
         address: { type: DataTypes.STRING(500), allowNull: true },
         title: { type: DataTypes.STRING(150), allowNull: true },

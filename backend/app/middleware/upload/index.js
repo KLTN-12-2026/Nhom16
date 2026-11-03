@@ -1,1 +1,4 @@
-module.exports = { ...require('./cv-upload.middleware') }
+module.exports = {
+  ...require('./cv-upload.middleware'),
+  ...require('./avatar-upload.middleware'),
+}

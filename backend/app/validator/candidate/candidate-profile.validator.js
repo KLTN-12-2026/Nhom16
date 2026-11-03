@@ -1,8 +1,9 @@
-﻿const yup = require('yup')
+const yup = require('yup')
 const { validationError } = require('../../util')
 
 const updateCandidateProfileSchema = yup.object({
   fullName: yup.string().trim().min(2, 'Họ và tên phải có ít nhất 2 ký tự.').max(150),
+  avatar: yup.string().trim().max(500).nullable().transform(v => v || null),
   phone: yup.string().trim().matches(/^[0-9+().\s-]{8,20}$/, 'Số điện thoại không hợp lệ.').nullable().transform(v => v || null),
   address: yup.string().trim().max(500).nullable().transform(v => v || null),
   title: yup.string().trim().max(150).nullable().transform(v => v || null),

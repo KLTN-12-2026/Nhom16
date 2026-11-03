@@ -182,7 +182,7 @@ export default function CandidateCvPage() {
           <i className="bi bi-file-earmark-arrow-up" />
           <span>{selectedFile ? selectedFile.name : 'Chọn file PDF hoặc DOCX'}</span>
         </label>
-        <label className="cv-display-name">Tên hiển thị<input type="text" placeholder="Ví dụ: CV Frontend 2026" maxLength={180} {...register('displayName')} /></label>
+        <label className="cv-display-name">Tên hiển thị<input type="text" placeholder="Nhập tên hiển thị CV" maxLength={180} {...register('displayName')} /></label>
         <button className="btn btn-primary" type="submit" disabled={isSubmitting}>{isSubmitting ? 'Đang tải lên...' : 'Tải CV lên'}</button>
         {(errors.file?.message || errors.displayName?.message) && <small className="cv-form-error">{errors.file?.message || errors.displayName?.message}</small>}
       </form>
