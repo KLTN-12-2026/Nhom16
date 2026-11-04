@@ -2,7 +2,7 @@
 .back-to-top { position: fixed; right: 1.5rem; bottom: 1.5rem; z-index: 50; width: 46px; height: 46px; border: 0; border-radius: 50%; color: #fff; background: #2563eb; box-shadow: 0 12px 28px rgba(37, 99, 235, .28); transition: transform .2s ease, background .2s ease; }
 .back-to-top:hover { transform: translateY(-3px); background: #1d4ed8; }
 .portal-shell { min-height: 100vh; background: #f7f9fc; color: #172033; }
-.portal-header { background: rgba(255,255,255,.96); box-shadow: 0 1px 0 rgba(15,23,42,.08); position: sticky; top: 0; z-index: 40; }
+.portal-header { background: #fff; box-shadow: 0 1px 0 rgba(15,23,42,.08); position: sticky; top: 0; z-index: 40; }
 .portal-header__inner { min-height: 72px; display: flex; align-items: center; gap: 2rem; }
 .portal-brand { display: inline-flex; align-items: center; gap: .7rem; color: #172033; font-weight: 750; text-decoration: none; white-space: nowrap; }
 .portal-brand__mark { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; color: #fff; background: #2563eb; }
