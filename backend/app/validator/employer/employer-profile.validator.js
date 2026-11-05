@@ -1,9 +1,9 @@
-﻿const yup = require('yup')
+const yup = require('yup')
 const { validationError } = require('../../util')
 
 const updateEmployerProfileSchema = yup.object({
   companyName: yup.string().trim().min(2, 'Tên công ty phải có ít nhất 2 ký tự.').max(200),
-  logo: yup.string().trim().url('Đường dẫn logo không hợp lệ.').nullable().transform(v => v || null),
+  logo: yup.string().trim().max(500).nullable().transform(v => v || null),
   companyPhone: yup.string().trim().matches(/^[0-9+().\s-]{8,20}$/, 'Số điện thoại không hợp lệ.').nullable().transform(v => v || null),
   companyAddress: yup.string().trim().min(10, 'Địa chỉ doanh nghiệp cần cụ thể hơn (tối thiểu 10 ký tự).').max(500),
   companyWebsite: yup.string().trim().url('Website doanh nghiệp không hợp lệ (cần https://).').nullable().transform(v => v || null),
