@@ -1,5 +1,11 @@
-﻿const { db } = require('../../db')
+const fs = require('node:fs/promises')
+const path = require('node:path')
+
+const { env } = require('../../config')
+const { db } = require('../../db')
 const { ApiError } = require('../../util')
+
+const logoRootDirectory = path.join(env.upload.rootDirectory, 'employer-logos')
 
 const getEmployerProfile = async (userId) => {
   const profile = await db.EmployerProfile.findOne({
@@ -31,4 +37,60 @@ const updateEmployerProfile = async (userId, payload) => {
   })
 }
 
-module.exports = { getEmployerProfile, updateEmployerProfile }
+const saveEmployerLogo = async (userId, file) => {
+  const profile = await db.EmployerProfile.findOne({ where: { userId } })
+  if (!profile) throw new ApiError(404, 'Không tìm thấy hồ sơ doanh nghiệp.', 'EMPLOYER_PROFILE_NOT_FOUND')
+
+  if (profile.logo && !profile.logo.startsWith('http://') && !profile.logo.startsWith('https://')) {
+    const oldFilePath = path.join(logoRootDirectory, path.basename(profile.logo))
+    await fs.unlink(oldFilePath).catch((err) => {
+      if (err.code !== 'ENOENT') console.error('Lỗi khi xóa logo cũ:', err)
+    })
+  }
+
+  const logoPath = `employer-logos/${file.filename}`
+  await profile.update({ logo: logoPath })
+
+  return await getEmployerProfile(userId)
+}
+
+const getEmployerLogoPath = async (userId) => {
+  const profile = await db.EmployerProfile.findOne({ where: { userId } })
+  if (!profile || !profile.logo) {
+    throw new ApiError(404, 'Doanh nghiệp chưa cập nhật logo.', 'LOGO_NOT_FOUND')
+  }
+
+  if (profile.logo.startsWith('http://') || profile.logo.startsWith('https://')) {
+    return { isExternal: true, url: profile.logo }
+  }
+
+  const absolutePath = path.join(logoRootDirectory, path.basename(profile.logo))
+  try {
+    await fs.access(absolutePath)
+  } catch {
+    throw new ApiError(404, 'Không tìm thấy file logo trên máy chủ.', 'LOGO_FILE_NOT_FOUND')
+  }
+
+  return { isExternal: false, absolutePath }
+}
+
+const deleteEmployerLogo = async (userId) => {
+  const profile = await db.EmployerProfile.findOne({ where: { userId } })
+  if (!profile) throw new ApiError(404, 'Không tìm thấy hồ sơ doanh nghiệp.', 'EMPLOYER_PROFILE_NOT_FOUND')
+
+  if (profile.logo && !profile.logo.startsWith('http://') && !profile.logo.startsWith('https://')) {
+    const oldFilePath = path.join(logoRootDirectory, path.basename(profile.logo))
+    await fs.unlink(oldFilePath).catch(() => undefined)
+  }
+
+  await profile.update({ logo: null })
+  return await getEmployerProfile(userId)
+}
+
+module.exports = {
+  getEmployerProfile,
+  updateEmployerProfile,
+  saveEmployerLogo,
+  getEmployerLogoPath,
+  deleteEmployerLogo,
+}
