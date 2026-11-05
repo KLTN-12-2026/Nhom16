@@ -9,6 +9,7 @@ export default function EmployerHomePage() {
         <a href="/employer/jobs"><i className="bi bi-briefcase" /><div><strong>Tin tuyển dụng</strong><span>Quản lý các vị trí đang tuyển</span></div></a>
         <a href="/employer/applications"><i className="bi bi-people" /><div><strong>Hồ sơ ứng tuyển</strong><span>Theo dõi và cập nhật trạng thái</span></div></a>
         <a href="/employer/recommendations"><i className="bi bi-person-check" /><div><strong>Ứng viên phù hợp</strong><span>Rút ngắn thời gian sàng lọc</span></div></a>
+        <a href="/employer/favorite-candidates"><i className="bi bi-person-heart" /><div><strong>Ứng viên đã lưu</strong><span>Quản lý danh sách ứng viên quan tâm</span></div></a>
       </section>
     </main>
   )

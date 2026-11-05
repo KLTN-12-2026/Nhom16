@@ -1,4 +1,4 @@
-const { Op } = require('sequelize')
+const { Op, col, fn, where: sequelizeWhere } = require('sequelize')
 const { db } = require('../../db')
 
 const EXPERIENCE_LABELS = { NONE: 'Không yêu cầu', '1_2': '1 - 2 năm', '2_5': '2 - 5 năm', OVER_5: 'Trên 5 năm' }
@@ -66,6 +66,10 @@ const getPublicJobs = async (query = {}) => {
   if (query.experience) where.experienceLevel = query.experience
   if (query.employmentType) where.employmentType = query.employmentType
   if (query.positionLevel) where.positionLevel = query.positionLevel
+  const skill = String(query.skill || '').trim()
+  if (skill) {
+    where[Op.and] = [sequelizeWhere(fn('JSON_SEARCH', col('Job.skills'), 'one', skill), { [Op.ne]: null })]
+  }
 
   const categoryWhere = { active: true }
   if (query.category) categoryWhere.code = query.category
@@ -96,4 +100,4 @@ const getActiveJobCategories = () => db.JobCategory.findAll({
   order: [['id', 'ASC']],
 })
 
-module.exports = { getActiveJobCategories, getPublicJobById, getPublicJobs }
+module.exports = { getActiveJobCategories, getPublicJobById, getPublicJobs, serializeJob }

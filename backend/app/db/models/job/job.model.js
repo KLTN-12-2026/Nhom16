@@ -6,6 +6,8 @@ class Job extends Model {
       {
         id: { type: DataTypes.BIGINT.UNSIGNED, autoIncrement: true, primaryKey: true },
         categoryId: { type: DataTypes.SMALLINT.UNSIGNED, allowNull: false, field: 'category_id' },
+        employerProfileId: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true, field: 'employer_profile_id' },
+        createdById: { type: DataTypes.BIGINT.UNSIGNED, allowNull: true, field: 'created_by_id' },
         sourceKey: { type: DataTypes.STRING(80), allowNull: true, unique: true, field: 'source_key' },
         title: { type: DataTypes.STRING(220), allowNull: false },
         company: { type: DataTypes.STRING(220), allowNull: false },
@@ -27,6 +29,7 @@ class Job extends Model {
         status: { type: DataTypes.STRING(20), allowNull: false, defaultValue: 'ACTIVE' },
         isPublic: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: true, field: 'is_public' },
         isHidden: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false, field: 'is_hidden' },
+        closedAt: { type: DataTypes.DATE, allowNull: true, field: 'closed_at' },
       },
       {
         tableName: 'jobs',
@@ -39,6 +42,10 @@ class Job extends Model {
 
   static associate(models) {
     this.belongsTo(models.JobCategory, { foreignKey: 'categoryId', as: 'category' })
+    this.belongsTo(models.EmployerProfile, { foreignKey: 'employerProfileId', as: 'employerProfile' })
+    this.belongsTo(models.User, { foreignKey: 'createdById', as: 'createdBy' })
+    this.hasMany(models.JobJdFile, { foreignKey: 'jobId', as: 'jdFiles' })
+    this.hasMany(models.Application, { foreignKey: 'jobId', as: 'applications' })
   }
 }
 

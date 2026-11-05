@@ -12,7 +12,7 @@ const locations = ['Hà Nội', 'Hồ Chí Minh', 'Đà Nẵng', 'Hải Phòng',
 const salaryOptions = [['UNDER_10', 'Dưới 10 triệu'], ['10_20', '10 - 20 triệu'], ['20_30', '20 - 30 triệu'], ['OVER_30', 'Trên 30 triệu']]
 const experienceOptions = [['NONE', 'Không yêu cầu'], ['1_2', '1 - 2 năm'], ['2_5', '2 - 5 năm'], ['OVER_5', 'Trên 5 năm']]
 
-const defaultFilters: JobFilters = { search: '', category: '', location: '', salary: '', experience: '', workMode: '', employmentType: '', positionLevel: '', sort: 'LATEST', page: 1, limit: 8 }
+const defaultFilters: JobFilters = { search: '', category: '', location: '', salary: '', experience: '', workMode: '', employmentType: '', positionLevel: '', skill: '', sort: 'LATEST', page: 1, limit: 8 }
 
 function FavoriteButton({ job, favorite }: { job: JobData; favorite: boolean }) {
   const dispatch = useAppDispatch()
@@ -151,6 +151,7 @@ export function JobsExplorer({ candidate = false }: { candidate?: boolean }) {
             <label>Hình thức làm việc<select {...register('workMode')}><option value="">Tất cả hình thức</option><option value="OFFICE">Tại văn phòng</option><option value="HYBRID">Hybrid</option><option value="REMOTE">Từ xa</option></select></label>
             <label>Loại công việc<select {...register('employmentType')}><option value="">Tất cả loại công việc</option><option value="FULL_TIME">Toàn thời gian</option><option value="INTERNSHIP">Thực tập</option><option value="CONTRACT">Hợp đồng</option></select></label>
             <label>Cấp bậc<select {...register('positionLevel')}><option value="">Tất cả cấp bậc</option><option value="INTERN">Thực tập sinh</option><option value="STAFF">Nhân viên</option><option value="MANAGER">Quản lý</option></select></label>
+            <label>Kỹ năng<input {...register('skill')} placeholder="Ví dụ: ReactJS" /></label>
             <button className="jobs-filter-panel__submit" type="submit">Áp dụng bộ lọc</button>
           </form>
         </aside>

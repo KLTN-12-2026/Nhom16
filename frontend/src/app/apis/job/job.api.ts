@@ -46,6 +46,7 @@ export interface JobFilters {
   workMode?: string
   employmentType?: string
   positionLevel?: string
+  skill?: string
   sort?: string
   page?: number
   limit?: number

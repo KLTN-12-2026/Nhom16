@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 
 import { AppLogo } from '../../components/app-logo'
+import { NotificationBell } from '../../components/notification-bell'
 import { ADMIN_PERMISSIONS, PERMISSION, type Permission } from '../../constants/permission.constant'
 import { ROUTE } from '../../constants/route.constant'
 import { useAuth } from '../../provider/auth-provider'
@@ -40,7 +41,10 @@ export function AdminLayout() {
           <button type="button" onClick={handleLogout}><i className="bi bi-box-arrow-right" /> Đăng xuất</button>
         </div>
       </aside>
-      <main className="admin-content"><Outlet /></main>
+      <div className="admin-main">
+        <header className="admin-topbar"><div><span>Không gian quản trị</span><strong>TopCV Admin</strong></div><NotificationBell /></header>
+        <main className="admin-content"><Outlet /></main>
+      </div>
     </div>
   )
 }

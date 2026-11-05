@@ -37,6 +37,18 @@ const createEmployerReviewService = ({ database, models, emailQueue }) => ({
       }
       const verificationStatus = decision === 'APPROVE' ? 'VERIFIED' : 'REJECTED'
       await profile.update({ verificationStatus, verifiedAt: decision === 'APPROVE' ? new Date() : null }, { transaction })
+      if (models.Notification) {
+        await models.Notification.create({
+          userId: profile.userId,
+          type: decision === 'APPROVE' ? 'EMPLOYER_APPROVED' : 'EMPLOYER_REJECTED',
+          title: decision === 'APPROVE' ? 'Doanh nghiệp đã được xác minh' : 'Hồ sơ doanh nghiệp chưa được duyệt',
+          message: decision === 'APPROVE'
+            ? `Hồ sơ ${profile.companyName} đã được duyệt. Bạn có thể bắt đầu đăng tin tuyển dụng.`
+            : `Hồ sơ ${profile.companyName} chưa được duyệt.${reason ? ` Lý do: ${reason.trim()}` : ''}`,
+          entityType: 'EMPLOYER_PROFILE',
+          entityId: profile.id,
+        }, { transaction })
+      }
       return {
         id: profile.id,
         verificationStatus,

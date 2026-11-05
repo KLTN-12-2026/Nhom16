@@ -1,7 +1,11 @@
 ﻿import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 import { getPublicJobApi, type JobData } from '../../apis/job'
+import { listCandidateCvsApi, type CandidateCv } from '../../apis/candidate'
+import { applyToJobApi, toggleFavoriteJobApi } from '../../apis/recruitment'
 import { ROUTE } from '../../constants/route.constant'
+import { ROLE } from '../../constants/role.constant'
 import { useAuth } from '../../provider/auth-provider'
 
 export default function JobDetailPage() {
@@ -12,6 +16,15 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [applied, setApplied] = useState(false)
+  const [showApply, setShowApply] = useState(false)
+  const [cvs, setCvs] = useState<CandidateCv[]>([])
+  const [actionError, setActionError] = useState('')
+  const [saved, setSaved] = useState(false)
+  const { register, handleSubmit, formState: { isSubmitting } } = useForm<{ cvId: string; coverLetter: string }>()
+
+  useEffect(() => {
+    if (showApply && user?.role === ROLE.CANDIDATE) listCandidateCvsApi().then(response => setCvs(response.data.cvs)).catch(cause => setActionError(cause.message))
+  }, [showApply, user?.role])
 
   useEffect(() => {
     getPublicJobApi(id || '')
@@ -139,21 +152,17 @@ export default function JobDetailPage() {
               <button
                 type="button"
                 className="btn btn-primary w-100 py-2 fw-semibold rounded-pill mb-2"
-                onClick={() => {
-                  if (!user) {
-                    alert('Vui lòng đăng nhập với tài khoản Ứng viên để nộp hồ sơ.')
-                  } else {
-                    setApplied(true)
-                  }
-                }}
+                onClick={() => { if (user?.role !== ROLE.CANDIDATE) setActionError('Vui lòng đăng nhập bằng tài khoản ứng viên.'); else setShowApply(true) }}
               >
                 <i className="bi bi-send me-2" /> Nộp hồ sơ ngay
               </button>
             )}
 
-            <button type="button" className="btn btn-outline-secondary w-100 py-2 rounded-pill mb-3">
-              <i className="bi bi-bookmark me-2" /> Lưu tin việc làm
+            <button type="button" className="btn btn-outline-secondary w-100 py-2 rounded-pill mb-3" onClick={() => { if (!user) return setActionError('Vui lòng đăng nhập để lưu việc làm.'); toggleFavoriteJobApi(job.id).then(response => setSaved(response.data.favorite)).catch(cause => setActionError(cause.message)) }}>
+              <i className={`bi ${saved ? 'bi-bookmark-fill' : 'bi-bookmark'} me-2`} /> {saved ? 'Đã lưu việc làm' : 'Lưu tin việc làm'}
             </button>
+            {actionError && <div className="alert alert-danger small">{actionError}</div>}
+            {showApply && <form className="apply-form" onSubmit={handleSubmit(async values => { try { await applyToJobApi(job.id, Number(values.cvId), values.coverLetter); setApplied(true); setShowApply(false); setActionError('') } catch (cause) { setActionError(cause instanceof Error ? cause.message : 'Không thể nộp hồ sơ.') } })}><h4>Chọn CV ứng tuyển</h4>{cvs.length === 0 ? <p>Bạn chưa có CV. Hãy tải CV trước khi ứng tuyển.</p> : <><select {...register('cvId', { required: true })} defaultValue=""><option value="" disabled>Chọn CV</option>{cvs.map(cv => <option value={cv.id} key={cv.id}>{cv.displayName}{cv.isDefault ? ' (Mặc định)' : ''}</option>)}</select><textarea rows={4} placeholder="Thư giới thiệu (không bắt buộc)" {...register('coverLetter')} /><div><button type="button" onClick={() => setShowApply(false)}>Hủy</button><button className="btn btn-success" disabled={isSubmitting} type="submit">{isSubmitting ? 'Đang gửi...' : 'Xác nhận nộp'}</button></div></>}</form>}
 
             <hr className="text-muted my-3" />
 

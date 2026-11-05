@@ -6,6 +6,7 @@ export const JOB_ACTIONS = Object.freeze({
   FAVORITES_LOAD: 'jobs/favorites/load',
   FAVORITES_LOADED: 'jobs/favorites/loaded',
   FAVORITE_TOGGLE: 'jobs/favorite/toggle',
+  FAVORITE_ROLLBACK: 'jobs/favorite/rollback',
 })
 
 export interface JobsState {
@@ -25,6 +26,7 @@ export const jobActions = {
   favoritesLoad: createAction(JOB_ACTIONS.FAVORITES_LOAD),
   favoritesLoaded: createAction<number[]>(JOB_ACTIONS.FAVORITES_LOADED),
   favoriteToggle: createAction<number>(JOB_ACTIONS.FAVORITE_TOGGLE),
+  favoriteRollback: createAction<number>(JOB_ACTIONS.FAVORITE_ROLLBACK),
 }
 
 export function jobsReducer(state: JobsState = initialState, action: UnknownAction): JobsState {
@@ -36,7 +38,8 @@ export function jobsReducer(state: JobsState = initialState, action: UnknownActi
     case JOB_ACTIONS.FAVORITES_LOADED:
       return { ...state, favoriteJobIds: payload as number[], favoritesInitialized: true }
 
-    case JOB_ACTIONS.FAVORITE_TOGGLE: {
+    case JOB_ACTIONS.FAVORITE_TOGGLE:
+    case JOB_ACTIONS.FAVORITE_ROLLBACK: {
       const jobId = payload as number
       const favoriteJobIds = state.favoriteJobIds.includes(jobId)
         ? state.favoriteJobIds.filter((id) => id !== jobId)

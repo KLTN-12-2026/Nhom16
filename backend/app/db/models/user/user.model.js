@@ -41,6 +41,7 @@ class User extends Model {
     this.hasOne(models.EmployerProfile, { foreignKey: userForeignKey, as: 'employerProfile' })
     this.hasOne(models.CandidateProfile, { foreignKey: userForeignKey, as: 'candidateProfile' })
     this.hasMany(models.CandidateCv, { foreignKey: userForeignKey, as: 'candidateCvs' })
+    this.hasMany(models.Notification, { foreignKey: userForeignKey, as: 'notifications' })
   }
 
   toJSON() {

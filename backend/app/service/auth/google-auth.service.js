@@ -14,7 +14,7 @@ const maskEmail = (email) => {
   return `${name.slice(0, 2)}${'*'.repeat(Math.max(2, name.length - 2))}@${domain}`
 }
 
-const createGoogleAuthService = ({ clientId, emailQueue, employerProfileRepository, identityRepository, otpSecret, recaptchaVerifier, redis, roleRepository, transactionManager, userRepository }) => {
+const createGoogleAuthService = ({ clientId, emailQueue, employerProfileRepository, identityRepository, notificationRepository, otpSecret, recaptchaVerifier, redis, roleRepository, transactionManager, userRepository }) => {
   const client = new OAuth2Client(clientId)
   const challengeKey = (id) => `google-auth:challenge:${id}`
   const hashCode = (id, code) => crypto.createHash('sha256').update(`${id}:${code}:${otpSecret}`).digest('hex')
@@ -137,7 +137,7 @@ const createGoogleAuthService = ({ clientId, emailQueue, employerProfileReposito
           if (payload.role === ROLES.EMPLOYER) {
             const company = await employerProfileRepository.findByTaxCode(payload.taxCode, { transaction })
             if (company) throw new ApiError(409, 'Mã số thuế này đã được đăng ký.', 'TAX_CODE_ALREADY_EXISTS')
-            await employerProfileRepository.create({
+            const employerProfile = await employerProfileRepository.create({
               userId: user.id,
               companyName: payload.companyName,
               taxCode: payload.taxCode,
@@ -148,6 +148,13 @@ const createGoogleAuthService = ({ clientId, emailQueue, employerProfileReposito
               representativeName: payload.representativeName,
               representativePosition: payload.representativePosition,
               verificationStatus: 'PENDING_REVIEW',
+            }, { transaction })
+            await notificationRepository?.createForRole(ROLES.ADMIN, {
+              type: 'EMPLOYER_PENDING_REVIEW',
+              title: 'Có doanh nghiệp mới chờ duyệt',
+              message: `${payload.companyName} vừa gửi hồ sơ xác minh doanh nghiệp.`,
+              entityType: 'EMPLOYER_PROFILE',
+              entityId: employerProfile.id,
             }, { transaction })
           }
           isNewUser = true

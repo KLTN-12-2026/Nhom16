@@ -9,6 +9,7 @@ const createRegistrationService = ({
   roleRepository,
   identityRepository,
   employerProfileRepository,
+  notificationRepository,
   passwordService,
 }) => ({
   async register(payload) {
@@ -57,7 +58,7 @@ const createRegistrationService = ({
         if (existingCompany) {
           throw new ApiError(409, 'Mã số thuế này đã được đăng ký.', 'TAX_CODE_ALREADY_EXISTS', { taxCode: 'Mã số thuế này đã được đăng ký.' })
         }
-        await employerProfileRepository.create({
+        const employerProfile = await employerProfileRepository.create({
           userId: createdUser.id,
           companyName: payload.companyName,
           taxCode: payload.taxCode,
@@ -68,6 +69,13 @@ const createRegistrationService = ({
           representativeName: payload.representativeName,
           representativePosition: payload.representativePosition,
           verificationStatus: 'PENDING_REVIEW',
+        }, { transaction })
+        await notificationRepository?.createForRole(ROLES.ADMIN, {
+          type: 'EMPLOYER_PENDING_REVIEW',
+          title: 'Có doanh nghiệp mới chờ duyệt',
+          message: `${payload.companyName} vừa gửi hồ sơ xác minh doanh nghiệp.`,
+          entityType: 'EMPLOYER_PROFILE',
+          entityId: employerProfile.id,
         }, { transaction })
       }
 

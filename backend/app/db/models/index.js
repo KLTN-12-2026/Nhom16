@@ -3,6 +3,7 @@ const { initCandidateModel } = require('./candidate')
 const { initCategoryModel } = require('./category')
 const { initEmployerModel } = require('./employer')
 const { initJobModel } = require('./job')
+const { initRecruitmentModel } = require('./recruitment')
 const { initUserModel } = require('./user')
 
 const initializeModels = (sequelize) => {
@@ -13,6 +14,7 @@ const initializeModels = (sequelize) => {
     ...initCandidateModel(sequelize),
     ...initCategoryModel(sequelize),
     ...initJobModel(sequelize),
+    ...initRecruitmentModel(sequelize),
   }
 
   Object.values(models)

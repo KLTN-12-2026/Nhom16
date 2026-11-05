@@ -4,6 +4,7 @@ import { AppLogo } from '../app-logo'
 import { ROLE, type Role } from '../../constants/role.constant'
 import { ROUTE } from '../../constants/route.constant'
 import { useAuth } from '../../provider/auth-provider'
+import { NotificationBell } from '../notification-bell'
 
 const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
   [ROLE.CANDIDATE]: [
@@ -40,6 +41,7 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
           {menus[role]?.map((item) => <NavLink key={item.to} to={item.to}>{item.label}</NavLink>)}
         </nav>
         <div className="portal-account">
+          <NotificationBell />
           <span className="portal-account__avatar">{user?.fullName.charAt(0).toUpperCase()}</span>
           <span className="portal-account__name">{user?.fullName}</span>
           <button type="button" onClick={handleLogout}>Đăng xuất</button>

@@ -1,6 +1,6 @@
 const { Op } = require('sequelize')
 
-const createAuthRepositories = ({ AuthIdentity, AuthSession, EmailVerificationToken, EmployerProfile, PasswordResetToken, Role, User, UserRole }) => ({
+const createAuthRepositories = ({ AuthIdentity, AuthSession, EmailVerificationToken, EmployerProfile, Notification, PasswordResetToken, Role, User, UserRole }) => ({
   userRepository: {
     findByEmail(email, options = {}) {
       return User.findOne({ where: { email }, transaction: options.transaction })
@@ -40,6 +40,17 @@ const createAuthRepositories = ({ AuthIdentity, AuthSession, EmailVerificationTo
   roleRepository: {
     findById(id, options = {}) {
       return Role.findByPk(id, { transaction: options.transaction })
+    },
+  },
+  notificationRepository: {
+    async createForRole(roleId, data, options = {}) {
+      const users = await User.findAll({
+        attributes: ['id'],
+        include: [{ model: Role, as: 'roles', where: { id: roleId }, attributes: [], through: { attributes: [] } }],
+        transaction: options.transaction,
+      })
+      if (!users.length) return []
+      return Notification.bulkCreate(users.map((user) => ({ ...data, userId: user.id })), { transaction: options.transaction })
     },
   },
   employerProfileRepository: {

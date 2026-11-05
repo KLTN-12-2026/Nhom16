@@ -39,6 +39,7 @@ class EmployerProfile extends Model {
       foreignKey: { name: 'userId', field: 'user_id' },
       as: 'user',
     })
+    this.hasMany(models.Job, { foreignKey: 'employerProfileId', as: 'jobs' })
   }
 }
 

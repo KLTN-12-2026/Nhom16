@@ -1,26 +1,19 @@
-import { put, select, takeEvery, takeLatest } from 'redux-saga/effects'
+import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
 
-import type { RootState } from '../../../store'
+import { listFavoriteJobsApi, toggleFavoriteJobApi } from '../../../apis/recruitment'
 import { JOB_ACTIONS, jobActions } from './jobs.redux'
 
-const FAVORITES_STORAGE_KEY = 'topcv.favoriteJobIds'
-
-function readFavorites() {
+function* loadFavoritesWorker() {
   try {
-    const value = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '[]')
-    return Array.isArray(value) ? value.filter(Number.isInteger) : []
+    const response: Awaited<ReturnType<typeof listFavoriteJobsApi>> = yield call(listFavoriteJobsApi)
+    yield put(jobActions.favoritesLoaded(response.data.map(item => item.job.id)))
   } catch {
-    return []
+    yield put(jobActions.favoritesLoaded([]))
   }
 }
 
-function* loadFavoritesWorker() {
-  yield put(jobActions.favoritesLoaded(readFavorites()))
-}
-
-function* persistFavoritesWorker() {
-  const favoriteJobIds: number[] = yield select((state: RootState) => state.jobs.favoriteJobIds)
-  localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteJobIds))
+function* persistFavoritesWorker(action: ReturnType<typeof jobActions.favoriteToggle>) {
+  try { yield call(toggleFavoriteJobApi, action.payload) } catch { yield put(jobActions.favoriteRollback(action.payload)) }
 }
 
 export function* jobsSaga() {

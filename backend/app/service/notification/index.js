@@ -1,1 +1,4 @@
-module.exports = require('./email.service')
+module.exports = {
+  ...require('./email.service'),
+  ...require('./in-app-notification.service'),
+}
