@@ -9,6 +9,7 @@ const validPayload = {
   password: 'Secure@123',
   confirmPassword: 'Secure@123',
   role: ROLES.CANDIDATE,
+  termsAccepted: true,
   recaptchaToken: 'recaptcha-token',
 }
 

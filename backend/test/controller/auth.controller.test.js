@@ -1,51 +1,41 @@
 const assert = require('node:assert/strict')
+const express = require('express')
 
-const { createAuthController } = require('../../app/controller/auth')
+const { initAuthEmailController } = require('../../app/controller/auth')
 
-const createResponse = () => ({
-  statusCode: null,
-  body: null,
-  status(code) {
-    this.statusCode = code
-    return this
-  },
-  json(body) {
-    this.body = body
-    return this
-  },
-})
+const getRoute = (router, path, method) => router.stack.find(
+  (layer) => layer.route?.path === path && layer.route.methods[method],
+)
 
 describe('auth controller', () => {
-  it('returns 201 and a safe user after registration', async () => {
-    const expectedUser = { id: 1, email: 'candidate@example.com', role: 'CANDIDATE' }
-    const controller = createAuthController({
-      validateRegisterPayload: async (body) => ({ ...body, email: body.email.toLowerCase() }),
-      registrationService: { register: async () => expectedUser },
-    })
-    const response = createResponse()
+  it('registers the public registration flow in the expected middleware order', () => {
+    const router = express.Router()
 
-    await controller.register(
-      { body: { email: 'Candidate@Example.com' }, ip: '127.0.0.1' },
-      response,
-      assert.fail,
-    )
+    initAuthEmailController(router)
 
-    assert.equal(response.statusCode, 201)
-    assert.deepEqual(response.body.data.user, expectedUser)
+    const route = getRoute(router, '/register', 'post')
+    assert.ok(route, 'POST /register must be registered')
+    assert.equal(route.route.stack.length, 3, 'register must include validation, reCAPTCHA and controller handler')
   })
 
-  it('forwards validation and service errors to error middleware', async () => {
-    const expectedError = new Error('invalid')
-    const controller = createAuthController({
-      validateRegisterPayload: async () => Promise.reject(expectedError),
-      registrationService: { register: async () => assert.fail('service must not be called') },
-    })
-    let forwardedError
+  it('registers session and account recovery endpoints', () => {
+    const router = express.Router()
 
-    await controller.register({}, createResponse(), (error) => {
-      forwardedError = error
-    })
+    initAuthEmailController(router)
 
-    assert.equal(forwardedError, expectedError)
+    const expectedRoutes = [
+      ['/login', 'post'],
+      ['/refresh', 'post'],
+      ['/logout', 'post'],
+      ['/me', 'get'],
+      ['/forgot-password', 'post'],
+      ['/reset-password', 'post'],
+      ['/verify-email', 'post'],
+      ['/resend-verification', 'post'],
+    ]
+
+    expectedRoutes.forEach(([path, method]) => {
+      assert.ok(getRoute(router, path, method), `${method.toUpperCase()} ${path} must be registered`)
+    })
   })
 })

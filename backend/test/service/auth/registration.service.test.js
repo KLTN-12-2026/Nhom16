@@ -26,16 +26,13 @@ const createDependencies = (overrides = {}) => {
       assignRole: async (userId, roleId) => calls.push(['assignRole', userId, roleId]),
     },
     roleRepository: {
-      findByCode: async () => ({ id: 2, code: ROLES.CANDIDATE }),
+      findById: async () => ({ id: 2, code: 'CANDIDATE' }),
     },
     identityRepository: {
       create: async (data) => calls.push(['createIdentity', data]),
     },
     passwordService: {
       hash: async () => 'hashed-password',
-    },
-    recaptchaVerifier: {
-      verify: async (data) => calls.push(['verifyCaptcha', data]),
     },
     ...overrides,
   }
@@ -48,7 +45,7 @@ describe('registration service', () => {
     const { calls, dependencies } = createDependencies()
     const service = createRegistrationService(dependencies)
 
-    const result = await service.register(payload, { ip: '127.0.0.1' })
+    const result = await service.register(payload)
 
     assert.deepEqual(result, {
       id: 10,
@@ -59,10 +56,6 @@ describe('registration service', () => {
     })
     assert.equal('password' in result, false)
     assert.equal('passwordHash' in result, false)
-    assert.deepEqual(calls[0], [
-      'verifyCaptcha',
-      { token: 'captcha-token', action: 'register', remoteIp: '127.0.0.1' },
-    ])
     assert.equal(calls.find(([name]) => name === 'createUser')[1].passwordHash, 'hashed-password')
   })
 
@@ -79,10 +72,7 @@ describe('registration service', () => {
   })
 
   it('rejects administrator registration before external verification', async () => {
-    const recaptchaVerifier = {
-      verify: async () => assert.fail('must not verify captcha for a forbidden role'),
-    }
-    const { dependencies } = createDependencies({ recaptchaVerifier })
+    const { dependencies } = createDependencies()
     const service = createRegistrationService(dependencies)
 
     await assert.rejects(
