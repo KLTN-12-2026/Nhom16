@@ -30,7 +30,7 @@ const listEmployerJobs = async (userId) => {
 
 const getEmployerJob = async (userId, jobId) => {
   const { job } = await getOwnedJob(userId, jobId, { include: [{ model: db.JobCategory, as: 'category' }, { model: db.JobJdFile, as: 'jdFiles' }] })
-  return job
+  return serializeJob(job)
 }
 
 const createEmployerJob = async (userId, payload) => {

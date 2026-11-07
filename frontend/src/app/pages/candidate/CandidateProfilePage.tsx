@@ -169,7 +169,7 @@ export default function CandidateProfilePage() {
   if (loading) {
     return (
       <main className="container py-5 text-center">
-        <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }} />
+        <div className="spinner-border text-success spinner-border-lg" role="status" />
         <p className="mt-3 text-muted fw-semibold">Đang tải hồ sơ ứng viên...</p>
       </main>
     )
@@ -237,6 +237,7 @@ export default function CandidateProfilePage() {
                 type="button"
                 className="avatar-delete-btn"
                 title="Xóa ảnh đại diện"
+                aria-label="Xóa ảnh đại diện"
                 onClick={handleDeleteAvatar}
               >
                 <i className="bi bi-trash3-fill" />
@@ -252,16 +253,12 @@ export default function CandidateProfilePage() {
               <span>Độ hoàn thiện hồ sơ</span>
               <span className="pct">{completeness}%</span>
             </div>
-            <div className="progress">
-              <div
-                className="progress-bar"
-                role="progressbar"
-                style={{ width: `${completeness}%` }}
-                aria-valuenow={completeness}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-            </div>
+            <progress
+              className="completeness-progress"
+              value={completeness}
+              max={100}
+              aria-label="Độ hoàn thiện hồ sơ"
+            />
           </div>
 
           <div className="profile-ai-tip mb-3">
@@ -300,10 +297,11 @@ export default function CandidateProfilePage() {
               </h3>
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">
+                  <label htmlFor="candidate-fullName" className="form-label fw-semibold">
                     Họ và tên <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="candidate-fullName"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập họ và tên"
@@ -314,11 +312,14 @@ export default function CandidateProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Email đăng ký tài khoản</label>
+                  <label htmlFor="candidate-email" className="form-label fw-semibold">Email đăng ký tài khoản</label>
                   <div className="input-group">
                     <input
+                      id="candidate-email"
                       type="email"
                       className="form-control bg-light text-muted rounded-3"
+                      placeholder="Email đăng ký"
+                      title="Email đăng ký tài khoản"
                       value={user?.email || ''}
                       disabled
                     />
@@ -329,8 +330,9 @@ export default function CandidateProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Số điện thoại liên hệ</label>
+                  <label htmlFor="candidate-phone" className="form-label fw-semibold">Số điện thoại liên hệ</label>
                   <input
+                    id="candidate-phone"
                     type="tel"
                     className="form-control rounded-3"
                     placeholder="Nhập số điện thoại"
@@ -340,8 +342,9 @@ export default function CandidateProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Địa chỉ hiện tại</label>
+                  <label htmlFor="candidate-address" className="form-label fw-semibold">Địa chỉ hiện tại</label>
                   <input
+                    id="candidate-address"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập địa chỉ"
@@ -358,8 +361,9 @@ export default function CandidateProfilePage() {
               </h3>
               <div className="row g-3">
                 <div className="col-12">
-                  <label className="form-label fw-semibold">Vị trí / Chức danh mong muốn</label>
+                  <label htmlFor="candidate-title" className="form-label fw-semibold">Vị trí / Chức danh mong muốn</label>
                   <input
+                    id="candidate-title"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập vị trí mong muốn"
@@ -370,10 +374,11 @@ export default function CandidateProfilePage() {
 
                 <div className="col-12">
                   <div className="d-flex justify-content-between align-items-center mb-1">
-                    <label className="form-label fw-semibold mb-0">Giới thiệu ngắn về bản thân</label>
+                    <label htmlFor="candidate-bio" className="form-label fw-semibold mb-0">Giới thiệu ngắn về bản thân</label>
                     <small className="text-muted">{form.bio.length}/2000 ký tự</small>
                   </div>
                   <textarea
+                    id="candidate-bio"
                     className="form-control rounded-3"
                     rows={4}
                     maxLength={2000}
@@ -392,9 +397,12 @@ export default function CandidateProfilePage() {
 
               <div className="input-group mb-3">
                 <input
+                  id="candidate-skill-input"
                   type="text"
                   className="form-control rounded-start-3"
                   placeholder="Nhập kỹ năng"
+                  aria-label="Nhập kỹ năng chuyên môn"
+                  title="Nhập kỹ năng chuyên môn"
                   value={skillInput}
                   onChange={(e) => setSkillInput(e.target.value)}
                   onKeyDown={(e) => {

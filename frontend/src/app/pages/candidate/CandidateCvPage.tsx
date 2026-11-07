@@ -34,7 +34,7 @@ function CvAvatar({ cv }: { cv: CandidateCv }) {
   const [imageFailed, setImageFailed] = useState(false)
   const showImage = cv.hasAvatar && !imageFailed
 
-  return <span className={`candidate-cv-card__avatar ${showImage ? 'has-image' : ''}`} aria-label={showImage ? 'Ảnh đại diện trong CV' : 'Ảnh đại diện mặc định'}>
+  return <span className={`candidate-cv-card__avatar ${showImage ? 'has-image' : ''}`}>
     {showImage
       ? <img src={getCandidateCvAvatarUrl(cv.id)} alt={`Ảnh đại diện của ${cv.candidateName || cv.displayName}`} onError={() => setImageFailed(true)} />
       : <i className="bi bi-person-fill" aria-hidden="true" />}

@@ -37,6 +37,15 @@ const serializeJob = (job) => ({
   postedAt: formatRelativeTime(job.publishedAt), publishedAt: job.publishedAt, deadline: job.deadline,
   status: job.status, tags: asArray(job.skills), description: job.description,
   requirements: asArray(job.requirements), benefits: asArray(job.benefits),
+  jdFiles: Array.isArray(job.jdFiles)
+    ? job.jdFiles.map((file) => ({
+        id: Number(file.id),
+        originalName: file.originalName,
+        mimeType: file.mimeType,
+        sizeBytes: Number(file.sizeBytes),
+        createdAt: file.createdAt,
+      }))
+    : [],
 })
 
 const salaryCondition = (salary) => {
@@ -89,7 +98,10 @@ const getPublicJobs = async (query = {}) => {
 const getPublicJobById = async (id) => {
   const job = await db.Job.findOne({
     where: { id, status: 'ACTIVE', isPublic: true, isHidden: false, deadline: { [Op.gte]: new Date().toISOString().slice(0, 10) } },
-    include: [{ model: db.JobCategory, as: 'category', where: { active: true }, required: true }],
+    include: [
+      { model: db.JobCategory, as: 'category', where: { active: true }, required: true },
+      { model: db.JobJdFile, as: 'jdFiles', required: false },
+    ],
   })
   return job ? serializeJob(job) : null
 }

@@ -1,7 +1,7 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
-import { getPublicJobApi, type JobData } from '../../apis/job'
+import { getPublicJobApi, downloadPublicJobJdApi, type JobData } from '../../apis/job'
 import { listCandidateCvsApi, type CandidateCv } from '../../apis/candidate'
 import { applyToJobApi, getCandidateApplicationJobApi, toggleFavoriteJobApi } from '../../apis/recruitment'
 import { ROUTE } from '../../constants/route.constant'
@@ -80,7 +80,7 @@ export default function JobDetailPage() {
         <div className="col-lg-8">
           <div className="card border-0 shadow-sm p-4 mb-4 rounded-4">
             <div className="d-flex align-items-start gap-3">
-              <div className="rounded-3 bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-4" style={{ width: 64, height: 64 }}>
+              <div className="rounded-3 bg-primary text-white d-flex align-items-center justify-content-center fw-bold fs-4 job-detail-logo-box">
                 {job.companyLogo || 'NT'}
               </div>
               <div className="flex-grow-1">
@@ -137,11 +137,37 @@ export default function JobDetailPage() {
                 <li key={idx} className="mb-1">{ben}</li>
               ))}
             </ul>
+
+            {job.jdFiles && job.jdFiles.length > 0 && (
+              <>
+                <h2 className="h5 fw-bold text-dark border-bottom pb-2 mb-3 mt-4">Tài liệu mô tả công việc (JD đính kèm)</h2>
+                <div className="d-flex flex-column gap-2">
+                  {job.jdFiles.map((file) => (
+                    <div className="d-flex align-items-center justify-content-between p-3 bg-light rounded-3 border" key={file.id}>
+                      <div className="d-flex align-items-center gap-3">
+                        <i className={`fs-3 bi ${file.originalName.endsWith('.docx') ? 'bi-file-earmark-word text-primary' : 'bi-file-earmark-pdf text-danger'}`} />
+                        <div>
+                          <strong className="d-block text-dark">{file.originalName}</strong>
+                          <small className="text-muted">{Math.round(file.sizeBytes / 1024)} KB</small>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary fw-semibold px-3 py-1 rounded-pill"
+                        onClick={() => void downloadPublicJobJdApi(job.id, file.id, file.originalName)}
+                      >
+                        <i className="bi bi-download me-1" /> Tải về
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         <div className="col-lg-4">
-          <div className="card border-0 shadow-sm p-4 rounded-4 position-sticky" style={{ top: 90 }}>
+          <div className="card border-0 shadow-sm p-4 rounded-4 position-sticky job-detail-sticky-card">
             <h3 className="h6 fw-bold mb-3">Hành động ứng tuyển</h3>
 
             {applicationId ? (
@@ -168,7 +194,7 @@ export default function JobDetailPage() {
               <i className={`bi ${saved ? 'bi-bookmark-fill' : 'bi-bookmark'} me-2`} /> {saved ? 'Đã lưu việc làm' : 'Lưu tin việc làm'}
             </button>}
             {actionError && <div className="alert alert-danger small">{actionError}</div>}
-            {showApply && <form className="apply-form" onSubmit={handleSubmit(async values => { try { await applyToJobApi(job.id, Number(values.cvId), values.coverLetter); setApplied(true); setShowApply(false); setActionError('') } catch (cause) { setActionError(cause instanceof Error ? cause.message : 'Không thể nộp hồ sơ.') } })}><h4>Chọn CV ứng tuyển</h4>{cvs.length === 0 ? <p>Bạn chưa có CV. Hãy tải CV trước khi ứng tuyển.</p> : <><select {...register('cvId', { required: true })} defaultValue=""><option value="" disabled>Chọn CV</option>{cvs.map(cv => <option value={cv.id} key={cv.id}>{cv.displayName}{cv.isDefault ? ' (Mặc định)' : ''}</option>)}</select><textarea rows={4} placeholder="Thư giới thiệu (không bắt buộc)" {...register('coverLetter')} /><div><button type="button" onClick={() => setShowApply(false)}>Hủy</button><button className="btn btn-success" disabled={isSubmitting} type="submit">{isSubmitting ? 'Đang gửi...' : 'Xác nhận nộp'}</button></div></>}</form>}
+            {showApply && <form className="apply-form" onSubmit={handleSubmit(async values => { try { await applyToJobApi(job.id, Number(values.cvId), values.coverLetter); setApplied(true); setShowApply(false); setActionError('') } catch (cause) { setActionError(cause instanceof Error ? cause.message : 'Không thể nộp hồ sơ.') } })}><h4>Chọn CV ứng tuyển</h4>{cvs.length === 0 ? <p>Bạn chưa có CV. Hãy tải CV trước khi ứng tuyển.</p> : <><select aria-label="Chọn CV ứng tuyển" title="Chọn CV ứng tuyển" {...register('cvId', { required: true })} defaultValue=""><option value="" disabled>Chọn CV</option>{cvs.map(cv => <option value={cv.id} key={cv.id}>{cv.displayName}{cv.isDefault ? ' (Mặc định)' : ''}</option>)}</select><textarea rows={4} placeholder="Thư giới thiệu (không bắt buộc)" {...register('coverLetter')} /><div><button type="button" onClick={() => setShowApply(false)}>Hủy</button><button className="btn btn-success" disabled={isSubmitting} type="submit">{isSubmitting ? 'Đang gửi...' : 'Xác nhận nộp'}</button></div></>}</form>}
 
             <hr className="text-muted my-3" />
 

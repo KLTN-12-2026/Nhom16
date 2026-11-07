@@ -1,6 +1,7 @@
-﻿const express = require('express')
+const express = require('express')
 const { sendSuccess, ApiError } = require('../../util')
 const { getActiveJobCategories, getPublicJobs, getPublicJobById } = require('../../service/job/job.service')
+const { downloadPublicJobJd } = require('../../service/employer/job-jd.service')
 
 const initJobController = (app) => {
   const router = express.Router()
@@ -19,6 +20,10 @@ const initJobController = (app) => {
       if (!data) throw new ApiError(404, 'Không tìm thấy tin tuyển dụng.', 'JOB_NOT_FOUND')
       return sendSuccess(res, { data, message: 'Lấy chi tiết việc làm thành công.' })
     })
+    .catch(next))
+
+  router.get('/:id/jd/:fileId/download', (req, res, next) => downloadPublicJobJd(req.params.id, req.params.fileId)
+    .then((file) => res.download(file.absolutePath, file.downloadName))
     .catch(next))
 
   app.use('/api/jobs', router)

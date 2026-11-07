@@ -168,7 +168,7 @@ export default function EmployerProfilePage() {
   if (loading) {
     return (
       <main className="container py-5 text-center">
-        <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }} />
+        <div className="spinner-border text-success spinner-border-lg" role="status" />
         <p className="mt-3 text-muted fw-semibold">Đang tải hồ sơ doanh nghiệp...</p>
       </main>
     )
@@ -237,6 +237,7 @@ export default function EmployerProfilePage() {
                 type="button"
                 className="logo-delete-btn"
                 title="Xóa logo"
+                aria-label="Xóa logo"
                 onClick={handleDeleteLogo}
               >
                 <i className="bi bi-trash3-fill" />
@@ -266,16 +267,12 @@ export default function EmployerProfilePage() {
               <span>Độ hoàn thiện hồ sơ</span>
               <span className="pct">{completeness}%</span>
             </div>
-            <div className="progress">
-              <div
-                className="progress-bar"
-                role="progressbar"
-                style={{ width: `${completeness}%` }}
-                aria-valuenow={completeness}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              />
-            </div>
+            <progress
+              className="completeness-progress"
+              value={completeness}
+              max={100}
+              aria-label="Độ hoàn thiện hồ sơ"
+            />
           </div>
 
           <div className="emp-trust-tip mb-3">
@@ -322,10 +319,11 @@ export default function EmployerProfilePage() {
               </h3>
               <div className="row g-3">
                 <div className="col-12">
-                  <label className="form-label fw-semibold">
+                  <label htmlFor="emp-companyName" className="form-label fw-semibold">
                     Tên doanh nghiệp <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="emp-companyName"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập tên doanh nghiệp theo giấy phép kinh doanh"
@@ -336,11 +334,14 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Mã số thuế</label>
+                  <label htmlFor="emp-taxCode" className="form-label fw-semibold">Mã số thuế</label>
                   <div className="input-group">
                     <input
+                      id="emp-taxCode"
                       type="text"
                       className="form-control bg-light text-muted rounded-start-3"
+                      placeholder="Mã số thuế"
+                      title="Mã số thuế"
                       value={form.taxCode}
                       disabled
                     />
@@ -351,11 +352,14 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Số giấy phép kinh doanh</label>
+                  <label htmlFor="emp-license" className="form-label fw-semibold">Số giấy phép kinh doanh</label>
                   <div className="input-group">
                     <input
+                      id="emp-license"
                       type="text"
                       className="form-control bg-light text-muted rounded-start-3"
+                      placeholder="Số giấy phép kinh doanh"
+                      title="Số giấy phép kinh doanh"
                       value={form.businessLicenseNumber}
                       disabled
                     />
@@ -366,10 +370,11 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">
+                  <label htmlFor="emp-repName" className="form-label fw-semibold">
                     Người đại diện pháp luật <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="emp-repName"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập họ và tên người đại diện"
@@ -380,10 +385,11 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">
+                  <label htmlFor="emp-repPosition" className="form-label fw-semibold">
                     Chức vụ người đại diện <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="emp-repPosition"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập chức vụ (Giám đốc, Tổng giám đốc...)"
@@ -401,10 +407,11 @@ export default function EmployerProfilePage() {
               </h3>
               <div className="row g-3">
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">
+                  <label htmlFor="emp-phone" className="form-label fw-semibold">
                     Số điện thoại doanh nghiệp <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="emp-phone"
                     type="tel"
                     className="form-control rounded-3"
                     placeholder="Nhập số điện thoại liên hệ"
@@ -415,8 +422,9 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Website công ty</label>
+                  <label htmlFor="emp-website" className="form-label fw-semibold">Website công ty</label>
                   <input
+                    id="emp-website"
                     type="url"
                     className="form-control rounded-3"
                     placeholder="https://company.vn"
@@ -426,8 +434,10 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">Quy mô nhân sự</label>
+                  <label htmlFor="emp-size" className="form-label fw-semibold">Quy mô nhân sự</label>
                   <select
+                    id="emp-size"
+                    title="Quy mô nhân sự"
                     className="form-select rounded-3"
                     value={form.companySize}
                     onChange={(e) => setForm({ ...form, companySize: e.target.value })}
@@ -441,10 +451,11 @@ export default function EmployerProfilePage() {
                 </div>
 
                 <div className="col-md-6">
-                  <label className="form-label fw-semibold">
+                  <label htmlFor="emp-address" className="form-label fw-semibold">
                     Địa chỉ trụ sở chính <span className="text-danger">*</span>
                   </label>
                   <input
+                    id="emp-address"
                     type="text"
                     className="form-control rounded-3"
                     placeholder="Nhập địa chỉ trụ sở chính"
@@ -463,10 +474,11 @@ export default function EmployerProfilePage() {
               <div className="row g-3">
                 <div className="col-12">
                   <div className="d-flex justify-content-between align-items-center mb-1">
-                    <label className="form-label fw-semibold mb-0">Mô tả doanh nghiệp & Môi trường làm việc</label>
+                    <label htmlFor="emp-description" className="form-label fw-semibold mb-0">Mô tả doanh nghiệp & Môi trường làm việc</label>
                     <small className="text-muted">{form.description.length}/3000 ký tự</small>
                   </div>
                   <textarea
+                    id="emp-description"
                     className="form-control rounded-3"
                     rows={5}
                     maxLength={3000}

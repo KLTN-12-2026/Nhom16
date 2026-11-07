@@ -1,4 +1,4 @@
-import { fetchApi } from '../fetch-api'
+import { fetchApi, getApiUrl } from '../fetch-api'
 
 export interface JobCategory {
   id: number
@@ -35,6 +35,13 @@ export interface JobData {
   description: string
   requirements: string[]
   benefits: string[]
+  jdFiles?: Array<{
+    id: number
+    originalName: string
+    sizeBytes: number
+    mimeType: string
+    createdAt?: string
+  }>
 }
 
 export interface JobFilters {
@@ -62,3 +69,15 @@ export const listPublicJobsApi = (filters: JobFilters) => {
 
 export const listJobCategoriesApi = () => fetchApi<{ categories: JobCategory[] }>('/jobs/categories')
 export const getPublicJobApi = (id: number | string) => fetchApi<JobData>(`/jobs/${id}`)
+
+export const downloadPublicJobJdApi = async (jobId: number | string, fileId: number | string, filename?: string) => {
+  const response = await fetch(getApiUrl(`/jobs/${jobId}/jd/${fileId}/download`), { credentials: 'include' })
+  if (!response.ok) throw new Error('Không thể tải file JD.')
+  const blob = await response.blob()
+  const url = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename || `JD-${jobId}.pdf`
+  anchor.click()
+  URL.revokeObjectURL(url)
+}

@@ -4,10 +4,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { listJobCategoriesApi, type JobCategory } from '../../apis/job'
 import {
   createEmployerJobApi,
+  deleteJobJdApi,
+  downloadEmployerJobJdApi,
   getEmployerJobApi,
   updateEmployerJobApi,
   uploadJobJdApi,
   type EmployerJobInput,
+  type JobJdFileData,
 } from '../../apis/recruitment'
 
 interface FormData
@@ -25,11 +28,22 @@ const splitItems = (value: string) =>
     .map((item) => item.trim())
     .filter(Boolean)
 
+const formatFileSize = (bytes?: number) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`
+}
+
 export default function EmployerJobFormPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [categories, setCategories] = useState<JobCategory[]>([])
   const [error, setError] = useState('')
+  const [jdFiles, setJdFiles] = useState<JobJdFileData[]>([])
+  const [uploadingJd, setUploadingJd] = useState(false)
+  const [jdFeedback, setJdFeedback] = useState('')
 
   const {
     register,
@@ -74,6 +88,7 @@ export default function EmployerJobFormPage() {
     getEmployerJobApi(id)
       .then((response) => {
         const job = response.data
+        setJdFiles(job.jdFiles || [])
         reset({
           categoryId: String(job.category.id),
           title: job.title,
@@ -120,6 +135,58 @@ export default function EmployerJobFormPage() {
 
   const submitAs = (intent: 'draft' | 'publish') => {
     setValue('publish', intent === 'publish')
+  }
+
+  const handleDownloadJd = async (fileId: number, originalName: string) => {
+    if (!id) return
+    try {
+      setError('')
+      await downloadEmployerJobJdApi(id, fileId, originalName)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể tải file JD.')
+    }
+  }
+
+  const handleDeleteJd = async (fileId: number) => {
+    if (!id) return
+    if (!window.confirm('Bạn có chắc muốn xóa file JD này?')) return
+    try {
+      setError('')
+      await deleteJobJdApi(id, fileId)
+      setJdFiles((prev) => prev.filter((f) => f.id !== fileId))
+      setJdFeedback('Đã xóa file JD thành công.')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể xóa file JD.')
+    }
+  }
+
+  const handleDirectUploadJd = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || !id) return
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File JD không được vượt quá 5 MB.')
+      event.target.value = ''
+      return
+    }
+    const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase()
+    if (!['.pdf', '.docx'].includes(ext)) {
+      setError('Chỉ chấp nhận file định dạng PDF hoặc DOCX.')
+      event.target.value = ''
+      return
+    }
+    try {
+      setUploadingJd(true)
+      setError('')
+      setJdFeedback('')
+      const response = await uploadJobJdApi(id, file)
+      setJdFiles((prev) => [...prev, response.data])
+      setJdFeedback('Tải file JD lên thành công.')
+      event.target.value = ''
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể tải file JD lên.')
+    } finally {
+      setUploadingJd(false)
+    }
   }
 
   return (
@@ -205,14 +272,67 @@ export default function EmployerJobFormPage() {
             <section className="job-form-section job-form-section--upload">
               <div className="job-form-section__heading">
                 <span className="job-form-section__number">4</span>
-                <div><h2>Tài liệu mô tả công việc</h2><p>Đính kèm JD để ứng viên có thể xem thông tin chi tiết.</p></div>
+                <div><h2>Tài liệu mô tả công việc (JD)</h2><p>Đính kèm tài liệu JD chi tiết để ứng viên tải về xem trước khi ứng tuyển.</p></div>
               </div>
-              <label className="job-file-drop">
-                <i className="bi bi-cloud-arrow-up" />
-                <strong>Chọn file JD từ máy tính</strong>
-                <span>Hỗ trợ PDF, DOCX · dung lượng tối đa 5 MB</span>
-                <input type="file" accept=".pdf,.docx" {...register('jdFile')} />
-              </label>
+
+              {jdFeedback && (
+                <div className="alert alert-success py-2 px-3 mb-3 d-flex align-items-center justify-content-between">
+                  <span><i className="bi bi-check-circle-fill me-2" />{jdFeedback}</span>
+                  <button type="button" className="btn-close btn-sm" aria-label="Đóng thông báo" title="Đóng thông báo" onClick={() => setJdFeedback('')} />
+                </div>
+              )}
+
+              {id ? (
+                <div>
+                  {jdFiles.length > 0 ? (
+                    <div className="job-jd-list mb-3">
+                      {jdFiles.map((file) => (
+                        <div className="job-jd-item" key={file.id}>
+                          <div className="job-jd-info">
+                            <i className={`job-jd-icon bi ${file.originalName.endsWith('.docx') ? 'bi-file-earmark-word text-primary' : 'bi-file-earmark-pdf text-danger'}`} />
+                            <div className="job-jd-meta">
+                              <span className="job-jd-name">{file.originalName}</span>
+                              <span className="job-jd-size">{formatFileSize(file.sizeBytes)}{file.createdAt ? ` · Tải lên ${new Date(file.createdAt).toLocaleDateString('vi-VN')}` : ''}</span>
+                            </div>
+                          </div>
+                          <div className="job-jd-actions">
+                            <button type="button" className="job-jd-btn" onClick={() => void handleDownloadJd(file.id, file.originalName)}>
+                              <i className="bi bi-download" /> Tải về
+                            </button>
+                            <button type="button" className="job-jd-btn job-jd-btn--danger" onClick={() => void handleDeleteJd(file.id)}>
+                              <i className="bi bi-trash3" /> Xóa
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted small mb-3"><i className="bi bi-info-circle me-1" /> Tin tuyển dụng này hiện chưa có file JD đính kèm.</p>
+                  )}
+
+                  <label className={`job-file-drop ${uploadingJd ? 'opacity-50' : ''}`}>
+                    <i className="bi bi-cloud-arrow-up" />
+                    <strong>{uploadingJd ? 'Đang tải file lên...' : 'Tải lên thêm tài liệu JD'}</strong>
+                    <span>Hỗ trợ định dạng PDF, DOCX · dung lượng tối đa 5 MB</span>
+                    <input type="file" accept=".pdf,.docx" disabled={uploadingJd} onChange={handleDirectUploadJd} />
+                  </label>
+                </div>
+              ) : (
+                <div>
+                  <label className="job-file-drop">
+                    <i className="bi bi-cloud-arrow-up" />
+                    <strong>Chọn file JD từ máy tính</strong>
+                    <span>Hỗ trợ PDF, DOCX · dung lượng tối đa 5 MB</span>
+                    <input type="file" accept=".pdf,.docx" {...register('jdFile')} />
+                  </label>
+                  {values.jdFile?.[0] && (
+                    <div className="mt-2 text-success fw-semibold small d-flex align-items-center">
+                      <i className="bi bi-file-earmark-check fs-5 me-2" />
+                      <span>Đã chọn file: <strong>{values.jdFile[0].name}</strong> ({formatFileSize(values.jdFile[0].size)})</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </section>
 
             <div className="job-editor-actions">
@@ -229,7 +349,7 @@ export default function EmployerJobFormPage() {
           <aside className="job-editor-sidebar">
             <div className="job-progress-card">
               <div className="job-progress-card__top"><span>Mức độ hoàn thiện</span><strong>{completion}%</strong></div>
-              <div className="job-progress-track"><span style={{ width: `${completion}%` }} /></div>
+              <progress className="job-progress-bar" value={completion} max={100} aria-label="Mức độ hoàn thiện" />
               <ul>{completionItems.map((item) => <li className={item.done ? 'is-done' : ''} key={item.label}><i className={`bi ${item.done ? 'bi-check-circle-fill' : 'bi-circle'}`} /> {item.label}</li>)}</ul>
             </div>
             <div className="job-tip-card"><i className="bi bi-stars" /><div><strong>Mẹo viết tin hiệu quả</strong><p>Tiêu đề rõ ràng, mức lương minh bạch và mô tả cụ thể giúp tăng tỷ lệ ứng tuyển phù hợp.</p></div></div>

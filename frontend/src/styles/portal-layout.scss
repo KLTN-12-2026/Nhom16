@@ -828,7 +828,19 @@
 .job-file-drop strong { color: var(--job-ink); }
 .job-file-drop span { color: #718096; font-size: .78rem; }
 .job-file-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.job-editor-actions { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.8rem; border-top: 1px solid #e2ebe6; background: rgba(255, 255, 255, .96); backdrop-filter: blur(10px); }
+.job-jd-list { display: flex; flex-direction: column; gap: .75rem; }
+.job-jd-item { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: .85rem 1.15rem; border: 1px solid #dce8e1; border-radius: 12px; background: #f8faf9; }
+.job-jd-info { display: flex; align-items: center; gap: .85rem; min-width: 0; }
+.job-jd-icon { font-size: 1.8rem; flex-shrink: 0; }
+.job-jd-meta { display: flex; flex-direction: column; min-width: 0; }
+.job-jd-name { font-weight: 600; color: #1a2e22; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .95rem; }
+.job-jd-size { font-size: .78rem; color: #64748b; }
+.job-jd-actions { display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+.job-jd-btn { display: inline-flex; align-items: center; gap: .35rem; padding: .4rem .75rem; border: 1px solid #dce8e1; border-radius: 8px; background: #fff; color: #334155; font-size: .82rem; font-weight: 650; cursor: pointer; transition: all .15s ease; }
+.job-jd-btn:hover { background: #f1f5f9; color: #0f172a; }
+.job-jd-btn--danger { color: #dc2626; border-color: #fecaca; }
+.job-jd-btn--danger:hover { background: #fef2f2; color: #b91c1c; }
+.job-editor-actions { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.8rem; border-top: 1px solid #e2ebe6; background: rgba(255, 255, 255, .96); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .job-editor-actions > div { display: flex; gap: .65rem; }
 .job-btn { min-height: 43px; display: inline-flex; align-items: center; justify-content: center; gap: .45rem; padding: .65rem 1rem; border: 1px solid transparent; border-radius: 10px; font-weight: 750; transition: transform .18s, box-shadow .18s, background .18s; }
 .job-btn:hover:not(:disabled) { transform: translateY(-1px); }
@@ -844,6 +856,17 @@
 .job-progress-card__top strong { color: var(--job-green-dark); }
 .job-progress-track { height: 7px; margin: .7rem 0 1rem; overflow: hidden; border-radius: 999px; background: #e7eee9; }
 .job-progress-track span { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, var(--job-green), #35c477); transition: width .3s ease; }
+.job-progress-bar { width: 100%; height: 7px; margin: .7rem 0 1rem; display: block; overflow: hidden; border: 0; border-radius: 999px; background: #e7eee9; accent-color: var(--job-green); }
+.job-progress-bar::-webkit-progress-bar { background: #e7eee9; border-radius: 999px; }
+.job-progress-bar::-webkit-progress-value { background: linear-gradient(90deg, var(--job-green), #35c477); border-radius: 999px; transition: width .3s ease; }
+.job-progress-bar::-moz-progress-bar { background: linear-gradient(90deg, var(--job-green), #35c477); border-radius: 999px; }
+.completeness-progress { width: 100%; height: 8px; display: block; overflow: hidden; border: 0; border-radius: 999px; background: #e2e8f0; accent-color: #00a94f; }
+.completeness-progress::-webkit-progress-bar { background: #e2e8f0; border-radius: 999px; }
+.completeness-progress::-webkit-progress-value { background: linear-gradient(90deg, #00a94f, #10b981); border-radius: 999px; transition: width .4s ease; }
+.completeness-progress::-moz-progress-bar { background: linear-gradient(90deg, #00a94f, #10b981); border-radius: 999px; }
+.spinner-border-lg { width: 3rem; height: 3rem; }
+.job-detail-logo-box { width: 64px; height: 64px; }
+.job-detail-sticky-card { top: 90px; }
 .job-progress-card ul { display: grid; gap: .65rem; margin: 0; padding: 0; list-style: none; }
 .job-progress-card li { display: flex; align-items: center; gap: .5rem; color: #7b8982; font-size: .8rem; }
 .job-progress-card li.is-done { color: #315f47; }
