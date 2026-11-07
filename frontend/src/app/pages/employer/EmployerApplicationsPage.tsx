@@ -34,9 +34,7 @@ export default function EmployerApplicationsPage() {
   const search = watch('search').trim().toLowerCase()
   const status = watch('status')
   const error = localError || storeError
-  const load = () => dispatch(recruitmentActions.employerApplicationsLoad())
-
-  useEffect(() => { load() }, [dispatch])
+  useEffect(() => { dispatch(recruitmentActions.employerApplicationsLoad()) }, [dispatch])
 
   const counts = useMemo(() => Object.keys(statusMeta).reduce<Record<string, number>>((result, key) => {
     result[key] = items.filter((item) => item.status === key).length
@@ -55,7 +53,7 @@ export default function EmployerApplicationsPage() {
     try {
       await updateApplicationStatusApi(item.id, nextStatus)
       setFeedback(`Đã chuyển ${item.candidate?.fullName || 'ứng viên'} sang “${statusMeta[nextStatus]?.label || nextStatus}”.`)
-      load()
+      dispatch(recruitmentActions.employerApplicationsLoad())
     } catch (cause) {
       setLocalError(cause instanceof Error ? cause.message : 'Không thể cập nhật hồ sơ ứng tuyển.')
     } finally {

@@ -27,9 +27,7 @@ export default function EmployerJobsPage() {
   const [feedback, setFeedback] = useState('')
   const search = watch('search').trim().toLowerCase()
   const status = watch('status')
-  const load = () => dispatch(recruitmentActions.employerJobsLoad())
-
-  useEffect(() => { load() }, [dispatch])
+  useEffect(() => { dispatch(recruitmentActions.employerJobsLoad()) }, [dispatch])
 
   const stats = useMemo(() => ({
     total: jobs.length,
@@ -50,7 +48,7 @@ export default function EmployerJobsPage() {
     try {
       await (action === 'clone' ? cloneEmployerJobApi(job.id) : changeEmployerJobStatusApi(job.id, action))
       setFeedback(action === 'clone' ? 'Đã tạo một bản nháp mới từ tin tuyển dụng.' : 'Đã cập nhật trạng thái tin tuyển dụng.')
-      load()
+      dispatch(recruitmentActions.employerJobsLoad())
     } catch (cause) {
       setFeedback(cause instanceof Error ? cause.message : 'Không thể cập nhật tin tuyển dụng.')
     } finally {

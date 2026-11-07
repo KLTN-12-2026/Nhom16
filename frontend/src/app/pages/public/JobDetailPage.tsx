@@ -3,13 +3,13 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { getPublicJobApi, type JobData } from '../../apis/job'
 import { listCandidateCvsApi, type CandidateCv } from '../../apis/candidate'
-import { applyToJobApi, toggleFavoriteJobApi } from '../../apis/recruitment'
+import { applyToJobApi, getCandidateApplicationJobApi, toggleFavoriteJobApi } from '../../apis/recruitment'
 import { ROUTE } from '../../constants/route.constant'
 import { ROLE } from '../../constants/role.constant'
 import { useAuth } from '../../provider/auth-provider'
 
 export default function JobDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id, applicationId } = useParams<{ id: string; applicationId: string }>()
   const location = useLocation()
   const { user } = useAuth()
   const [job, setJob] = useState<JobData | null>(null)
@@ -27,7 +27,8 @@ export default function JobDetailPage() {
   }, [showApply, user?.role])
 
   useEffect(() => {
-    getPublicJobApi(id || '')
+    const request = applicationId ? getCandidateApplicationJobApi(applicationId) : getPublicJobApi(id || '')
+    request
       .then((response) => {
         setJob(response.data)
         setLoading(false)
@@ -36,9 +37,9 @@ export default function JobDetailPage() {
         setError(err.message)
         setLoading(false)
       })
-  }, [id])
+  }, [applicationId, id])
 
-  const jobsPath = location.pathname.startsWith('/candidate/') ? ROUTE.CANDIDATE_JOBS : ROUTE.JOBS
+  const jobsPath = applicationId ? '/candidate/applications' : location.pathname.startsWith('/candidate/') ? ROUTE.CANDIDATE_JOBS : ROUTE.JOBS
 
   if (loading) {
     return (
@@ -143,7 +144,12 @@ export default function JobDetailPage() {
           <div className="card border-0 shadow-sm p-4 rounded-4 position-sticky" style={{ top: 90 }}>
             <h3 className="h6 fw-bold mb-3">Hành động ứng tuyển</h3>
 
-            {applied ? (
+            {applicationId ? (
+              <div className="alert alert-success d-flex align-items-center gap-2">
+                <i className="bi bi-file-earmark-check-fill fs-5" />
+                <span>Đây là JD bạn đã dùng để ứng tuyển.</span>
+              </div>
+            ) : applied ? (
               <div className="alert alert-success d-flex align-items-center gap-2">
                 <i className="bi bi-check-circle-fill fs-5" />
                 <span>Bạn đã gửi hồ sơ ứng tuyển thành công!</span>
@@ -158,9 +164,9 @@ export default function JobDetailPage() {
               </button>
             )}
 
-            <button type="button" className="btn btn-outline-secondary w-100 py-2 rounded-pill mb-3" onClick={() => { if (!user) return setActionError('Vui lòng đăng nhập để lưu việc làm.'); toggleFavoriteJobApi(job.id).then(response => setSaved(response.data.favorite)).catch(cause => setActionError(cause.message)) }}>
+            {!applicationId && <button type="button" className="btn btn-outline-secondary w-100 py-2 rounded-pill mb-3" onClick={() => { if (!user) return setActionError('Vui lòng đăng nhập để lưu việc làm.'); toggleFavoriteJobApi(job.id).then(response => setSaved(response.data.favorite)).catch(cause => setActionError(cause.message)) }}>
               <i className={`bi ${saved ? 'bi-bookmark-fill' : 'bi-bookmark'} me-2`} /> {saved ? 'Đã lưu việc làm' : 'Lưu tin việc làm'}
-            </button>
+            </button>}
             {actionError && <div className="alert alert-danger small">{actionError}</div>}
             {showApply && <form className="apply-form" onSubmit={handleSubmit(async values => { try { await applyToJobApi(job.id, Number(values.cvId), values.coverLetter); setApplied(true); setShowApply(false); setActionError('') } catch (cause) { setActionError(cause instanceof Error ? cause.message : 'Không thể nộp hồ sơ.') } })}><h4>Chọn CV ứng tuyển</h4>{cvs.length === 0 ? <p>Bạn chưa có CV. Hãy tải CV trước khi ứng tuyển.</p> : <><select {...register('cvId', { required: true })} defaultValue=""><option value="" disabled>Chọn CV</option>{cvs.map(cv => <option value={cv.id} key={cv.id}>{cv.displayName}{cv.isDefault ? ' (Mặc định)' : ''}</option>)}</select><textarea rows={4} placeholder="Thư giới thiệu (không bắt buộc)" {...register('coverLetter')} /><div><button type="button" onClick={() => setShowApply(false)}>Hủy</button><button className="btn btn-success" disabled={isSubmitting} type="submit">{isSubmitting ? 'Đang gửi...' : 'Xác nhận nộp'}</button></div></>}</form>}
 

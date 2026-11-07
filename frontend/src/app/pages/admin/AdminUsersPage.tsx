@@ -58,6 +58,8 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     fetchUsers()
+    // Search is submitted explicitly; do not fetch again on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, roleFilter, statusFilter])
 
   const handleSearchSubmit = (e: FormEvent) => {

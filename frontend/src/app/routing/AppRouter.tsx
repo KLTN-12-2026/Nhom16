@@ -28,6 +28,7 @@ import EmployerJobsPage from '../pages/employer/EmployerJobsPage'
 import EmployerJobFormPage from '../pages/employer/EmployerJobFormPage'
 import EmployerApplicationsPage from '../pages/employer/EmployerApplicationsPage'
 import EmployerFavoriteCandidatesPage from '../pages/employer/EmployerFavoriteCandidatesPage'
+import EmployerRecommendationsPage from '../pages/employer/EmployerRecommendationsPage'
 import HomePage from '../pages/home/HomePage'
 import CategoriesPage from '../pages/public/CategoriesPage'
 import CvAnalysisPage from '../pages/public/CvAnalysisPage'
@@ -85,6 +86,7 @@ export function AppRouter() {
         <Route path="cv" element={<RequirePermission permission={PERMISSION.CV_MANAGE}><CandidateCvPage /></RequirePermission>} />
         <Route path="profile" element={<CandidateProfilePage />} />
         <Route path="applications" element={<CandidateApplicationsPage />} />
+        <Route path="applications/:applicationId/job" element={<JobDetailPage />} />
         <Route path="saved-jobs" element={<CandidateSavedJobsPage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
@@ -98,6 +100,7 @@ export function AppRouter() {
         <Route path="jobs/:id/edit" element={<EmployerJobFormPage />} />
         <Route path="applications" element={<EmployerApplicationsPage />} />
         <Route path="favorite-candidates" element={<EmployerFavoriteCandidatesPage />} />
+        <Route path="recommendations" element={<RequirePermission permission={PERMISSION.CANDIDATE_RECOMMENDATION_VIEW}><EmployerRecommendationsPage /></RequirePermission>} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
 
