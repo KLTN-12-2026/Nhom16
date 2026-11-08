@@ -20,3 +20,5 @@ backend/public/temp/
 backend/uploads/
 ~$*.docx
 *.docx
+~$*.xlsx
+*.xlsx
