@@ -13,6 +13,8 @@ const salaryOptions = [['UNDER_10', 'Dưới 10 triệu'], ['10_20', '10 - 20 tr
 const experienceOptions = [['NONE', 'Không yêu cầu'], ['1_2', '1 - 2 năm'], ['2_5', '2 - 5 năm'], ['OVER_5', 'Trên 5 năm']]
 
 const defaultFilters: JobFilters = { search: '', category: '', location: '', salary: '', experience: '', workMode: '', employmentType: '', positionLevel: '', skill: '', sort: 'LATEST', page: 1, limit: 8 }
+type QuickFilters = Pick<JobFilters, 'search' | 'category' | 'location'>
+type AdvancedFilters = Pick<JobFilters, 'category' | 'salary' | 'experience' | 'workMode' | 'employmentType' | 'positionLevel' | 'skill'>
 
 function FavoriteButton({ job, favorite }: { job: JobData; favorite: boolean }) {
   const dispatch = useAppDispatch()
@@ -82,7 +84,24 @@ export function JobsExplorer({ candidate = false }: { candidate?: boolean }) {
   const initialFilters = { ...defaultFilters, category: searchParams.get('category') || '' }
   const dispatch = useAppDispatch()
   const { selectedJobId, favoriteJobIds, favoritesInitialized } = useAppSelector((state) => state.jobs)
-  const { register, handleSubmit, reset, setValue, getValues } = useForm<JobFilters>({ defaultValues: initialFilters })
+  const quickForm = useForm<QuickFilters>({
+    defaultValues: {
+      search: initialFilters.search,
+      category: initialFilters.category,
+      location: initialFilters.location,
+    },
+  })
+  const advancedForm = useForm<AdvancedFilters>({
+    defaultValues: {
+      category: initialFilters.category,
+      salary: initialFilters.salary,
+      experience: initialFilters.experience,
+      workMode: initialFilters.workMode,
+      employmentType: initialFilters.employmentType,
+      positionLevel: initialFilters.positionLevel,
+      skill: initialFilters.skill,
+    },
+  })
   const [filters, setFilters] = useState<JobFilters>(initialFilters)
   const [categories, setCategories] = useState<JobCategory[]>([])
   const [jobs, setJobs] = useState<JobData[]>([])
@@ -113,12 +132,24 @@ export function JobsExplorer({ candidate = false }: { candidate?: boolean }) {
   }, [dispatch, filters])
 
   const selectedJob = jobs.find((job) => job.id === selectedJobId) || jobs[0]
-  const submitFilters = (values: JobFilters) => setFilters({ ...values, page: 1, limit: 8 })
-  const selectCategory = (code: string) => {
-    setValue('category', code)
-    setFilters({ ...getValues(), category: code, page: 1, limit: 8 })
+  const submitQuickFilters = (values: QuickFilters) => {
+    advancedForm.setValue('category', values.category)
+    setFilters((current) => ({ ...current, ...values, page: 1, limit: 8 }))
   }
-  const clearFilters = () => { reset(defaultFilters); setFilters(defaultFilters) }
+  const submitAdvancedFilters = (values: AdvancedFilters) => {
+    quickForm.setValue('category', values.category)
+    setFilters((current) => ({ ...current, ...values, page: 1, limit: 8 }))
+  }
+  const selectCategory = (code: string) => {
+    quickForm.setValue('category', code)
+    advancedForm.setValue('category', code)
+    setFilters((current) => ({ ...current, category: code, page: 1, limit: 8 }))
+  }
+  const clearFilters = () => {
+    quickForm.reset({ search: '', category: '', location: '' })
+    advancedForm.reset({ category: '', salary: '', experience: '', workMode: '', employmentType: '', positionLevel: '', skill: '' })
+    setFilters(defaultFilters)
+  }
   const changePage = (page: number) => setFilters((current) => ({ ...current, page }))
 
   return (
@@ -128,10 +159,10 @@ export function JobsExplorer({ candidate = false }: { candidate?: boolean }) {
           <p className="jobs-search-hero__eyebrow">Cơ hội nghề nghiệp dành cho bạn</p>
           <h1>Tìm công việc phù hợp</h1>
           <p>Khám phá tin tuyển dụng đã được công khai từ các doanh nghiệp trên hệ thống.</p>
-          <form className="jobs-search-form" onSubmit={handleSubmit(submitFilters)}>
-            <label><i className="bi bi-search" /><input {...register('search')} placeholder="Chức danh, công ty hoặc từ khóa" /></label>
-            <label><i className="bi bi-grid" /><select {...register('category')}><option value="">Tất cả ngành nghề</option>{categories.map((category) => <option key={category.code} value={category.code}>{category.shortName}</option>)}</select></label>
-            <label><i className="bi bi-geo-alt" /><select {...register('location')}><option value="">Tất cả địa điểm</option>{locations.map((location) => <option key={location}>{location}</option>)}</select></label>
+          <form className="jobs-search-form" onSubmit={quickForm.handleSubmit(submitQuickFilters)}>
+            <label><i className="bi bi-search" /><input {...quickForm.register('search')} placeholder="Chức danh, công ty hoặc từ khóa" /></label>
+            <label><i className="bi bi-grid" /><select {...quickForm.register('category')}><option value="">Tất cả ngành nghề</option>{categories.map((category) => <option key={category.code} value={category.code}>{category.shortName}</option>)}</select></label>
+            <label><i className="bi bi-geo-alt" /><select {...quickForm.register('location')}><option value="">Tất cả địa điểm</option>{locations.map((location) => <option key={location}>{location}</option>)}</select></label>
             <button type="submit"><i className="bi bi-search" />Tìm kiếm</button>
             <button type="button" className="jobs-filter-toggle" onClick={() => setShowFilters((value) => !value)}><i className="bi bi-funnel" />Bộ lọc</button>
           </form>
@@ -143,15 +174,15 @@ export function JobsExplorer({ candidate = false }: { candidate?: boolean }) {
 
       <div className="container jobs-explorer-layout">
         <aside className={`jobs-filter-sidebar${showFilters ? ' is-open' : ''}`}>
-          <form className="jobs-filter-panel" onSubmit={handleSubmit(submitFilters)}>
+          <form className="jobs-filter-panel" onSubmit={advancedForm.handleSubmit(submitAdvancedFilters)}>
             <div className="jobs-filter-panel__heading"><div><i className="bi bi-funnel-fill" /><h2>Lọc nâng cao</h2></div><button type="button" onClick={clearFilters}>Xóa lọc</button></div>
-            <label>Ngành nghề<select {...register('category')}><option value="">Tất cả ngành nghề</option>{categories.map((category) => <option key={category.code} value={category.code}>{category.shortName}</option>)}</select></label>
-            <label>Mức lương<select {...register('salary')}><option value="">Tất cả mức lương</option>{salaryOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-            <label>Kinh nghiệm<select {...register('experience')}><option value="">Tất cả kinh nghiệm</option>{experienceOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
-            <label>Hình thức làm việc<select {...register('workMode')}><option value="">Tất cả hình thức</option><option value="OFFICE">Tại văn phòng</option><option value="HYBRID">Hybrid</option><option value="REMOTE">Từ xa</option></select></label>
-            <label>Loại công việc<select {...register('employmentType')}><option value="">Tất cả loại công việc</option><option value="FULL_TIME">Toàn thời gian</option><option value="INTERNSHIP">Thực tập</option><option value="CONTRACT">Hợp đồng</option></select></label>
-            <label>Cấp bậc<select {...register('positionLevel')}><option value="">Tất cả cấp bậc</option><option value="INTERN">Thực tập sinh</option><option value="STAFF">Nhân viên</option><option value="MANAGER">Quản lý</option></select></label>
-            <label>Kỹ năng<input {...register('skill')} placeholder="Ví dụ: ReactJS" /></label>
+            <label>Ngành nghề<select {...advancedForm.register('category')}><option value="">Tất cả ngành nghề</option>{categories.map((category) => <option key={category.code} value={category.code}>{category.shortName}</option>)}</select></label>
+            <label>Mức lương<select {...advancedForm.register('salary')}><option value="">Tất cả mức lương</option>{salaryOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+            <label>Kinh nghiệm<select {...advancedForm.register('experience')}><option value="">Tất cả kinh nghiệm</option>{experienceOptions.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+            <label>Hình thức làm việc<select {...advancedForm.register('workMode')}><option value="">Tất cả hình thức</option><option value="OFFICE">Tại văn phòng</option><option value="HYBRID">Hybrid</option><option value="REMOTE">Từ xa</option></select></label>
+            <label>Loại công việc<select {...advancedForm.register('employmentType')}><option value="">Tất cả loại công việc</option><option value="FULL_TIME">Toàn thời gian</option><option value="INTERNSHIP">Thực tập</option><option value="CONTRACT">Hợp đồng</option></select></label>
+            <label>Cấp bậc<select {...advancedForm.register('positionLevel')}><option value="">Tất cả cấp bậc</option><option value="INTERN">Thực tập sinh</option><option value="STAFF">Nhân viên</option><option value="MANAGER">Quản lý</option></select></label>
+            <label>Kỹ năng<input {...advancedForm.register('skill')} placeholder="Ví dụ: ReactJS" /></label>
             <button className="jobs-filter-panel__submit" type="submit">Áp dụng bộ lọc</button>
           </form>
         </aside>
@@ -159,7 +190,7 @@ export function JobsExplorer({ candidate = false }: { candidate?: boolean }) {
         <main className="jobs-results">
           <div className="jobs-results__heading">
             <div><span>{pagination.total} cơ hội</span><h2>Việc làm đang tuyển</h2></div>
-            <select aria-label="Sắp xếp việc làm" {...register('sort')} onChange={(event) => { setValue('sort', event.target.value); setFilters({ ...getValues(), sort: event.target.value, page: 1 }) }}>
+            <select aria-label="Sắp xếp việc làm" value={filters.sort} onChange={(event) => setFilters((current) => ({ ...current, sort: event.target.value, page: 1 }))}>
               <option value="LATEST">Mới nhất</option><option value="SALARY_DESC">Lương cao nhất</option><option value="SALARY_ASC">Lương thấp nhất</option>
             </select>
           </div>
