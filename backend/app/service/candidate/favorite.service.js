@@ -12,6 +12,7 @@ const listFavoriteJobs = async (userId) => {
 
   return favorites.map(favorite => ({
     id: Number(favorite.id),
+    createdAt: favorite.createdAt,
     job: serializeJob(favorite.job),
   }))
 }

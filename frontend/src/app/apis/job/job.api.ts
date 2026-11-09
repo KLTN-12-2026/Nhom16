@@ -35,6 +35,7 @@ export interface JobData {
   description: string
   requirements: string[]
   benefits: string[]
+  savedAt?: string
   jdFiles?: Array<{
     id: number
     originalName: string

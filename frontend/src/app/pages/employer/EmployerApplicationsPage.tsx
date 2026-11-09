@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { useSearchParams } from 'react-router-dom'
 import {
   downloadApplicationCvApi,
   toggleFavoriteCandidateApi,
@@ -22,6 +23,7 @@ const pipeline = ['RECEIVED', 'REVIEWING', 'INTERVIEW', 'OFFER']
 interface FilterForm {
   search: string
   status: string
+  sort: string
 }
 
 export default function EmployerApplicationsPage() {
@@ -30,9 +32,12 @@ export default function EmployerApplicationsPage() {
   const [localError, setLocalError] = useState('')
   const [feedback, setFeedback] = useState('')
   const [busyId, setBusyId] = useState<number | null>(null)
-  const { register, watch, reset } = useForm<FilterForm>({ defaultValues: { search: '', status: '' } })
+  const [searchParams, setSearchParams] = useSearchParams()
+  const candidateId = Number(searchParams.get('candidateId')) || 0
+  const { register, watch, reset } = useForm<FilterForm>({ defaultValues: { search: '', status: '', sort: 'NEWEST' } })
   const search = watch('search').trim().toLowerCase()
   const status = watch('status')
+  const sort = watch('sort')
   const error = localError || storeError
   useEffect(() => { dispatch(recruitmentActions.employerApplicationsLoad()) }, [dispatch])
 
@@ -43,8 +48,13 @@ export default function EmployerApplicationsPage() {
 
   const filteredItems = useMemo(() => items.filter((item) => {
     const keyword = `${item.candidate?.fullName || ''} ${item.candidate?.email || ''} ${item.job.title} ${item.cv.displayName}`.toLowerCase()
-    return (!status || item.status === status) && (!search || keyword.includes(search))
-  }), [items, search, status])
+    return (!candidateId || item.candidate?.id === candidateId) && (!status || item.status === status) && (!search || keyword.includes(search))
+  }).sort((left, right) => {
+    if (sort === 'OLDEST') return new Date(left.appliedAt).getTime() - new Date(right.appliedAt).getTime()
+    if (sort === 'CANDIDATE_ASC') return (left.candidate?.fullName || '').localeCompare(right.candidate?.fullName || '', 'vi')
+    if (sort === 'JOB_ASC') return left.job.title.localeCompare(right.job.title, 'vi')
+    return new Date(right.appliedAt).getTime() - new Date(left.appliedAt).getTime()
+  }), [candidateId, items, search, sort, status])
 
   const update = async (item: ApplicationData, nextStatus: string) => {
     setBusyId(item.id)
@@ -90,11 +100,11 @@ export default function EmployerApplicationsPage() {
         <section className="application-pipeline" aria-label="Tổng quan quy trình tuyển dụng">
           {pipeline.map((key) => {
             const meta = statusMeta[key]
-            return <button className={`application-stage application-stage--${meta.tone}${status === key ? ' is-active' : ''}`} type="button" key={key} onClick={() => reset({ search: watch('search'), status: status === key ? '' : key })}>
+            return <button className={`application-stage application-stage--${meta.tone}${status === key ? ' is-active' : ''}`} type="button" key={key} onClick={() => reset({ search: watch('search'), status: status === key ? '' : key, sort })}>
               <span><i className={`bi ${meta.icon}`} /></span><div><small>{meta.label}</small><strong>{counts[key] || 0}</strong></div><i className="bi bi-chevron-right" />
             </button>
           })}
-          <button className={`application-stage application-stage--red${status === 'REJECTED' ? ' is-active' : ''}`} type="button" onClick={() => reset({ search: watch('search'), status: status === 'REJECTED' ? '' : 'REJECTED' })}>
+          <button className={`application-stage application-stage--red${status === 'REJECTED' ? ' is-active' : ''}`} type="button" onClick={() => reset({ search: watch('search'), status: status === 'REJECTED' ? '' : 'REJECTED', sort })}>
             <span><i className="bi bi-x-circle" /></span><div><small>Không phù hợp</small><strong>{counts.REJECTED || 0}</strong></div>
           </button>
         </section>
@@ -107,7 +117,8 @@ export default function EmployerApplicationsPage() {
             <form>
               <label className="application-search"><i className="bi bi-search" /><input placeholder="Tìm ứng viên, email, vị trí hoặc CV..." {...register('search')} /></label>
               <label className="application-filter"><i className="bi bi-funnel" /><select aria-label="Lọc trạng thái" {...register('status')}><option value="">Tất cả trạng thái</option>{Object.entries(statusMeta).map(([value, meta]) => <option value={value} key={value}>{meta.label}</option>)}</select></label>
-              {(search || status) && <button className="application-clear-filter" type="button" onClick={() => reset()}>Xóa lọc</button>}
+              <label className="application-filter"><i className="bi bi-sort-down" /><select aria-label="Sắp xếp hồ sơ" {...register('sort')}><option value="NEWEST">Mới nhất</option><option value="OLDEST">Cũ nhất</option><option value="CANDIDATE_ASC">Tên ứng viên A–Z</option><option value="JOB_ASC">Vị trí A–Z</option></select></label>
+              {(search || status || candidateId) && <button className="application-clear-filter" type="button" onClick={() => { reset(); setSearchParams({}) }}>Xóa lọc</button>}
             </form>
           </div>
 

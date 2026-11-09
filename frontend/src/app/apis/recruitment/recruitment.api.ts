@@ -31,9 +31,9 @@ export const listEmployerApplicationsApi = (jobId?: number) => fetchApi<Applicat
 export const updateApplicationStatusApi = (id: number, status: string, note?: string) => fetchApi<ApplicationData>(`/employer/applications/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status, note }) })
 export const downloadApplicationCvApi = async (application: ApplicationData) => { const response = await fetch(getApiUrl(`/employer/applications/${application.id}/cv/download`), { credentials: 'include' }); if (!response.ok) throw new ApiClientError(response.status, { code: 'CV_DOWNLOAD_FAILED', message: 'Không thể tải CV ứng viên.' }); const url = URL.createObjectURL(await response.blob()); const anchor = document.createElement('a'); anchor.href = url; anchor.download = application.cv.originalName || `${application.cv.displayName}.pdf`; anchor.click(); URL.revokeObjectURL(url) }
 export const toggleFavoriteCandidateApi = (candidateId: number) => fetchApi<{ favorite: boolean; candidateId: number }>(`/employer/favorite-candidates/${candidateId}/toggle`, { method: 'POST' })
-export interface FavoriteCandidateData { id: number; candidate: { id: number; fullName: string; email: string; candidateProfile?: { avatar?: string; phone?: string; title?: string; skills?: string[] } } }
+export interface FavoriteCandidateData { id: number; createdAt: string; candidate: { id: number; fullName: string; email: string; candidateProfile?: { avatar?: string; phone?: string; title?: string; skills?: string[] } } }
 export const listFavoriteCandidatesApi = () => fetchApi<FavoriteCandidateData[]>('/employer/favorite-candidates')
-export const listFavoriteJobsApi = () => fetchApi<Array<{ id: number; job: JobData }>>('/candidate/favorite-jobs')
+export const listFavoriteJobsApi = () => fetchApi<Array<{ id: number; createdAt: string; job: JobData }>>('/candidate/favorite-jobs')
 export const toggleFavoriteJobApi = (jobId: number) => fetchApi<{ favorite: boolean; jobId: number }>(`/candidate/favorite-jobs/${jobId}/toggle`, { method: 'POST' })
 export interface NotificationData { id: number; type: string; title: string; message: string; entityType?: string; entityId?: number; readAt: string | null; createdAt: string }
 export const listNotificationsApi = () => fetchApi<NotificationData[]>('/candidate/notifications')

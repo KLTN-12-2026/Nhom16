@@ -1,6 +1,7 @@
 const { createApp } = require('./app')
 const { redis } = require('./config')
 const { initApiController } = require('./controller')
+const { initCronTasks } = require('./cron')
 const { closeDatabase, initDatabase } = require('./db')
 const { initErrorMiddleware } = require('./middleware')
 const { initQueue } = require('./queue')
@@ -16,6 +17,7 @@ const initApplication = async () => {
     initRedis(),
   ])
   const queue = initQueue()
+  const cron = await initCronTasks({ models })
   const dependencies = {
     cvQueue: queue.cvQueue,
     database,
@@ -32,6 +34,7 @@ const initApplication = async () => {
     app,
     async close() {
       await Promise.allSettled([
+        cron.close(),
         closeDatabase(),
         queue.close(),
         redisClient.quit(),
