@@ -42,6 +42,15 @@ const env = Object.freeze({
     secretKey: process.env.RECAPTCHA_SECRET_KEY || '',
     minimumScore: toNumber(process.env.RECAPTCHA_MIN_SCORE, 0.5),
   },
+  ai: {
+    provider: process.env.AI_PROVIDER || 'ollama',
+    ollamaBaseUrl: process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434',
+    ollamaModel: process.env.OLLAMA_MODEL || 'qwen2.5:3b',
+    requestTimeoutMs: toNumber(process.env.AI_REQUEST_TIMEOUT_MS, 120000),
+    anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+    anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929',
+    cvMaxCharacters: toNumber(process.env.AI_CV_MAX_CHARACTERS, 30000),
+  },
   upload: {
     rootDirectory: path.resolve(__dirname, '../../uploads'),
     cvMaxBytes: toNumber(process.env.CV_UPLOAD_MAX_BYTES, 5 * 1024 * 1024),

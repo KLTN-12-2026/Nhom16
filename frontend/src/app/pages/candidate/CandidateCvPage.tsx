@@ -54,7 +54,7 @@ function CvDetailSection({ icon, title, items, emptyText, variant }: {
   title: string
   items: string[]
   emptyText: string
-  variant: 'skills' | 'certificates' | 'projects'
+  variant: 'education' | 'experience' | 'skills' | 'certificates' | 'projects'
 }) {
   return <section className={`cv-detail cv-detail--${variant}`}>
     <h3><i className={`bi ${icon}`} /> {title}<span>{items.length}</span></h3>
@@ -211,11 +211,14 @@ export default function CandidateCvPage() {
             </div>
           </div>
           <div className="candidate-cv-card__details">
+            <CvDetailSection icon="bi-mortarboard" title="Học vấn" items={cv.education || []} emptyText="Chưa nhận diện được thông tin học vấn." variant="education" />
+            <CvDetailSection icon="bi-briefcase" title="Kinh nghiệm" items={cv.experience || []} emptyText="Chưa nhận diện được kinh nghiệm làm việc." variant="experience" />
             <CvDetailSection icon="bi-lightning-charge" title="Kỹ năng" items={cv.skills || []} emptyText="Chưa nhận diện được kỹ năng trong CV." variant="skills" />
             <CvDetailSection icon="bi-patch-check" title="Chứng chỉ" items={cv.certificates || []} emptyText="Chưa có thông tin chứng chỉ." variant="certificates" />
             <CvDetailSection icon="bi-kanban" title="Dự án nổi bật" items={cv.projects || []} emptyText="Chưa nhận diện được dự án trong CV." variant="projects" />
           </div>
-          <div className="candidate-cv-card__meta"><span><i className={`bi ${cv.mimeType.includes('pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word'}`} /> {cv.originalName}</span><span>{formatBytes(cv.sizeBytes)}</span><span>Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</span></div>
+          <div className="candidate-cv-card__meta"><span><i className={`bi ${cv.mimeType.includes('pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word'}`} /> {cv.originalName}</span><span>{formatBytes(cv.sizeBytes)}</span><span>Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</span>{cv.analyzedAt && <span>Phân tích lần {cv.analysisVersion} · {new Date(cv.analyzedAt).toLocaleString('vi-VN')}</span>}</div>
+          {cv.analysisError && <p className="cv-form-error"><i className="bi bi-exclamation-triangle" /> {cv.analysisError}</p>}
           <div className="candidate-cv-card__actions">
             <button type="button" className="cv-action" onClick={() => downloadCandidateCvApi(cv).catch((cause) => setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể tải CV.') }))}><i className="bi bi-download" /> Tải xuống</button>
             <RenameCv

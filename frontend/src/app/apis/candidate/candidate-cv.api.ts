@@ -11,11 +11,16 @@ export interface CandidateCv {
   candidateEmail: string | null
   candidatePhone: string | null
   headline: string | null
+  education: string[]
+  experience: string[]
   skills: string[]
   certificates: string[]
   projects: string[]
   hasAvatar: boolean
   extractionStatus: 'pending' | 'processing' | 'completed' | 'partial' | 'failed'
+  analysisVersion: number
+  analysisError: string | null
+  analyzedAt: string | null
   createdAt: string
   updatedAt: string
 }

@@ -56,6 +56,21 @@ describe('CV extraction service', () => {
     ])
   })
 
+  it('extracts education and experience only from the supplied CV content', () => {
+    const result = extractCareerSections(`
+      HỌC VẤN
+      Đại học Duy Tân - Công nghệ phần mềm - 2022 đến 2026
+      KINH NGHIỆM
+      Thực tập sinh Backend tại Peacom - 06/2026 đến 09/2026
+      KỸ NĂNG
+      NodeJS, MySQL
+    `)
+
+    assert.deepEqual(result.education, ['Đại học Duy Tân - Công nghệ phần mềm - 2022 đến 2026'])
+    assert.deepEqual(result.experience, ['Thực tập sinh Backend tại Peacom - 06/2026 đến 09/2026'])
+    assert.deepEqual(result.skills, ['NodeJS', 'MySQL'])
+  })
+
   it('supports section content written on the same line as its heading', () => {
     const result = extractCareerSections('Skills: JavaScript, React, Docker\nCertifications: IELTS 7.0\nProjects: Candidate matching system')
 

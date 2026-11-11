@@ -12,6 +12,8 @@ const avatarDirectory = path.resolve(env.upload.rootDirectory, 'cv-avatars')
 const ignoredHeadings = /^(curriculum vitae|resume|cv|profile|contact|personal information|thông tin cá nhân|hồ sơ|mục tiêu nghề nghiệp)$/i
 const cvSectionPattern = /\b(kinh nghiệm|học vấn|kỹ năng|mục tiêu nghề nghiệp|chứng chỉ|dự án|work experience|education|skills|career objective|certifications?|projects?)\b/gi
 const sectionDefinitions = Object.freeze({
+  education: /^(học vấn|hoc van|education|academic background)$/i,
+  experience: /^(kinh nghiệm|kinh nghiem|kinh nghiệm làm việc|kinh nghiem lam viec|work experience|experience)$/i,
   skills: /^(kỹ năng|ky nang|skills?|technical skills?|core competencies)$/i,
   certificates: /^(chứng chỉ|chung chi|certifications?|certificates?|awards?(?:\s*(?:&|and)\s*certifications?)?)$/i,
   projects: /^(dự án|du an|projects?|personal projects?|academic projects?)$/i,
@@ -44,7 +46,7 @@ const getSectionName = (line) => {
 
 const extractCareerSections = (text) => {
   const lines = normalizeText(text).split(/\r?\n/).map((line) => line.trim()).filter(Boolean)
-  const sections = { skills: [], certificates: [], projects: [] }
+  const sections = { education: [], experience: [], skills: [], certificates: [], projects: [] }
   let currentSection = null
 
   for (const line of lines) {
@@ -67,6 +69,8 @@ const extractCareerSections = (text) => {
 
   const skillItems = sections.skills.flatMap((line) => line.split(/[,;|·•●▪]+/))
   return {
+    education: uniqueItems(sections.education, 12),
+    experience: uniqueItems(sections.experience, 16),
     skills: uniqueItems(skillItems, 16),
     certificates: uniqueItems(sections.certificates, 8),
     projects: uniqueItems(sections.projects, 10),
@@ -190,9 +194,7 @@ const extractPdfImages = async (buffer) => {
 
 const extractCvData = async (absolutePath, mimeType) => {
   try {
-    const extracted = mimeType === 'application/pdf'
-      ? await extractPdf(absolutePath)
-      : await extractDocx(absolutePath)
+    const extracted = await extractCvDocument(absolutePath, mimeType)
     const basicInformation = extractBasicInformation(extracted.text)
     const careerSections = extractCareerSections(extracted.text)
     return {
@@ -214,6 +216,8 @@ const extractCvData = async (absolutePath, mimeType) => {
       candidateEmail: null,
       candidatePhone: null,
       headline: null,
+      education: [],
+      experience: [],
       skills: [],
       certificates: [],
       projects: [],
@@ -223,4 +227,8 @@ const extractCvData = async (absolutePath, mimeType) => {
   }
 }
 
-module.exports = { extractBasicInformation, extractCareerSections, extractCvData }
+const extractCvDocument = (absolutePath, mimeType) => mimeType === 'application/pdf'
+  ? extractPdf(absolutePath)
+  : extractDocx(absolutePath)
+
+module.exports = { extractBasicInformation, extractCareerSections, extractCvData, extractCvDocument }

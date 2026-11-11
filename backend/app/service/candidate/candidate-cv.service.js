@@ -3,8 +3,9 @@ const path = require('node:path')
 
 const { env } = require('../../config')
 const { db } = require('../../db')
+const { cvAnalysisService } = require('../ai/cv-analysis.service')
 const { ApiError } = require('../../util')
-const { extractCvData } = require('./cv-extraction.service')
+const { extractCvDocument } = require('./cv-extraction.service')
 
 const backendRoot = path.resolve(__dirname, '../../..')
 const cvRoot = path.resolve(env.upload.rootDirectory, 'cv')
@@ -21,11 +22,16 @@ const toCandidateCv = (cv) => ({
   candidateEmail: cv.candidateEmail,
   candidatePhone: cv.candidatePhone,
   headline: cv.headline,
+  education: Array.isArray(cv.education) ? cv.education : [],
+  experience: Array.isArray(cv.experience) ? cv.experience : [],
   skills: Array.isArray(cv.skills) ? cv.skills : [],
   certificates: Array.isArray(cv.certificates) ? cv.certificates : [],
   projects: Array.isArray(cv.projects) ? cv.projects : [],
   hasAvatar: Boolean(cv.avatarPath),
   extractionStatus: cv.extractionStatus,
+  analysisVersion: Number(cv.analysisVersion || 0),
+  analysisError: cv.analysisError,
+  analyzedAt: cv.analyzedAt,
   createdAt: cv.createdAt,
   updatedAt: cv.updatedAt,
 })
@@ -152,8 +158,22 @@ const processCandidateCv = async (id) => {
   if (!cv) return { skipped: true }
   await cv.update({ extractionStatus: 'processing' })
   const absolutePath = resolveStoredPath(cv.storagePath)
-  const extracted = await extractCvData(absolutePath, cv.mimeType)
-  const avatarPath = extracted.avatarAbsolutePath ? path.relative(backendRoot, extracted.avatarAbsolutePath) : null
+  let document
+  let extracted
+  try {
+    document = await extractCvDocument(absolutePath, cv.mimeType)
+    extracted = await cvAnalysisService.analyze(document.text)
+  } catch (error) {
+    if (document?.avatarAbsolutePath) await fs.unlink(document.avatarAbsolutePath).catch(() => undefined)
+    await cv.update({
+      extractionStatus: 'failed',
+      analysisVersion: Number(cv.analysisVersion || 0) + 1,
+      analysisError: error.message?.slice(0, 500) || 'AI chưa thể phân tích CV.',
+      analyzedAt: new Date(),
+    })
+    throw error
+  }
+  const avatarPath = document.avatarAbsolutePath ? path.relative(backendRoot, document.avatarAbsolutePath) : null
   const previousAvatarPath = cv.avatarPath ? resolveStoredPath(cv.avatarPath, avatarRoot) : null
 
   try {
@@ -162,18 +182,25 @@ const processCandidateCv = async (id) => {
       candidateEmail: extracted.candidateEmail,
       candidatePhone: extracted.candidatePhone,
       headline: extracted.headline,
+      education: extracted.education,
+      experience: extracted.experience,
       skills: extracted.skills,
       certificates: extracted.certificates,
       projects: extracted.projects,
       avatarPath,
       extractionStatus: extracted.extractionStatus,
+      analysisVersion: Number(cv.analysisVersion || 0) + 1,
+      analysisError: extracted.extractionStatus === 'failed'
+        ? 'Không thể đọc đủ nội dung để xác định đây là một CV hợp lệ.'
+        : null,
+      analyzedAt: new Date(),
     })
   } catch (error) {
-    if (extracted.avatarAbsolutePath) await fs.unlink(extracted.avatarAbsolutePath).catch(() => undefined)
+    if (document.avatarAbsolutePath) await fs.unlink(document.avatarAbsolutePath).catch(() => undefined)
     throw error
   }
 
-  if (previousAvatarPath && previousAvatarPath !== extracted.avatarAbsolutePath) {
+  if (previousAvatarPath && previousAvatarPath !== document.avatarAbsolutePath) {
     await fs.unlink(previousAvatarPath).catch((error) => {
       if (error.code !== 'ENOENT') throw error
     })
@@ -183,7 +210,7 @@ const processCandidateCv = async (id) => {
 
 const queueCandidateCvExtraction = async (userId, id, cvQueue) => {
   const cv = await findOwnedCv(userId, id)
-  await cv.update({ extractionStatus: 'pending' })
+  await cv.update({ extractionStatus: 'pending', analysisError: null })
   await cvQueue.addExtraction(Number(cv.id))
   return toCandidateCv(cv)
 }

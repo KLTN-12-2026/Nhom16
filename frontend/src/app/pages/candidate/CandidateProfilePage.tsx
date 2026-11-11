@@ -109,7 +109,9 @@ export default function CandidateProfilePage() {
     try {
       await uploadCandidateAvatarApi(file)
       setHasCustomAvatar(true)
-      setAvatarTimestamp(Date.now())
+      const timestamp = Date.now()
+      setAvatarTimestamp(timestamp)
+      window.dispatchEvent(new CustomEvent('candidate-avatar-updated', { detail: { timestamp } }))
       setFeedback({ type: 'success', message: 'Cập nhật ảnh đại diện thành công!' })
     } catch (err) {
       const message = err instanceof ApiClientError ? err.message : 'Không thể tải ảnh đại diện lên.'
@@ -128,7 +130,9 @@ export default function CandidateProfilePage() {
     try {
       await deleteCandidateAvatarApi()
       setHasCustomAvatar(false)
-      setAvatarTimestamp(Date.now())
+      const timestamp = Date.now()
+      setAvatarTimestamp(timestamp)
+      window.dispatchEvent(new CustomEvent('candidate-avatar-updated', { detail: { timestamp } }))
       setFeedback({ type: 'success', message: 'Đã xóa ảnh đại diện.' })
     } catch (err) {
       const message = err instanceof ApiClientError ? err.message : 'Không thể xóa ảnh đại diện.'
@@ -243,6 +247,14 @@ export default function CandidateProfilePage() {
                 <i className="bi bi-trash3-fill" />
               </button>
             )}
+          </div>
+
+          <div className="profile-avatar-actions">
+            <label htmlFor={avatarInputId} className="profile-avatar-upload-button">
+              <i className="bi bi-cloud-arrow-up" />
+              <span>{hasCustomAvatar ? 'Đổi ảnh đại diện' : 'Tải ảnh đại diện'}</span>
+            </label>
+            <small>JPG, PNG hoặc WEBP · tối đa 5 MB</small>
           </div>
 
           <h2 className="h5 fw-bold text-dark mb-1">{form.fullName || 'Chưa đặt họ tên'}</h2>
