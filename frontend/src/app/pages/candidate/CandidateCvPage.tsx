@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import { useForm } from 'react-hook-form'
+import { useDispatch, useSelector } from 'react-redux'
 
 import {
   deleteCandidateCvApi,
@@ -11,8 +12,11 @@ import {
   setDefaultCandidateCvApi,
   uploadCandidateCvApi,
   type CandidateCv,
+  type CvQualityAssessment,
 } from '../../apis/candidate'
 import { ApiClientError } from '../../apis/fetch-api'
+import { candidateCvActions } from '../../modules/candidate-cv/redux'
+import type { AppDispatch, RootState } from '../../store'
 
 interface UploadCvForm {
   displayName: string
@@ -66,6 +70,34 @@ function CvDetailSection({ icon, title, items, emptyText, variant }: {
   </section>
 }
 
+const qualityCriteria = [
+  ['completeness', 'Đầy đủ'],
+  ['clarity', 'Rõ ràng'],
+  ['consistency', 'Nhất quán'],
+  ['evidence', 'Thể hiện năng lực'],
+] as const
+
+function CvQualityPanel({ assessment }: { assessment: CvQualityAssessment }) {
+  return <section className="cv-quality" aria-label="Đánh giá chất lượng CV">
+    <header>
+      <div className="cv-quality__score" style={{ '--quality-score': `${assessment.overallScore * 3.6}deg` } as CSSProperties}>
+        <span><strong>{assessment.overallScore}</strong><small>/100</small></span>
+      </div>
+      <div><span className="cv-quality__eyebrow"><i className="bi bi-stars" /> AI đánh giá chất lượng</span><h3>{assessment.overallScore >= 80 ? 'Hồ sơ nổi bật' : assessment.overallScore >= 60 ? 'Hồ sơ khá tốt' : 'Hồ sơ cần hoàn thiện'}</h3><p>{assessment.disclaimer}</p></div>
+    </header>
+    <div className="cv-quality__criteria">{qualityCriteria.map(([key, label]) => <article key={key}>
+      <div><strong>{label}</strong><span>{assessment.criteria[key].score}/100</span></div>
+      <span className="cv-quality__bar"><i style={{ width: `${assessment.criteria[key].score}%` }} /></span>
+      <p>{assessment.criteria[key].summary}</p>
+    </article>)}</div>
+    <div className="cv-quality__insights">
+      <article><h4><i className="bi bi-check-circle" /> Điểm mạnh</h4><ul>{assessment.strengths.map((item) => <li key={item}>{item}</li>)}</ul></article>
+      <article><h4><i className="bi bi-exclamation-circle" /> Điểm cần cải thiện</h4><ul>{assessment.limitations.map((item) => <li key={item}>{item}</li>)}</ul></article>
+    </div>
+    <footer>Đánh giá phiên bản {assessment.analysisVersion} · {new Date(assessment.assessedAt).toLocaleString('vi-VN')}</footer>
+  </section>
+}
+
 function RenameCv({ cv, onSaved, onError }: { cv: CandidateCv; onSaved: (updated: CandidateCv) => void; onError: (message: string) => void }) {
   const [editing, setEditing] = useState(false)
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<RenameCvForm>({
@@ -102,6 +134,8 @@ function RenameCv({ cv, onSaved, onError }: { cv: CandidateCv; onSaved: (updated
 }
 
 export default function CandidateCvPage() {
+  const dispatch = useDispatch<AppDispatch>()
+  const qualityState = useSelector((state: RootState) => state.candidateCv)
   const [cvs, setCvs] = useState<CandidateCv[]>([])
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -191,7 +225,11 @@ export default function CandidateCvPage() {
     <section className="candidate-cv-list" aria-label="Danh sách CV">
       {loading && <div className="cv-empty"><span className="spinner-border text-primary" /><p>Đang tải danh sách CV...</p></div>}
       {!loading && cvs.length === 0 && <div className="cv-empty"><i className="bi bi-file-earmark-person" /><h2>Bạn chưa có CV</h2><p>Tải CV đầu tiên để chuẩn bị cho bước phân tích và ứng tuyển.</p></div>}
-      {!loading && cvs.map((cv) => <article className={`candidate-cv-card candidate-cv-card--${cv.extractionStatus}`} key={cv.id}>
+      {!loading && cvs.map((cv) => {
+        const qualityAssessment = qualityState.assessmentByCvId[cv.id] || cv.qualityAssessment
+        const qualityError = qualityState.errorByCvId[cv.id]
+        const isAssessing = qualityState.assessingCvId === cv.id
+        return <article className={`candidate-cv-card candidate-cv-card--${cv.extractionStatus}`} key={cv.id}>
         <div className="candidate-cv-card__topline">
           <div className="candidate-cv-card__title"><h2>{cv.displayName}</h2>{cv.isDefault && <span><i className="bi bi-star-fill" /> CV mặc định</span>}</div>
           <span className={`cv-analysis-status cv-analysis-status--${cv.extractionStatus}`}><i className={`bi ${extractionLabels[cv.extractionStatus].icon}`} /> {extractionLabels[cv.extractionStatus].label}</span>
@@ -218,6 +256,8 @@ export default function CandidateCvPage() {
             <CvDetailSection icon="bi-kanban" title="Dự án nổi bật" items={cv.projects || []} emptyText="Chưa nhận diện được dự án trong CV." variant="projects" />
           </div>
           <div className="candidate-cv-card__meta"><span><i className={`bi ${cv.mimeType.includes('pdf') ? 'bi-file-earmark-pdf' : 'bi-file-earmark-word'}`} /> {cv.originalName}</span><span>{formatBytes(cv.sizeBytes)}</span><span>Tải lên {new Date(cv.createdAt).toLocaleDateString('vi-VN')}</span>{cv.analyzedAt && <span>Phân tích lần {cv.analysisVersion} · {new Date(cv.analyzedAt).toLocaleString('vi-VN')}</span>}</div>
+          {qualityAssessment && <CvQualityPanel assessment={qualityAssessment} />}
+          {qualityError && <p className="cv-form-error"><i className="bi bi-exclamation-triangle" /> {qualityError}</p>}
           {cv.analysisError && <p className="cv-form-error"><i className="bi bi-exclamation-triangle" /> {cv.analysisError}</p>}
           <div className="candidate-cv-card__actions">
             <button type="button" className="cv-action" onClick={() => downloadCandidateCvApi(cv).catch((cause) => setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể tải CV.') }))}><i className="bi bi-download" /> Tải xuống</button>
@@ -236,6 +276,7 @@ export default function CandidateCvPage() {
                 setFeedback({ type: 'error', message: getErrorMessage(cause, 'Không thể đọc thông tin CV.') })
               } finally { setBusyId(null) }
             }}><i className="bi bi-arrow-repeat" /> Đọc lại thông tin</button>
+            {['completed', 'partial'].includes(cv.extractionStatus) && <button type="button" className="cv-action cv-action--ai" disabled={qualityState.assessingCvId !== null} onClick={() => dispatch(candidateCvActions.qualityRequested({ cvId: cv.id, force: Boolean(qualityAssessment) }))}><i className={`bi ${isAssessing ? 'bi-arrow-repeat' : 'bi-stars'}`} /> {isAssessing ? 'AI đang đánh giá...' : qualityAssessment ? 'Đánh giá lại chất lượng' : 'Đánh giá chất lượng'}</button>}
             {!cv.isDefault && <button type="button" className="cv-action" disabled={busyId !== null} onClick={async () => {
               setBusyId(cv.id)
               try {
@@ -259,7 +300,7 @@ export default function CandidateCvPage() {
             }}><i className="bi bi-trash" /> Xóa</button>
           </div>
         </div>
-      </article>)}
+      </article>})}
     </section>
   </main>
 }

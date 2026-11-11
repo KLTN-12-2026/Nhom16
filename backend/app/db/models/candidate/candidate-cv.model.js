@@ -48,6 +48,7 @@ class CandidateCv extends Model {
       as: 'user',
     })
     this.hasMany(models.Application, { foreignKey: 'candidateCvId', as: 'applications' })
+    this.hasMany(models.CvQualityAssessment, { foreignKey: 'candidateCvId', as: 'qualityAssessments' })
   }
 
   toJSON() {

@@ -4,14 +4,16 @@ const path = require('node:path')
 const { env } = require('../../config')
 const { db } = require('../../db')
 const { cvAnalysisService } = require('../ai/cv-analysis.service')
+const { isVietnameseCvQuality } = require('../ai/cv-quality-schema.service')
 const { ApiError } = require('../../util')
 const { extractCvDocument } = require('./cv-extraction.service')
+const { toQualityAssessment } = require('./cv-quality-assessment.service')
 
 const backendRoot = path.resolve(__dirname, '../../..')
 const cvRoot = path.resolve(env.upload.rootDirectory, 'cv')
 const avatarRoot = path.resolve(env.upload.rootDirectory, 'cv-avatars')
 
-const toCandidateCv = (cv) => ({
+const toCandidateCv = (cv, qualityAssessment = null) => ({
   id: Number(cv.id),
   displayName: cv.displayName,
   originalName: cv.originalName,
@@ -34,6 +36,7 @@ const toCandidateCv = (cv) => ({
   analyzedAt: cv.analyzedAt,
   createdAt: cv.createdAt,
   updatedAt: cv.updatedAt,
+  qualityAssessment: toQualityAssessment(qualityAssessment),
 })
 
 const resolveStoredPath = (storagePath, allowedRoot = cvRoot) => {
@@ -55,7 +58,21 @@ const listCandidateCvs = async (userId) => {
     where: { userId },
     order: [['isDefault', 'DESC'], ['createdAt', 'DESC']],
   })
-  return cvs.map(toCandidateCv)
+  const assessments = cvs.length ? await db.CvQualityAssessment.findAll({
+    where: { candidateCvId: cvs.map((cv) => cv.id) },
+    order: [['analysisVersion', 'DESC'], ['assessedAt', 'DESC']],
+  }) : []
+  const currentByCv = new Map()
+  assessments.forEach((assessment) => {
+    const cv = cvs.find((item) => String(item.id) === String(assessment.candidateCvId))
+    if (cv
+      && Number(assessment.analysisVersion) === Number(cv.analysisVersion)
+      && isVietnameseCvQuality(assessment)
+      && !currentByCv.has(String(cv.id))) {
+      currentByCv.set(String(cv.id), assessment)
+    }
+  })
+  return cvs.map((cv) => toCandidateCv(cv, currentByCv.get(String(cv.id))))
 }
 
 const createCandidateCv = async (userId, file, displayName, cvQueue) => {

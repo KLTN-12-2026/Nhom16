@@ -23,6 +23,19 @@ export interface CandidateCv {
   analyzedAt: string | null
   createdAt: string
   updatedAt: string
+  qualityAssessment: CvQualityAssessment | null
+}
+
+export interface CvQualityCriterion { score: number; summary: string }
+export interface CvQualityAssessment {
+  id: number
+  analysisVersion: number
+  overallScore: number
+  criteria: Record<'completeness' | 'clarity' | 'consistency' | 'evidence', CvQualityCriterion>
+  strengths: string[]
+  limitations: string[]
+  assessedAt: string
+  disclaimer: string
 }
 
 export const listCandidateCvsApi = () => fetchApi<{ cvs: CandidateCv[] }>('/candidate/cvs')
@@ -48,6 +61,12 @@ export const setDefaultCandidateCvApi = (id: number) => fetchApi<{ cv: Candidate
 export const extractCandidateCvApi = (id: number) => fetchApi<{ cv: CandidateCv }>(`/candidate/cvs/${id}/extraction`, {
   method: 'PUT',
   timeoutMs: 30000,
+})
+
+export const assessCandidateCvQualityApi = (id: number, force = false) => fetchApi<{ assessment: CvQualityAssessment }>(`/candidate/cvs/${id}/quality-assessment`, {
+  method: 'POST',
+  body: JSON.stringify({ force }),
+  timeoutMs: 190000,
 })
 
 export const deleteCandidateCvApi = (id: number) => fetchApi<{ id: number }>(`/candidate/cvs/${id}`, {

@@ -23,6 +23,7 @@ const {
   renameCandidateCv,
   setDefaultCandidateCv,
 } = require("../../service/candidate/candidate-cv.service");
+const { assessCandidateCvQuality } = require("../../service/candidate/cv-quality-assessment.service");
 const { sendSuccess } = require("../../util");
 const {
   validateRenameCandidateCv,
@@ -82,6 +83,15 @@ const initCandidateCvController = (app, { cvQueue }) => {
           message: "CV đã được đưa vào hàng đợi xử lý.",
         }),
       )
+      .catch(next),
+  );
+
+  router.post("/:id/quality-assessment", (req, res, next) =>
+    assessCandidateCvQuality(req.user.id, req.params.id, { force: req.body?.force === true })
+      .then((assessment) => sendSuccess(res, {
+        data: { assessment },
+        message: "Đánh giá chất lượng CV hoàn tất.",
+      }))
       .catch(next),
   );
 
