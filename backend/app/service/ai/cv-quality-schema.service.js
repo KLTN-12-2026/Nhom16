@@ -87,4 +87,4 @@ const isVietnameseCvQuality = (value) => {
   return insights.every((text) => isVietnameseText(text) || isTechnicalLabel(text))
 }
 
-module.exports = { cvQualitySchema, isVietnameseCvQuality, isVietnameseText, validateCvQuality }
+module.exports = { cvQualitySchema, isTechnicalLabel, isVietnameseCvQuality, isVietnameseText, validateCvQuality }

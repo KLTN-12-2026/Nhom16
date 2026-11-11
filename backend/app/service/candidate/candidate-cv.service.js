@@ -4,16 +4,18 @@ const path = require('node:path')
 const { env } = require('../../config')
 const { db } = require('../../db')
 const { cvAnalysisService } = require('../ai/cv-analysis.service')
+const { isVietnameseCvImprovement } = require('../ai/cv-improvement-schema.service')
 const { isVietnameseCvQuality } = require('../ai/cv-quality-schema.service')
 const { ApiError } = require('../../util')
 const { extractCvDocument } = require('./cv-extraction.service')
+const { toImprovementSuggestion } = require('./cv-improvement-suggestion.service')
 const { toQualityAssessment } = require('./cv-quality-assessment.service')
 
 const backendRoot = path.resolve(__dirname, '../../..')
 const cvRoot = path.resolve(env.upload.rootDirectory, 'cv')
 const avatarRoot = path.resolve(env.upload.rootDirectory, 'cv-avatars')
 
-const toCandidateCv = (cv, qualityAssessment = null) => ({
+const toCandidateCv = (cv, qualityAssessment = null, improvementSuggestion = null) => ({
   id: Number(cv.id),
   displayName: cv.displayName,
   originalName: cv.originalName,
@@ -37,6 +39,7 @@ const toCandidateCv = (cv, qualityAssessment = null) => ({
   createdAt: cv.createdAt,
   updatedAt: cv.updatedAt,
   qualityAssessment: toQualityAssessment(qualityAssessment),
+  improvementSuggestion: toImprovementSuggestion(improvementSuggestion),
 })
 
 const resolveStoredPath = (storagePath, allowedRoot = cvRoot) => {
@@ -53,26 +56,45 @@ const findOwnedCv = async (userId, id, options = {}) => {
   return cv
 }
 
+const pickCurrentByCv = (records, cvs, isValidFn) => {
+  const cvById = new Map(cvs.map((cv) => [String(cv.id), cv]))
+  const currentByCv = new Map()
+  records.forEach((record) => {
+    const cvId = String(record.candidateCvId)
+    const cv = cvById.get(cvId)
+    if (cv && Number(record.analysisVersion) === Number(cv.analysisVersion) && isValidFn(record) && !currentByCv.has(cvId)) {
+      currentByCv.set(cvId, record)
+    }
+  })
+  return currentByCv
+}
+
 const listCandidateCvs = async (userId) => {
   const cvs = await db.CandidateCv.findAll({
     where: { userId },
     order: [['isDefault', 'DESC'], ['createdAt', 'DESC']],
   })
-  const assessments = cvs.length ? await db.CvQualityAssessment.findAll({
-    where: { candidateCvId: cvs.map((cv) => cv.id) },
-    order: [['analysisVersion', 'DESC'], ['assessedAt', 'DESC']],
-  }) : []
-  const currentByCv = new Map()
-  assessments.forEach((assessment) => {
-    const cv = cvs.find((item) => String(item.id) === String(assessment.candidateCvId))
-    if (cv
-      && Number(assessment.analysisVersion) === Number(cv.analysisVersion)
-      && isVietnameseCvQuality(assessment)
-      && !currentByCv.has(String(cv.id))) {
-      currentByCv.set(String(cv.id), assessment)
-    }
-  })
-  return cvs.map((cv) => toCandidateCv(cv, currentByCv.get(String(cv.id))))
+  if (!cvs.length) return []
+
+  const cvIds = cvs.map((cv) => cv.id)
+  const [assessments, suggestions] = await Promise.all([
+    db.CvQualityAssessment.findAll({
+      where: { candidateCvId: cvIds },
+      order: [['analysisVersion', 'DESC'], ['assessedAt', 'DESC']],
+    }),
+    db.CvImprovementSuggestion.findAll({
+      where: { candidateCvId: cvIds },
+      order: [['analysisVersion', 'DESC'], ['generatedAt', 'DESC']],
+    }),
+  ])
+
+  const currentQualityByCv = pickCurrentByCv(assessments, cvs, isVietnameseCvQuality)
+  const currentSuggestionByCv = pickCurrentByCv(suggestions, cvs, isVietnameseCvImprovement)
+  return cvs.map((cv) => toCandidateCv(
+    cv,
+    currentQualityByCv.get(String(cv.id)),
+    currentSuggestionByCv.get(String(cv.id)),
+  ))
 }
 
 const createCandidateCv = async (userId, file, displayName, cvQueue) => {

@@ -24,6 +24,7 @@ const {
   setDefaultCandidateCv,
 } = require("../../service/candidate/candidate-cv.service");
 const { assessCandidateCvQuality } = require("../../service/candidate/cv-quality-assessment.service");
+const { suggestCandidateCvImprovement } = require("../../service/candidate/cv-improvement-suggestion.service");
 const { sendSuccess } = require("../../util");
 const {
   validateRenameCandidateCv,
@@ -91,6 +92,18 @@ const initCandidateCvController = (app, { cvQueue }) => {
       .then((assessment) => sendSuccess(res, {
         data: { assessment },
         message: "Đánh giá chất lượng CV hoàn tất.",
+      }))
+      .catch(next),
+  );
+
+  router.post("/:id/improvement-suggestions", (req, res, next) =>
+    suggestCandidateCvImprovement(req.user.id, req.params.id, {
+      force: req.body?.force === true,
+      customRequest: typeof req.body?.customRequest === "string" ? req.body.customRequest : "",
+    })
+      .then((suggestion) => sendSuccess(res, {
+        data: { suggestion },
+        message: "Tạo gợi ý cải thiện CV hoàn tất.",
       }))
       .catch(next),
   );

@@ -24,6 +24,7 @@ export interface CandidateCv {
   createdAt: string
   updatedAt: string
   qualityAssessment: CvQualityAssessment | null
+  improvementSuggestion: CvImprovementSuggestion | null
 }
 
 export interface CvQualityCriterion { score: number; summary: string }
@@ -35,6 +36,29 @@ export interface CvQualityAssessment {
   strengths: string[]
   limitations: string[]
   assessedAt: string
+  disclaimer: string
+}
+
+export interface CvRecommendedSkill { keyword: string; reason: string }
+export interface CvObjectiveRewrite { currentStatus: string; suggestedText: string; rationale: string }
+export interface CvExperienceRewrite { original: string; improved: string; focusNote: string }
+export interface CvSectionAdvice { reason: string; actionableEdit: string }
+export interface CvImprovementWarnings {
+  missingContacts: string[]
+  spellingOrExpression: string[]
+  missingSections: string[]
+}
+export interface CvImprovementSuggestion {
+  id: number
+  analysisVersion: number
+  targetRole: string
+  recommendedSkills: CvRecommendedSkill[]
+  objectiveRewrite: CvObjectiveRewrite
+  experienceRewrites: CvExperienceRewrite[]
+  educationSuggestion: CvSectionAdvice | null
+  presentationSuggestion: CvSectionAdvice | null
+  warnings: CvImprovementWarnings
+  generatedAt: string
   disclaimer: string
 }
 
@@ -66,6 +90,12 @@ export const extractCandidateCvApi = (id: number) => fetchApi<{ cv: CandidateCv 
 export const assessCandidateCvQualityApi = (id: number, force = false) => fetchApi<{ assessment: CvQualityAssessment }>(`/candidate/cvs/${id}/quality-assessment`, {
   method: 'POST',
   body: JSON.stringify({ force }),
+  timeoutMs: 190000,
+})
+
+export const suggestCandidateCvImprovementApi = (id: number, force = false, customRequest = '') => fetchApi<{ suggestion: CvImprovementSuggestion }>(`/candidate/cvs/${id}/improvement-suggestions`, {
+  method: 'POST',
+  body: JSON.stringify({ force, customRequest: customRequest.trim() }),
   timeoutMs: 190000,
 })
 
