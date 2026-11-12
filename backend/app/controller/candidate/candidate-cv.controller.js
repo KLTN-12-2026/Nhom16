@@ -24,7 +24,10 @@ const {
   setDefaultCandidateCv,
 } = require("../../service/candidate/candidate-cv.service");
 const { assessCandidateCvQuality } = require("../../service/candidate/cv-quality-assessment.service");
-const { suggestCandidateCvImprovement } = require("../../service/candidate/cv-improvement-suggestion.service");
+const {
+  getCandidateCvImprovementStatus,
+  suggestCandidateCvImprovement,
+} = require("../../service/candidate/cv-improvement-suggestion.service");
 const { sendSuccess } = require("../../util");
 const {
   validateRenameCandidateCv,
@@ -100,11 +103,26 @@ const initCandidateCvController = (app, { cvQueue }) => {
     suggestCandidateCvImprovement(req.user.id, req.params.id, {
       force: req.body?.force === true,
       customRequest: typeof req.body?.customRequest === "string" ? req.body.customRequest : "",
+      cvQueue,
     })
-      .then((suggestion) => sendSuccess(res, {
-        data: { suggestion },
-        message: "Tạo gợi ý cải thiện CV hoàn tất.",
+      .then((result) => sendSuccess(res, {
+        data: result,
+        message: result.status === "completed"
+          ? "Tạo gợi ý cải thiện CV hoàn tất."
+          : "Yêu cầu gợi ý cải thiện CV đã được đưa vào hàng đợi xử lý.",
+        statusCode: result.status === "completed" ? 200 : 202,
       }))
+      .catch(next),
+  );
+
+  router.get("/:id/improvement-suggestions", (req, res, next) =>
+    getCandidateCvImprovementStatus(
+      req.user.id,
+      req.params.id,
+      typeof req.query?.jobId === "string" ? req.query.jobId : "",
+      { cvQueue },
+    )
+      .then((result) => sendSuccess(res, { data: result }))
       .catch(next),
   );
 

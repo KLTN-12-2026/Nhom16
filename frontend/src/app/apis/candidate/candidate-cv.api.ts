@@ -87,16 +87,27 @@ export const extractCandidateCvApi = (id: number) => fetchApi<{ cv: CandidateCv 
   timeoutMs: 30000,
 })
 
+export interface CvImprovementJobPayload {
+  status: 'idle' | 'queued' | 'processing' | 'completed'
+  jobId: string | null
+  suggestion: CvImprovementSuggestion | null
+}
+
 export const assessCandidateCvQualityApi = (id: number, force = false) => fetchApi<{ assessment: CvQualityAssessment }>(`/candidate/cvs/${id}/quality-assessment`, {
   method: 'POST',
   body: JSON.stringify({ force }),
   timeoutMs: 190000,
 })
 
-export const suggestCandidateCvImprovementApi = (id: number, force = false, customRequest = '') => fetchApi<{ suggestion: CvImprovementSuggestion }>(`/candidate/cvs/${id}/improvement-suggestions`, {
+export const suggestCandidateCvImprovementApi = (id: number, force = false, customRequest = '') => fetchApi<CvImprovementJobPayload>(`/candidate/cvs/${id}/improvement-suggestions`, {
   method: 'POST',
   body: JSON.stringify({ force, customRequest: customRequest.trim() }),
-  timeoutMs: 190000,
+  timeoutMs: 30000,
+})
+
+export const getCandidateCvImprovementStatusApi = (id: number, jobId: string) => fetchApi<CvImprovementJobPayload>(`/candidate/cvs/${id}/improvement-suggestions?jobId=${encodeURIComponent(jobId)}`, {
+  method: 'GET',
+  timeoutMs: 15000,
 })
 
 export const deleteCandidateCvApi = (id: number) => fetchApi<{ id: number }>(`/candidate/cvs/${id}`, {

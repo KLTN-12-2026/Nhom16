@@ -2,7 +2,9 @@ const { expect } = require('chai')
 
 const {
   buildContactAudit,
+  getCandidateCvImprovementStatus,
   mergeContactWarnings,
+  processCandidateCvImprovement,
   suggestCandidateCvImprovement,
 } = require('../../../app/service/candidate/cv-improvement-suggestion.service')
 
@@ -186,5 +188,79 @@ describe('Candidate CV improvement suggestion service (PB12)', () => {
     expect(savedValues.presentationSuggestion).to.deep.equal(validAiOutput.presentationSuggestion)
     expect(result.id).to.equal(12)
     expect(result.disclaimer).to.include('AI')
+  })
+
+  it('enqueues improvement job into cvQueue and resolves worker status polling', async () => {
+    let queuedPayload
+    let savedValues
+    const models = {
+      CandidateCv: {
+        findOne: async () => ({
+          id: 5,
+          userId: 10,
+          extractionStatus: 'completed',
+          analysisVersion: 2,
+          candidateName: 'Lê Thị Hoa',
+          candidateEmail: 'hoa@example.com',
+          candidatePhone: '0905123456',
+          headline: 'Frontend Developer',
+          education: ['Đại học Duy Tân'],
+          experience: [],
+          skills: ['React'],
+          certificates: [],
+          projects: [],
+        }),
+      },
+      CvQualityAssessment: {
+        findOne: async () => validQualityAssessment,
+      },
+      CvImprovementSuggestion: {
+        findOne: async () => null,
+        upsert: async (values) => {
+          savedValues = { id: 15, ...values }
+          return [savedValues]
+        },
+      },
+    }
+
+    const cvQueue = {
+      addImprovement: async (payload) => {
+        queuedPayload = payload
+        return { id: 'job-99' }
+      },
+      getJob: async (jobId) => ({
+        id: jobId,
+        data: queuedPayload,
+        returnvalue: savedValues ? { id: 15, ...validAiOutput, analysisVersion: 2, generatedAt: savedValues.generatedAt, disclaimer: 'AI' } : null,
+        getState: async () => (savedValues ? 'completed' : 'active'),
+      }),
+    }
+
+    const queued = await suggestCandidateCvImprovement(10, 5, {
+      force: true,
+      customRequest: 'Nhấn mạnh React',
+      cvQueue,
+      models,
+    })
+    expect(queued).to.deep.equal({ status: 'queued', jobId: 'job-99', suggestion: null })
+    expect(queuedPayload).to.deep.equal({
+      userId: 10,
+      cvId: 5,
+      analysisVersion: 2,
+      customRequest: 'Nhấn mạnh React',
+    })
+
+    const processingStatus = await getCandidateCvImprovementStatus(10, 5, 'job-99', { cvQueue, models })
+    expect(processingStatus.status).to.equal('processing')
+
+    const workerResult = await processCandidateCvImprovement(queuedPayload, {
+      models,
+      improvementService: { suggest: async () => validAiOutput },
+    })
+    expect(workerResult.id).to.equal(15)
+
+    const completedStatus = await getCandidateCvImprovementStatus(10, 5, 'job-99', { cvQueue, models })
+    expect(completedStatus.status).to.equal('completed')
+    expect(completedStatus.suggestion.id).to.equal(15)
   })
 })

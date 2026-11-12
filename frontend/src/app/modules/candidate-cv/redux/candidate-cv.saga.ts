@@ -1,6 +1,10 @@
-import { call, put, takeLatest } from 'redux-saga/effects'
+import { call, delay, put, takeLatest } from 'redux-saga/effects'
 
-import { assessCandidateCvQualityApi, suggestCandidateCvImprovementApi } from '../../../apis/candidate'
+import {
+  assessCandidateCvQualityApi,
+  getCandidateCvImprovementStatusApi,
+  suggestCandidateCvImprovementApi,
+} from '../../../apis/candidate'
 import { ApiClientError } from '../../../apis/fetch-api'
 import { CANDIDATE_CV_ACTIONS, candidateCvActions } from './candidate-cv.redux'
 
@@ -26,7 +30,39 @@ function* suggestImprovementWorker(action: ReturnType<typeof candidateCvActions.
       Boolean(action.payload.force),
       action.payload.customRequest || '',
     )
-    yield put(candidateCvActions.improvementSucceeded({ cvId: action.payload.cvId, suggestion: response.data.suggestion }))
+    if (response.data.suggestion) {
+      yield put(candidateCvActions.improvementSucceeded({
+        cvId: action.payload.cvId,
+        suggestion: response.data.suggestion,
+      }))
+      return
+    }
+
+    const jobId = response.data.jobId
+    if (!jobId) {
+      throw new Error('Missing improvement jobId')
+    }
+
+    for (let attempt = 0; attempt < 90; attempt += 1) {
+      yield delay(2000)
+      const statusResponse: Awaited<ReturnType<typeof getCandidateCvImprovementStatusApi>> = yield call(
+        getCandidateCvImprovementStatusApi,
+        action.payload.cvId,
+        jobId,
+      )
+      if (statusResponse.data.status === 'completed' && statusResponse.data.suggestion) {
+        yield put(candidateCvActions.improvementSucceeded({
+          cvId: action.payload.cvId,
+          suggestion: statusResponse.data.suggestion,
+        }))
+        return
+      }
+    }
+
+    yield put(candidateCvActions.improvementFailed({
+      cvId: action.payload.cvId,
+      message: 'Yêu cầu mất quá nhiều thời gian. Vui lòng thử lại.',
+    }))
   } catch (cause) {
     const message = cause instanceof ApiClientError ? cause.message : 'Hệ thống AI đang bận, vui lòng thử lại sau.'
     yield put(candidateCvActions.improvementFailed({ cvId: action.payload.cvId, message }))

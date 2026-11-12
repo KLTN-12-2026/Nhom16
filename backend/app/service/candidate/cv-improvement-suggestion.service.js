@@ -49,17 +49,7 @@ const findCurrentSuggestion = async (candidateCvId, analysisVersion, models = db
   return toImprovementSuggestion(suggestion)
 }
 
-const suggestCandidateCvImprovement = async (userId, id, {
-  force = false,
-  customRequest = '',
-  improvementService = cvImprovementService,
-  models = db,
-} = {}) => {
-  const normalizedRequest = String(customRequest || '').trim().slice(0, 300)
-  if (!isRecruitmentScopeRequest(normalizedRequest)) {
-    throw new ApiError(422, OUT_OF_SCOPE_MESSAGE, 'OUT_OF_SCOPE_REQUEST')
-  }
-
+const loadImprovementContext = async (userId, id, models = db) => {
   const cv = await models.CandidateCv.findOne({ where: { id, userId } })
   if (!cv) throw new ApiError(404, 'Không tìm thấy CV.', 'CV_NOT_FOUND')
 
@@ -75,11 +65,13 @@ const suggestCandidateCvImprovement = async (userId, id, {
     throw new ApiError(409, 'CV cần được đánh giá chất lượng trước khi xem gợi ý cải thiện.', 'CV_QUALITY_ASSESSMENT_REQUIRED')
   }
 
-  if (!force && !normalizedRequest) {
-    const current = await findCurrentSuggestion(cv.id, cv.analysisVersion, models)
-    if (current && isVietnameseCvImprovement(current)) return current
-  }
+  return { cv, assessment }
+}
 
+const runAndSaveImprovement = async (cv, assessment, normalizedRequest, {
+  improvementService = cvImprovementService,
+  models = db,
+} = {}) => {
   const audit = buildContactAudit(cv)
   const result = await improvementService.suggest({
     headline: cv.headline,
@@ -115,10 +107,104 @@ const suggestCandidateCvImprovement = async (userId, id, {
   return toImprovementSuggestion(saved)
 }
 
+const processCandidateCvImprovement = async ({
+  userId,
+  cvId,
+  customRequest = '',
+} = {}, {
+  improvementService = cvImprovementService,
+  models = db,
+} = {}) => {
+  const normalizedRequest = String(customRequest || '').trim().slice(0, 300)
+  if (!isRecruitmentScopeRequest(normalizedRequest)) {
+    throw new ApiError(422, OUT_OF_SCOPE_MESSAGE, 'OUT_OF_SCOPE_REQUEST')
+  }
+  const { cv, assessment } = await loadImprovementContext(userId, cvId, models)
+  return runAndSaveImprovement(cv, assessment, normalizedRequest, { improvementService, models })
+}
+
+const suggestCandidateCvImprovement = async (userId, id, {
+  force = false,
+  customRequest = '',
+  cvQueue = null,
+  improvementService = cvImprovementService,
+  models = db,
+} = {}) => {
+  const normalizedRequest = String(customRequest || '').trim().slice(0, 300)
+  if (!isRecruitmentScopeRequest(normalizedRequest)) {
+    throw new ApiError(422, OUT_OF_SCOPE_MESSAGE, 'OUT_OF_SCOPE_REQUEST')
+  }
+
+  const { cv, assessment } = await loadImprovementContext(userId, id, models)
+
+  if (!force && !normalizedRequest) {
+    const current = await findCurrentSuggestion(cv.id, cv.analysisVersion, models)
+    if (current && isVietnameseCvImprovement(current)) {
+      return cvQueue ? { status: 'completed', jobId: null, suggestion: current } : current
+    }
+  }
+
+  if (cvQueue) {
+    const job = await cvQueue.addImprovement({
+      userId: Number(userId),
+      cvId: Number(cv.id),
+      analysisVersion: Number(cv.analysisVersion),
+      customRequest: normalizedRequest,
+    })
+    return { status: 'queued', jobId: String(job.id), suggestion: null }
+  }
+
+  return runAndSaveImprovement(cv, assessment, normalizedRequest, { improvementService, models })
+}
+
+const mapFailedJobError = (failedReason) => {
+  const reason = String(failedReason || '').trim()
+  if (reason === OUT_OF_SCOPE_MESSAGE) {
+    return new ApiError(422, OUT_OF_SCOPE_MESSAGE, 'OUT_OF_SCOPE_REQUEST')
+  }
+  if (reason.includes('tiếng Việt')) {
+    return new ApiError(422, reason, 'CV_IMPROVEMENT_LANGUAGE_INVALID')
+  }
+  return new ApiError(503, 'Hệ thống AI đang bận, vui lòng thử lại sau.', 'CV_IMPROVEMENT_AI_UNAVAILABLE')
+}
+
+const getCandidateCvImprovementStatus = async (userId, id, jobId, {
+  cvQueue = null,
+  models = db,
+} = {}) => {
+  const cv = await models.CandidateCv.findOne({ where: { id, userId } })
+  if (!cv) throw new ApiError(404, 'Không tìm thấy CV.', 'CV_NOT_FOUND')
+
+  if (jobId && cvQueue) {
+    const job = await cvQueue.getJob(String(jobId))
+    if (!job || Number(job.data?.cvId) !== Number(cv.id) || Number(job.data?.userId) !== Number(userId)) {
+      throw new ApiError(404, 'Không tìm thấy tiến trình tạo gợi ý cải thiện CV.', 'CV_IMPROVEMENT_JOB_NOT_FOUND')
+    }
+    const state = await job.getState()
+    if (state === 'completed') {
+      const suggestion = job.returnvalue || await findCurrentSuggestion(cv.id, cv.analysisVersion, models)
+      return { status: 'completed', jobId: String(job.id), suggestion }
+    }
+    if (state === 'failed') {
+      throw mapFailedJobError(job.failedReason)
+    }
+    return { status: 'processing', jobId: String(job.id), suggestion: null }
+  }
+
+  const current = await findCurrentSuggestion(cv.id, cv.analysisVersion, models)
+  return {
+    status: current ? 'completed' : 'idle',
+    jobId: null,
+    suggestion: current,
+  }
+}
+
 module.exports = {
   buildContactAudit,
   findCurrentSuggestion,
+  getCandidateCvImprovementStatus,
   mergeContactWarnings,
+  processCandidateCvImprovement,
   suggestCandidateCvImprovement,
   toImprovementSuggestion,
 }
