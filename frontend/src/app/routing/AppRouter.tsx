@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { PERMISSION } from '../constants/permission.constant'
@@ -6,42 +7,43 @@ import { AdminLayout } from '../layouts/admin-layout'
 import { CandidateLayout } from '../layouts/candidate-layout'
 import { EmployerLayout } from '../layouts/employer-layout'
 import { PublicLayout } from '../layouts/public-layout'
-import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
-import EmployerReviewPage from '../pages/admin/EmployerReviewPage'
-import AdminUsersPage from '../pages/admin/AdminUsersPage'
-import LoginPage from '../pages/auth/login'
-import ForgotPasswordPage from '../pages/auth/forgot-password'
-import GoogleCompletePage from '../pages/auth/google-complete'
-import RegisterPage from '../pages/auth/register'
-import ResetPasswordPage from '../pages/auth/reset-password'
-import VerifyEmailPage from '../pages/auth/verify-email'
-import CandidateHomePage from '../pages/candidate/CandidateHomePage'
-import CandidateCvPage from '../pages/candidate/CandidateCvPage'
-import CandidateJobsPage from '../pages/candidate/CandidateJobsPage'
-import CandidateProfilePage from '../pages/candidate/CandidateProfilePage'
-import CandidateApplicationsPage from '../pages/candidate/CandidateApplicationsPage'
-import CandidateSavedJobsPage from '../pages/candidate/CandidateSavedJobsPage'
-import CandidateAiMatchPage from '../pages/candidate/CandidateAiMatchPage'
-import ComingSoonPage from '../pages/common/ComingSoonPage'
-import EmployerHomePage from '../pages/employer/EmployerHomePage'
-import EmployerProfilePage from '../pages/employer/EmployerProfilePage'
-import EmployerJobsPage from '../pages/employer/EmployerJobsPage'
-import EmployerJobFormPage from '../pages/employer/EmployerJobFormPage'
-import EmployerApplicationsPage from '../pages/employer/EmployerApplicationsPage'
-import EmployerFavoriteCandidatesPage from '../pages/employer/EmployerFavoriteCandidatesPage'
-import EmployerRecommendationsPage from '../pages/employer/EmployerRecommendationsPage'
-import EmployerJdAiPage from '../pages/employer/EmployerJdAiPage'
-import HomePage from '../pages/home/HomePage'
-import CategoriesPage from '../pages/public/CategoriesPage'
-import CvAnalysisPage from '../pages/public/CvAnalysisPage'
-import ForEmployersPage from '../pages/public/ForEmployersPage'
-import JobsPage from '../pages/public/JobsPage'
-import JobDetailPage from '../pages/public/JobDetailPage'
 import { useAuth } from '../provider/auth-provider'
 import { FullPageLoader } from './FullPageLoader'
 import { RequireAuth } from './RequireAuth'
 import { RequirePermission } from './RequirePermission'
 import { RequireRole } from './RequireRole'
+
+const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
+const EmployerReviewPage = lazy(() => import('../pages/admin/EmployerReviewPage'))
+const AdminUsersPage = lazy(() => import('../pages/admin/AdminUsersPage'))
+const LoginPage = lazy(() => import('../pages/auth/login'))
+const ForgotPasswordPage = lazy(() => import('../pages/auth/forgot-password'))
+const GoogleCompletePage = lazy(() => import('../pages/auth/google-complete'))
+const RegisterPage = lazy(() => import('../pages/auth/register'))
+const ResetPasswordPage = lazy(() => import('../pages/auth/reset-password'))
+const VerifyEmailPage = lazy(() => import('../pages/auth/verify-email'))
+const CandidateHomePage = lazy(() => import('../pages/candidate/CandidateHomePage'))
+const CandidateCvPage = lazy(() => import('../pages/candidate/CandidateCvPage'))
+const CandidateJobsPage = lazy(() => import('../pages/candidate/CandidateJobsPage'))
+const CandidateProfilePage = lazy(() => import('../pages/candidate/CandidateProfilePage'))
+const CandidateApplicationsPage = lazy(() => import('../pages/candidate/CandidateApplicationsPage'))
+const CandidateSavedJobsPage = lazy(() => import('../pages/candidate/CandidateSavedJobsPage'))
+const CandidateAiMatchPage = lazy(() => import('../pages/candidate/CandidateAiMatchPage'))
+const ComingSoonPage = lazy(() => import('../pages/common/ComingSoonPage'))
+const EmployerHomePage = lazy(() => import('../pages/employer/EmployerHomePage'))
+const EmployerProfilePage = lazy(() => import('../pages/employer/EmployerProfilePage'))
+const EmployerJobsPage = lazy(() => import('../pages/employer/EmployerJobsPage'))
+const EmployerJobFormPage = lazy(() => import('../pages/employer/EmployerJobFormPage'))
+const EmployerApplicationsPage = lazy(() => import('../pages/employer/EmployerApplicationsPage'))
+const EmployerFavoriteCandidatesPage = lazy(() => import('../pages/employer/EmployerFavoriteCandidatesPage'))
+const EmployerRecommendationsPage = lazy(() => import('../pages/employer/EmployerRecommendationsPage'))
+const EmployerJdAiPage = lazy(() => import('../pages/employer/EmployerJdAiPage'))
+const HomePage = lazy(() => import('../pages/home/HomePage'))
+const CategoriesPage = lazy(() => import('../pages/public/CategoriesPage'))
+const CvAnalysisPage = lazy(() => import('../pages/public/CvAnalysisPage'))
+const ForEmployersPage = lazy(() => import('../pages/public/ForEmployersPage'))
+const JobsPage = lazy(() => import('../pages/public/JobsPage'))
+const JobDetailPage = lazy(() => import('../pages/public/JobDetailPage'))
 
 function HomeEntry() {
   const { user } = useAuth()
@@ -65,7 +67,8 @@ export function AppRouter() {
   if (isLoading) return <FullPageLoader />
 
   return (
-    <Routes>
+    <Suspense fallback={<FullPageLoader />}>
+      <Routes>
       <Route element={<PublicLayout />}>
         <Route index element={<HomeEntry />} />
         <Route path="jobs" element={<JobsEntry />} />
@@ -115,7 +118,8 @@ export function AppRouter() {
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   )
 }
