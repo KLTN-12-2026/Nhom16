@@ -13,11 +13,13 @@ const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
     { label: 'Tìm việc', to: ROUTE.CANDIDATE_JOBS },
     { label: 'Hồ sơ cá nhân', to: '/candidate/profile' },
     { label: 'CV của tôi', to: ROUTE.CANDIDATE_CVS },
+    { label: 'AI so khớp', to: '/candidate/ai/job-match' },
     { label: 'Việc đã ứng tuyển', to: '/candidate/applications' },
     { label: 'Việc đã lưu', to: '/candidate/saved-jobs' },
   ],
   [ROLE.EMPLOYER]: [
     { label: 'Tin tuyển dụng', to: '/employer/jobs' },
+    { label: 'AI phân tích JD', to: '/employer/ai/jd-analysis' },
     { label: 'Hồ sơ doanh nghiệp', to: '/employer/company' },
     { label: 'Hồ sơ ứng tuyển', to: '/employer/applications' },
     { label: 'Ứng viên phù hợp', to: '/employer/recommendations' },

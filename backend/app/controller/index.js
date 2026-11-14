@@ -4,6 +4,7 @@ const { initCommonController } = require('./common')
 const { initCandidateController } = require('./candidate')
 const { initEmployerController } = require('./employer')
 const { initJobController } = require('./job')
+const { initAiController } = require('./ai')
 
 const initApiController = (app, dependencies) => {
   initCommonController(app, dependencies)
@@ -12,6 +13,7 @@ const initApiController = (app, dependencies) => {
   initEmployerController(app, dependencies)
   initAdminController(app, dependencies)
   initJobController(app, dependencies)
+  initAiController(app, dependencies)
 }
 
 module.exports = { initApiController }

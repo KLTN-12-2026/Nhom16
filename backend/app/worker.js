@@ -14,7 +14,7 @@ const startWorker = async () => {
 
   process.on('SIGTERM', () => shutdown('SIGTERM'))
   process.on('SIGINT', () => shutdown('SIGINT'))
-  console.log('Email and CV workers are ready')
+  console.log('Email, CV and recruitment AI workers are ready')
 }
 
 startWorker().catch((error) => {

@@ -11,6 +11,15 @@ const initRedis = async () => {
   return redis
 }
 
+const buildControllerDependencies = ({ database, models, redisClient, queue }) => ({
+  aiQueue: queue.aiQueue,
+  cvQueue: queue.cvQueue,
+  database,
+  emailQueue: queue.emailQueue,
+  models,
+  redis: redisClient,
+})
+
 const initApplication = async () => {
   const [{ database, models }, redisClient] = await Promise.all([
     initDatabase(),
@@ -18,13 +27,7 @@ const initApplication = async () => {
   ])
   const queue = initQueue()
   const cron = await initCronTasks({ models })
-  const dependencies = {
-    cvQueue: queue.cvQueue,
-    database,
-    emailQueue: queue.emailQueue,
-    models,
-    redis: redisClient,
-  }
+  const dependencies = buildControllerDependencies({ database, models, queue, redisClient })
 
   const app = createApp()
   initApiController(app, dependencies)
@@ -43,4 +46,4 @@ const initApplication = async () => {
   }
 }
 
-module.exports = { initApplication }
+module.exports = { buildControllerDependencies, initApplication }

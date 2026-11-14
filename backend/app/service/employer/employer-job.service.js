@@ -56,7 +56,16 @@ const getOwnedJob = async (userId, jobId, options = {}) => {
 const updateEmployerJob = async (userId, jobId, payload) => {
   const { job, profile } = await getOwnedJob(userId, jobId)
   if ([JOB_STATUS.CLOSED, JOB_STATUS.EXPIRED].includes(job.status)) throw new ApiError(409, 'Không thể sửa tin đã đóng hoặc hết hạn.', 'JOB_NOT_EDITABLE')
-  await job.update(normalizeJobPayload({ ...job.toJSON(), ...payload }, profile, userId))
+  const nextPayload = normalizeJobPayload({ ...job.toJSON(), ...payload }, profile, userId)
+  const aiSourceFields = ['title', 'description', 'requirements', 'skills', 'experienceLevel', 'positionLevel', 'employmentType']
+  const sourceChanged = aiSourceFields.some(field => JSON.stringify(job.get(field)) !== JSON.stringify(nextPayload[field]))
+  await db.sequelize.transaction(async transaction => {
+    await job.update(nextPayload, { transaction })
+    if (sourceChanged) {
+      await db.CvJobComparison.destroy({ where: { jobId: job.id }, transaction })
+      await db.JobJdAnalysis.destroy({ where: { jobId: job.id }, transaction })
+    }
+  })
   return job
 }
 

@@ -1,0 +1,23 @@
+const express = require('express')
+const { ROLES } = require('../../constants')
+const { authenticateJwt } = require('../../middleware/auth/passport.middleware')
+const { requireRole } = require('../../middleware/auth/require-role.middleware')
+const { validateBody } = require('../../middleware/validation/validate.middleware')
+const { sendSuccess } = require('../../util')
+const { listEmployerJdAnalyses, requestJdAnalysis, updateJdAnalysis, confirmJdAnalysis } = require('../../service/employer/jd-analysis.service')
+const { deleteCvJobComparison, getCvJobComparison, listCvJobComparisons, requestCvJobComparison } = require('../../service/candidate/cv-job-comparison.service')
+const { validateComparisonRequest, validateJdAnalysisRequest, validateJdAnalysisUpdate } = require('../../validator/ai/recruitment-ai.validator')
+const initAiController = (app, { aiQueue }) => {
+  const employer = express.Router(); employer.use(authenticateJwt, requireRole(ROLES.EMPLOYER))
+  employer.get('/jd-analyses', (req, res, next) => listEmployerJdAnalyses(req.user.id).then(data => sendSuccess(res, { data })).catch(next))
+  employer.post('/jobs/:jobId/jd-analysis', validateBody(validateJdAnalysisRequest), (req, res, next) => requestJdAnalysis(req.user.id, req.params.jobId, aiQueue, req.validatedBody.force).then(data => sendSuccess(res, { statusCode: 202, data, message: 'JD đã được đưa vào hàng đợi AI.' })).catch(next))
+  employer.patch('/jd-analyses/:id', validateBody(validateJdAnalysisUpdate), (req, res, next) => updateJdAnalysis(req.user.id, req.params.id, req.validatedBody).then(data => sendSuccess(res, { data, message: 'Đã lưu nội dung phân tích.' })).catch(next))
+  employer.post('/jd-analyses/:id/confirm', (req, res, next) => confirmJdAnalysis(req.user.id, req.params.id).then(data => sendSuccess(res, { data, message: 'Đã xác nhận kết quả phân tích JD.' })).catch(next))
+  app.use('/api/employer/ai', employer)
+  const candidate = express.Router(); candidate.use(authenticateJwt, requireRole(ROLES.CANDIDATE))
+  candidate.get('/job-comparisons', (req, res, next) => req.query.cvId && req.query.jobId ? getCvJobComparison(req.user.id, { cvId: Number(req.query.cvId), jobId: Number(req.query.jobId) }).then(data => sendSuccess(res, { data })).catch(next) : listCvJobComparisons(req.user.id).then(data => sendSuccess(res, { data })).catch(next))
+  candidate.post('/job-comparisons', validateBody(validateComparisonRequest), (req, res, next) => requestCvJobComparison(req.user.id, req.validatedBody, aiQueue).then(data => sendSuccess(res, { statusCode: 202, data, message: 'CV và JD đã được đưa vào hàng đợi AI.' })).catch(next))
+  candidate.delete('/job-comparisons/:id', (req, res, next) => deleteCvJobComparison(req.user.id, req.params.id).then(data => sendSuccess(res, { data, message: 'Đã xóa kết quả đối chiếu.' })).catch(next))
+  app.use('/api/candidate/ai', candidate)
+}
+module.exports = { initAiController }

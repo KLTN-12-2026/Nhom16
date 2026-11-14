@@ -4,6 +4,8 @@ const requestOllamaStructuredJson = async ({
   baseUrl,
   model,
   timeoutMs,
+  numPredict,
+  format,
   schema,
   messages,
   fetchImpl = global.fetch,
@@ -17,8 +19,8 @@ const requestOllamaStructuredJson = async ({
       body: JSON.stringify({
         model,
         stream: false,
-        format: schema,
-        options: { temperature: 0 },
+        format: format || schema,
+        options: { temperature: 0, ...(numPredict ? { num_predict: numPredict } : {}) },
         messages,
       }),
     })

@@ -46,6 +46,8 @@ class Job extends Model {
     this.belongsTo(models.User, { foreignKey: 'createdById', as: 'createdBy' })
     this.hasMany(models.JobJdFile, { foreignKey: 'jobId', as: 'jdFiles' })
     this.hasMany(models.Application, { foreignKey: 'jobId', as: 'applications' })
+    this.hasMany(models.JobJdAnalysis, { foreignKey: 'jobId', as: 'jdAnalyses' })
+    this.hasMany(models.CvJobComparison, { foreignKey: 'jobId', as: 'cvComparisons' })
   }
 }
 

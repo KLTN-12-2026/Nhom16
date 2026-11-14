@@ -21,6 +21,7 @@ import CandidateJobsPage from '../pages/candidate/CandidateJobsPage'
 import CandidateProfilePage from '../pages/candidate/CandidateProfilePage'
 import CandidateApplicationsPage from '../pages/candidate/CandidateApplicationsPage'
 import CandidateSavedJobsPage from '../pages/candidate/CandidateSavedJobsPage'
+import CandidateAiMatchPage from '../pages/candidate/CandidateAiMatchPage'
 import ComingSoonPage from '../pages/common/ComingSoonPage'
 import EmployerHomePage from '../pages/employer/EmployerHomePage'
 import EmployerProfilePage from '../pages/employer/EmployerProfilePage'
@@ -29,6 +30,7 @@ import EmployerJobFormPage from '../pages/employer/EmployerJobFormPage'
 import EmployerApplicationsPage from '../pages/employer/EmployerApplicationsPage'
 import EmployerFavoriteCandidatesPage from '../pages/employer/EmployerFavoriteCandidatesPage'
 import EmployerRecommendationsPage from '../pages/employer/EmployerRecommendationsPage'
+import EmployerJdAiPage from '../pages/employer/EmployerJdAiPage'
 import HomePage from '../pages/home/HomePage'
 import CategoriesPage from '../pages/public/CategoriesPage'
 import CvAnalysisPage from '../pages/public/CvAnalysisPage'
@@ -88,6 +90,7 @@ export function AppRouter() {
         <Route path="applications" element={<CandidateApplicationsPage />} />
         <Route path="applications/:applicationId/job" element={<JobDetailPage />} />
         <Route path="saved-jobs" element={<CandidateSavedJobsPage />} />
+        <Route path="ai/job-match" element={<CandidateAiMatchPage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
 
@@ -101,6 +104,7 @@ export function AppRouter() {
         <Route path="applications" element={<EmployerApplicationsPage />} />
         <Route path="favorite-candidates" element={<EmployerFavoriteCandidatesPage />} />
         <Route path="recommendations" element={<RequirePermission permission={PERMISSION.CANDIDATE_RECOMMENDATION_VIEW}><EmployerRecommendationsPage /></RequirePermission>} />
+        <Route path="ai/jd-analysis" element={<EmployerJdAiPage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
 
