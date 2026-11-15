@@ -21,7 +21,7 @@ export default function CandidateHomePage() {
             <span>Cập nhật kỹ năng, chức danh và thông tin liên hệ</span>
           </div>
         </Link>
-        <Link to={ROUTE.CANDIDATE_JOBS}>
+        <Link to={ROUTE.CANDIDATE_RECOMMENDATIONS}>
           <i className="bi bi-briefcase" />
           <div>
             <strong>Việc làm phù hợp</strong>

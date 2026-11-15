@@ -29,6 +29,7 @@ const CandidateProfilePage = lazy(() => import('../pages/candidate/CandidateProf
 const CandidateApplicationsPage = lazy(() => import('../pages/candidate/CandidateApplicationsPage'))
 const CandidateSavedJobsPage = lazy(() => import('../pages/candidate/CandidateSavedJobsPage'))
 const CandidateAiMatchPage = lazy(() => import('../pages/candidate/CandidateAiMatchPage'))
+const CandidateJobRecommendationsPage = lazy(() => import('../pages/candidate/CandidateJobRecommendationsPage'))
 const ComingSoonPage = lazy(() => import('../pages/common/ComingSoonPage'))
 const EmployerHomePage = lazy(() => import('../pages/employer/EmployerHomePage'))
 const EmployerProfilePage = lazy(() => import('../pages/employer/EmployerProfilePage'))
@@ -93,6 +94,7 @@ export function AppRouter() {
         <Route path="applications" element={<CandidateApplicationsPage />} />
         <Route path="applications/:applicationId/job" element={<JobDetailPage />} />
         <Route path="saved-jobs" element={<CandidateSavedJobsPage />} />
+        <Route path="recommendations" element={<RequirePermission permission={PERMISSION.JOB_RECOMMENDATION_VIEW}><CandidateJobRecommendationsPage /></RequirePermission>} />
         <Route path="ai/job-match" element={<CandidateAiMatchPage />} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>

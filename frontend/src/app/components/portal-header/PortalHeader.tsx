@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
 import { getCandidateAvatarUrl } from '../../apis/candidate'
@@ -11,6 +11,7 @@ import { NotificationBell } from '../notification-bell'
 const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
   [ROLE.CANDIDATE]: [
     { label: 'Tìm việc', to: ROUTE.CANDIDATE_JOBS },
+    { label: 'Việc làm gợi ý', to: ROUTE.CANDIDATE_RECOMMENDATIONS },
     { label: 'Hồ sơ cá nhân', to: '/candidate/profile' },
     { label: 'CV của tôi', to: ROUTE.CANDIDATE_CVS },
     { label: 'AI so khớp', to: '/candidate/ai/job-match' },
