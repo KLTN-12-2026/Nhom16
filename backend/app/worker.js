@@ -3,7 +3,7 @@ const { closeDatabase, initDatabase } = require('./db')
 
 const startWorker = async () => {
   await initDatabase()
-  const workers = initWorker()
+  const workers = await initWorker()
 
   const shutdown = async (signal) => {
     console.log(`${signal} received, stopping workers`)

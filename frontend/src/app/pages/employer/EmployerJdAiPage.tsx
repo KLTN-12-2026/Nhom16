@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useDispatch, useSelector } from 'react-redux'
 import { confirmJdAnalysisApi, updateJdAnalysisApi, type JdAnalysis } from '../../apis/ai'
+import { ApiClientError } from '../../apis/fetch-api'
 import type { JobData } from '../../apis/job'
 import { listEmployerJobsApi } from '../../apis/recruitment'
 import { recruitmentAiActions } from '../../modules/recruitment-ai/redux'
@@ -10,6 +11,8 @@ import '../../../styles/recruitment-ai.scss'
 
 type Form = { jobId: string }
 type Section = [keyof JdAnalysis, string, string, string]
+type Notice = { type: 'success' | 'error'; message: string } | null
+type PendingAction = 'save' | 'confirm' | null
 
 const sections: Section[] = [
   ['responsibilities', 'Trách nhiệm chính', 'bi-list-check', 'Những đầu việc ứng viên sẽ đảm nhiệm'],
@@ -30,8 +33,8 @@ export default function EmployerJdAiPage() {
   const ai = useSelector((state: RootState) => state.recruitmentAi)
   const [jobs, setJobs] = useState<JobData[]>([])
   const [selected, setSelected] = useState<JdAnalysis | null>(null)
-  const [notice, setNotice] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [notice, setNotice] = useState<Notice>(null)
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null)
   const { register, handleSubmit, watch } = useForm<Form>()
   const selectedJobId = Number(watch('jobId'))
 
@@ -49,18 +52,48 @@ export default function EmployerJdAiPage() {
   const completedCount = ai.jdAnalyses.filter(item => item.status === 'COMPLETED').length
   const confirmedCount = ai.jdAnalyses.filter(item => item.isConfirmed).length
   const fieldCount = selected ? sections.reduce((sum, [key]) => sum + (Array.isArray(selected[key]) ? (selected[key] as string[]).length : 0), 0) : 0
-  const run = ({ jobId }: Form) => { setNotice(''); dispatch(recruitmentAiActions.requestJd(Number(jobId), false)) }
-  const retry = () => { if (selected) { setNotice(''); dispatch(recruitmentAiActions.requestJd(selected.jobId, true)) } }
+  const run = ({ jobId }: Form) => { setNotice(null); dispatch(recruitmentAiActions.requestJd(Number(jobId), false)) }
+  const retry = () => { if (selected) { setNotice(null); dispatch(recruitmentAiActions.requestJd(selected.jobId, true)) } }
+  const remove = () => {
+    if (!selected || !window.confirm(`Xóa phiên phân tích "${selected.job?.title || selected.title || `#${selected.id}`}"?`)) return
+    dispatch(recruitmentAiActions.deleteJd(selected.id))
+    setSelected(null)
+    setNotice({ type: 'success', message: 'Đã xóa phiên phân tích khỏi lịch sử.' })
+  }
   const changeList = (key: keyof JdAnalysis, value: string) => setSelected(previous => previous ? { ...previous, [key]: value.split('\n').map(item => item.trim()).filter(Boolean) } : previous)
+  const syncAnalysis = (analysis: JdAnalysis) => {
+    const next = { ...selected, ...analysis, job: analysis.job || selected?.job } as JdAnalysis
+    dispatch(recruitmentAiActions.syncJd(next))
+    setSelected(next)
+  }
+  const getErrorMessage = (cause: unknown, fallback: string) => cause instanceof ApiClientError ? cause.message : fallback
   const save = async () => {
     if (!selected) return
-    setSaving(true)
-    try { const response = await updateJdAnalysisApi(selected.id, selected); setSelected(response.data); setNotice('Đã lưu bản hiệu chỉnh. Hãy xác nhận khi nội dung đã chính xác.') } finally { setSaving(false) }
+    setPendingAction('save')
+    setNotice(null)
+    try {
+      const response = await updateJdAnalysisApi(selected.id, selected)
+      syncAnalysis(response.data)
+      setNotice({ type: 'success', message: 'Đã lưu bản hiệu chỉnh. Hãy xác nhận khi nội dung đã chính xác.' })
+    } catch (cause) {
+      setNotice({ type: 'error', message: getErrorMessage(cause, 'Không thể lưu bản hiệu chỉnh. Vui lòng thử lại.') })
+    } finally {
+      setPendingAction(null)
+    }
   }
   const confirm = async () => {
     if (!selected) return
-    setSaving(true)
-    try { const response = await confirmJdAnalysisApi(selected.id); setSelected(response.data); setNotice('Đã xác nhận cấu trúc JD để dùng cho đối chiếu CV.') } finally { setSaving(false) }
+    setPendingAction('confirm')
+    setNotice(null)
+    try {
+      const response = await confirmJdAnalysisApi(selected.id)
+      syncAnalysis(response.data)
+      setNotice({ type: 'success', message: 'Đã xác nhận cấu trúc JD để dùng cho đối chiếu CV.' })
+    } catch (cause) {
+      setNotice({ type: 'error', message: getErrorMessage(cause, 'Không thể xác nhận kết quả. Vui lòng thử lại.') })
+    } finally {
+      setPendingAction(null)
+    }
   }
 
   return <main className="container ai-studio">
@@ -82,7 +115,7 @@ export default function EmployerJdAiPage() {
     </section>
 
     {ai.error && <div className="ai-feedback ai-feedback--error" role="alert"><i className="bi bi-exclamation-octagon" /><div><strong>Không thể bắt đầu phân tích</strong><span>{ai.error}</span></div><button onClick={() => selected ? retry() : dispatch(recruitmentAiActions.listJd())}>Thử lại</button></div>}
-    {notice && <div className="ai-feedback ai-feedback--success"><i className="bi bi-check-circle" /><span>{notice}</span></div>}
+    {notice && !selected && <div className={`ai-feedback ai-feedback--${notice.type}`} role={notice.type === 'error' ? 'alert' : 'status'}><i className={`bi ${notice.type === 'error' ? 'bi-exclamation-octagon' : 'bi-check-circle'}`} /><span>{notice.message}</span></div>}
 
     <div className="ai-studio__workspace">
       <aside className="ai-runs">
@@ -92,9 +125,10 @@ export default function EmployerJdAiPage() {
 
       <section className="ai-editor">
         {!selected ? <div className="ai-editor__empty"><span><i className="bi bi-stars" /></span><h2>Sẵn sàng chuẩn hóa JD</h2><p>Chọn một tin tuyển dụng ở phía trên để tạo bản phân tích có cấu trúc.</p></div> : <>
-          <header className="ai-editor__header"><div><span className={`ai-pill is-${selected.status.toLowerCase()}`}><i className="bi bi-circle-fill" />{statusText[selected.status]}</span><h2>{selected.title || selected.job?.title}</h2><p>Phiên bản {selected.analysisVersion} · {fieldCount} dữ kiện được trích xuất</p></div>{selected.status === 'COMPLETED' && <div className="ai-editor__actions"><button onClick={save} disabled={saving}><i className="bi bi-cloud-check" /> Lưu chỉnh sửa</button><button className="is-primary" onClick={confirm} disabled={saving || selected.isConfirmed}><i className="bi bi-patch-check" /> {selected.isConfirmed ? 'Đã xác nhận' : 'Xác nhận kết quả'}</button></div>}</header>
+          <header className="ai-editor__header"><div><span className={`ai-pill is-${selected.status.toLowerCase()}`}><i className="bi bi-circle-fill" />{statusText[selected.status]}</span><h2>{selected.title || selected.job?.title}</h2><p>Phiên bản {selected.analysisVersion} · {fieldCount} dữ kiện được trích xuất</p></div><div className="ai-editor__actions">{selected.status === 'COMPLETED' && <><button onClick={save} disabled={pendingAction !== null}><i className={`bi ${pendingAction === 'save' ? 'bi-arrow-repeat ai-spin' : 'bi-cloud-check'}`} /> {pendingAction === 'save' ? 'Đang lưu...' : 'Lưu chỉnh sửa'}</button><button className="is-primary" onClick={confirm} disabled={pendingAction !== null || selected.isConfirmed}><i className={`bi ${pendingAction === 'confirm' ? 'bi-arrow-repeat ai-spin' : 'bi-patch-check'}`} /> {pendingAction === 'confirm' ? 'Đang xác nhận...' : selected.isConfirmed ? 'Đã xác nhận' : 'Xác nhận kết quả'}</button><button className="is-danger" onClick={remove} disabled={pendingAction !== null}><i className="bi bi-trash3" /> Xóa phiên</button></>}</div></header>
+          {notice && <div className={`ai-feedback ai-editor__notice ai-feedback--${notice.type}`} role={notice.type === 'error' ? 'alert' : 'status'} aria-live="polite"><i className={`bi ${notice.type === 'error' ? 'bi-exclamation-octagon' : 'bi-check-circle'}`} /><div><strong>{notice.type === 'error' ? 'Thao tác chưa hoàn tất' : 'Cập nhật thành công'}</strong><span>{notice.message}</span></div></div>}
           {['PENDING', 'PROCESSING'].includes(selected.status) && <div className="ai-progress"><span className="ai-progress__visual"><i className="bi bi-cpu" /></span><div><strong>{selected.status === 'PENDING' ? 'Đang chờ AI worker tiếp nhận' : 'AI đang đọc và phân loại nội dung JD'}</strong><p>Quá trình thường mất từ 10–60 giây. Bạn có thể rời trang và quay lại sau.</p><span className="ai-progress__bar"><i /></span></div></div>}
-          {selected.status === 'FAILED' && <div className="ai-feedback ai-feedback--error"><i className="bi bi-exclamation-octagon" /><div><strong>Phiên phân tích thất bại</strong><span>{selected.errorMessage || 'Không thể xử lý JD ở thời điểm hiện tại.'}</span></div><button onClick={retry}>Phân tích lại</button></div>}
+          {selected.status === 'FAILED' && <div className="ai-feedback ai-feedback--error"><i className="bi bi-exclamation-octagon" /><div><strong>Phiên phân tích thất bại</strong><span>{selected.errorMessage || 'Không thể xử lý JD ở thời điểm hiện tại.'}</span></div><span className="ai-feedback__actions"><button onClick={retry}>Phân tích lại</button><button className="is-danger" onClick={remove}><i className="bi bi-trash3" /> Xóa</button></span></div>}
           {selected.status === 'COMPLETED' && <div className="ai-editor__content"><label className="ai-summary-field"><span><i className="bi bi-card-text" /> Tóm tắt vị trí</span><textarea value={selected.summary || ''} onChange={event => setSelected({ ...selected, summary: event.target.value })} placeholder="Tóm tắt ngắn gọn mục tiêu của vị trí" /></label><div className="ai-section-grid">{sections.map(([key, title, icon, description]) => <label key={String(key)}><header><i className={`bi ${icon}`} /><span><strong>{title}</strong><small>{description}</small></span><em>{Array.isArray(selected[key]) ? (selected[key] as string[]).length : 0}</em></header><textarea value={Array.isArray(selected[key]) ? (selected[key] as string[]).join('\n') : ''} onChange={event => changeList(key, event.target.value)} placeholder="Mỗi nội dung một dòng" /></label>)}</div></div>}
         </>}
       </section>

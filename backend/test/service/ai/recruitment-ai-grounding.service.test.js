@@ -5,6 +5,7 @@ const {
   buildJdCriteria,
   calculateMatchScore,
   normalizeComparisonResult,
+  parseModelJson,
 } = require('../../../app/service/ai/recruitment-ai.service')
 
 describe('Recruitment AI grounding and JD quality gates', () => {
@@ -84,5 +85,13 @@ describe('Recruitment AI grounding and JD quality gates', () => {
   it('calculates the match score deterministically from grounded groups', () => {
     expect(calculateMatchScore({ metCriteria: [{}, {}], partialCriteria: [{}, {}, {}, {}], missingCriteria: [{}, {}] })).to.equal(50)
     expect(calculateMatchScore()).to.equal(null)
+  })
+
+  it('parses structured JSON wrapped by a small local model with extra text', () => {
+    expect(parseModelJson('Kết quả:\n```json\n{"title":"Backend Developer"}\n```')).to.deep.equal({ title: 'Backend Developer' })
+  })
+
+  it('rejects a truncated structured response with a stable error code', () => {
+    expect(() => parseModelJson('{"title":"Backend Developer"')).to.throw().with.property('code', 'AI_RESULT_INVALID')
   })
 })

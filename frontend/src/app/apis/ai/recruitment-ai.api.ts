@@ -6,6 +6,7 @@ export const listJdAnalysesApi = () => fetchApi<JdAnalysis[]>('/employer/ai/jd-a
 export const requestJdAnalysisApi = (jobId: number, force = false) => fetchApi<JdAnalysis>(`/employer/ai/jobs/${jobId}/jd-analysis`, { method: 'POST', body: JSON.stringify({ force }) })
 export const updateJdAnalysisApi = (id: number, data: Partial<JdAnalysis>) => fetchApi<JdAnalysis>(`/employer/ai/jd-analyses/${id}`, { method: 'PATCH', body: JSON.stringify(data) })
 export const confirmJdAnalysisApi = (id: number) => fetchApi<JdAnalysis>(`/employer/ai/jd-analyses/${id}/confirm`, { method: 'POST' })
+export const deleteJdAnalysisApi = (id: number) => fetchApi<{ id: number }>(`/employer/ai/jd-analyses/${id}`, { method: 'DELETE' })
 export const listCvJobComparisonsApi = () => fetchApi<CvJobComparison[]>('/candidate/ai/job-comparisons')
 export const getCvJobComparisonApi = (cvId: number, jobId: number) => fetchApi<CvJobComparison | null>(`/candidate/ai/job-comparisons?cvId=${cvId}&jobId=${jobId}`)
 export const requestCvJobComparisonApi = (cvId: number, jobId: number, force = false) => fetchApi<CvJobComparison>('/candidate/ai/job-comparisons', { method: 'POST', body: JSON.stringify({ cvId, jobId, force }) })

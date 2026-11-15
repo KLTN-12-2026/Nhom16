@@ -2,10 +2,10 @@ const { createEmailWorker } = require('./email')
 const { createCvWorker } = require('./cv')
 const { createAiWorker } = require('./ai')
 
-const initWorker = () => {
+const initWorker = async () => {
   const { connection, worker } = createEmailWorker()
   const cv = createCvWorker()
-  const ai = createAiWorker()
+  const ai = await createAiWorker()
   return {
     async close() {
       await Promise.all([worker.close(), cv.worker.close(), ai.worker.close()])
