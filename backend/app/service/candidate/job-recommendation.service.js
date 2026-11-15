@@ -170,8 +170,8 @@ const getMatchTier = (score) => {
   return 'low'
 }
 
-const scoreJobForCv = ({ cv, job, jdAnalysis = null, comparison = null, referenceDate = todayIso() }) => {
-  if (!isJobActiveForRecommendation(job, referenceDate)) return null
+const scoreJobForCv = ({ cv, job, jdAnalysis = null, comparison = null, referenceDate = todayIso(), skipActiveCheck = false }) => {
+  if (!skipActiveCheck && !isJobActiveForRecommendation(job, referenceDate)) return null
 
   const cvCorpus = buildCvCorpus(cv)
   const requiredSkillList = toStringList([

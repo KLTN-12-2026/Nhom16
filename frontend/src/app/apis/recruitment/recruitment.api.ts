@@ -38,3 +38,88 @@ export const toggleFavoriteJobApi = (jobId: number) => fetchApi<{ favorite: bool
 export interface NotificationData { id: number; type: string; title: string; message: string; entityType?: string; entityId?: number; readAt: string | null; createdAt: string }
 export const listNotificationsApi = () => fetchApi<NotificationData[]>('/candidate/notifications')
 export const markNotificationReadApi = (id: number) => fetchApi<NotificationData>(`/candidate/notifications/${id}/read`, { method: 'PATCH' })
+
+export interface EmployerRecommendedJobSummary extends JobData {
+  jdAnalysisVersion: number | null
+  hasCompletedJdAnalysis: boolean
+}
+
+export interface EmployerCandidateRecommendationItem {
+  rank: number
+  matchScore: number
+  matchTier: 'high' | 'medium' | 'low'
+  scoreSource: 'ai_verified' | 'jd_matched'
+  matchedCriteria: string[]
+  partialCriteria: string[]
+  missingCriteria: string[]
+  matchedSkills: string[]
+  missingRequirements: string[]
+  explanation: string
+  cvAnalysisVersion: number
+  jdAnalysisVersion: number | null
+  isFavorite: boolean
+  candidate: {
+    id: number
+    fullName: string
+    email: string
+    title: string
+    skills: string[]
+  }
+  cv: {
+    id: number
+    displayName: string
+    originalName: string
+    headline: string | null
+    skills: string[]
+    extractionStatus: string
+    analysisVersion: number
+    analyzedAt: string | null
+  }
+  application: {
+    id: number
+    jobId: number
+    jobTitle: string
+    status: string
+    appliedAt: string
+    isDirectApplicant: boolean
+    profileUrl: string
+    cvDownloadUrl: string
+  }
+}
+
+export interface EmployerCandidateRecommendationsResponse {
+  selectedJob: EmployerRecommendedJobSummary | null
+  jobs: EmployerRecommendedJobSummary[]
+  recommendations: EmployerCandidateRecommendationItem[]
+  emptyReason: 'NO_EMPLOYER_JOBS' | 'NO_APPLICANTS' | 'NO_MATCHING_CANDIDATES' | null
+  meta: {
+    pool: 'job' | 'employer'
+    totalCandidates: number
+    totalMatched: number
+    highMatchCount: number
+    aiVerifiedCount: number
+    favoriteCount: number
+    updatedAt: string
+  }
+}
+
+export interface EmployerCandidateRecommendationQuery {
+  jobId?: number
+  pool?: 'job' | 'employer'
+  search?: string
+  minScore?: number
+  status?: string
+  sort?: string
+}
+
+export const getEmployerCandidateRecommendationsApi = (params: EmployerCandidateRecommendationQuery = {}) => {
+  const query = new URLSearchParams()
+  if (params.jobId) query.set('jobId', String(params.jobId))
+  if (params.pool) query.set('pool', params.pool)
+  if (params.search?.trim()) query.set('search', params.search.trim())
+  if (typeof params.minScore === 'number' && params.minScore > 0) query.set('minScore', String(params.minScore))
+  if (params.status) query.set('status', params.status)
+  if (params.sort) query.set('sort', params.sort)
+  const qs = query.toString()
+  return fetchApi<EmployerCandidateRecommendationsResponse>(`/employer/recommendations${qs ? `?${qs}` : ''}`)
+}

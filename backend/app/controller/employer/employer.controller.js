@@ -22,6 +22,7 @@ const { JOB_STATUS } = require('../../service/job/job-workflow.service')
 const { uploadJobJd: uploadJobJdMiddleware } = require('../../middleware/upload')
 const { uploadJobJd, downloadJobJd, deleteJobJd } = require('../../service/employer/job-jd.service')
 const { listFavoriteCandidates, toggleFavoriteCandidate } = require('../../service/employer/favorite-candidate.service')
+const { getEmployerCandidateRecommendations } = require('../../service/employer/candidate-recommendation.service')
 
 const initEmployerController = (app) => {
   const router = express.Router()
@@ -108,6 +109,7 @@ const initEmployerController = (app) => {
   router.get('/applications/:id/cv/download', ...employerOnly, (req, res, next) => getEmployerApplicationCv(req.user.id, req.params.id).then(file => res.download(file.absolutePath, file.downloadName)).catch(next))
   router.get('/favorite-candidates', ...employerOnly, (req, res, next) => listFavoriteCandidates(req.user.id).then(data => sendSuccess(res, { data, message: 'Lấy danh sách ứng viên đã lưu thành công.' })).catch(next))
   router.post('/favorite-candidates/:candidateId/toggle', ...employerOnly, (req, res, next) => toggleFavoriteCandidate(req.user.id, req.params.candidateId).then(data => sendSuccess(res, { data, message: data.favorite ? 'Đã lưu ứng viên.' : 'Đã bỏ lưu ứng viên.' })).catch(next))
+  router.get('/recommendations', ...employerOnly, (req, res, next) => getEmployerCandidateRecommendations(req.user.id, { jobId: req.query.jobId, pool: req.query.pool, search: req.query.search, minScore: req.query.minScore, status: req.query.status, sort: req.query.sort }).then(data => sendSuccess(res, { data, message: 'Lấy danh sách gợi ý ứng viên thành công.' })).catch(next))
 
   app.use('/api/employer', router)
 }
