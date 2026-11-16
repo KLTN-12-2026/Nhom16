@@ -16,6 +16,9 @@ import { RequireRole } from './RequireRole'
 const AdminDashboardPage = lazy(() => import('../pages/admin/AdminDashboardPage'))
 const EmployerReviewPage = lazy(() => import('../pages/admin/EmployerReviewPage'))
 const AdminUsersPage = lazy(() => import('../pages/admin/AdminUsersPage'))
+const AdminJobsPage = lazy(() => import('../pages/admin/AdminJobsPage'))
+const AdminCategoriesPage = lazy(() => import('../pages/admin/AdminCategoriesPage'))
+const AdminReportsPage = lazy(() => import('../pages/admin/AdminReportsPage'))
 const LoginPage = lazy(() => import('../pages/auth/login'))
 const ForgotPasswordPage = lazy(() => import('../pages/auth/forgot-password'))
 const GoogleCompletePage = lazy(() => import('../pages/auth/google-complete'))
@@ -117,6 +120,9 @@ export function AppRouter() {
         <Route path="dashboard" element={<RequirePermission permission={PERMISSION.ADMIN_STATISTICS_VIEW}><AdminDashboardPage /></RequirePermission>} />
         <Route path="employers" element={<RequirePermission permission={PERMISSION.ADMIN_USER_MANAGE}><EmployerReviewPage /></RequirePermission>} />
         <Route path="users" element={<RequirePermission permission={PERMISSION.ADMIN_USER_MANAGE}><AdminUsersPage /></RequirePermission>} />
+        <Route path="jobs" element={<RequirePermission permission={PERMISSION.ADMIN_JOB_MANAGE}><AdminJobsPage /></RequirePermission>} />
+        <Route path="categories" element={<RequirePermission permission={PERMISSION.ADMIN_CATEGORY_MANAGE}><AdminCategoriesPage /></RequirePermission>} />
+        <Route path="reports" element={<RequirePermission permission={PERMISSION.ADMIN_REPORT_MANAGE}><AdminReportsPage /></RequirePermission>} />
         <Route path="*" element={<ComingSoonPage />} />
       </Route>
 
