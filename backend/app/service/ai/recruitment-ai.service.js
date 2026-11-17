@@ -17,7 +17,14 @@ const comparisonSchema = { type: 'object', additionalProperties: false, required
 
 const cleanList = (value) => Array.isArray(value) ? [...new Set(value.map(item => String(item).trim()).filter(Boolean))].slice(0, 15) : []
 const words = value => String(value || '').normalize('NFKC').match(/[\p{L}\p{N}+#.]+/gu) || []
-const normalizedKey = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9+#]+/g, ' ').trim()
+const normalizedKey = value => String(value || '')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/đ/g, 'd')
+  .replace(/Đ/g, 'D')
+  .toLowerCase()
+  .replace(/[^a-z0-9+#]+/g, ' ')
+  .trim()
 const isMeaningfulSentence = value => {
   const tokens = words(value)
   const unique = new Set(tokens.map(token => token.toLowerCase()))
@@ -60,12 +67,18 @@ const validateJd = (value) => {
   buildJdCriteria(result)
   return result
 }
-const comparisonStopWords = new Set(['co', 'voi', 'va', 'hoac', 'trong', 'kinh', 'nghiem', 'phat', 'trien', 'xay', 'dung', 'su', 'dung', 'toi', 'thieu', 'yeu', 'cau', 'tot', 'nghiep', 'lam', 'viec', 'hieu', 'biet', 'kha', 'nang', 'the', 'la', 'mot', 'cua', 'cho', 'tren', 've', 'duoc', 'cac', 'ung', 'vien'])
+const comparisonStopWords = new Set([
+  'co', 'voi', 'va', 'hoac', 'trong', 'kinh', 'nghiem', 'phat', 'trien', 'xay', 'dung', 'su', 'dung', 'toi', 'thieu',
+  'yeu', 'cau', 'tot', 'nghiep', 'lam', 'viec', 'hieu', 'biet', 'kha', 'nang', 'the', 'la', 'mot', 'cua', 'cho', 'tren',
+  've', 'duoc', 'cac', 'ung', 'vien', 'dai', 'hoc', 'cao', 'dang', 'trinh', 'chuyen', 'nganh', 'nam', 'tuong', 'duong',
+  'vung', 'chuan', 'muc', 'hien', 'hanh', 'thanh', 'thao', 'phan', 'mem', 'pho', 'bien', 'it', 'nhat', 'trach', 'nhiem',
+  'bao', 'mat', 'thong', 'tin', 'du', 'lieu', 'can', 'than', 'trung', 'thuc', 'ti', 'mi', 'vi', 'tri', 'o', 'tu', 'den',
+])
 const findDirectCvEvidence = (criterionText, cv) => {
   if (!cv) return null
-  const cvItems = Object.values(cv).flatMap(value => Array.isArray(value) ? value : [value]).map(item => normalizedKey(item)).filter(Boolean)
+  const cvItems = Object.values(cv).flatMap(value => Array.isArray(value) ? value : [value]).map(item => ` ${normalizedKey(item)} `).filter(item => item.trim())
   const criterionTokens = [...new Set(words(criterionText).map(normalizedKey).filter(token => token.length >= 3 && !comparisonStopWords.has(token)))]
-  const matches = criterionTokens.filter(token => cvItems.some(item => item.includes(token)))
+  const matches = criterionTokens.filter(token => cvItems.some(item => item.includes(` ${token} `)))
   if (!matches.length) return null
   return { status: matches.length >= 2 ? 'met' : 'partial', evidence: `CV có đề cập trực tiếp: ${matches.slice(0, 3).join(', ')}.` }
 }
@@ -135,8 +148,8 @@ const analyzeJobDescription = async (jobData) => {
 const compareCvWithJob = async ({ cv, jd }) => {
   const criteria = buildJdCriteria(jd)
   const raw = await request(comparisonSchema,
-    'Đối chiếu CV với từng tiêu chí JD. Dùng đúng criterionId, mỗi ID đúng một lần. status chỉ là met, partial hoặc missing. Chỉ dùng dữ liệu CV, không suy đoán. Bằng chứng tiếng Việt tối đa 12 từ; giải thích tối đa 35 từ. Không chấm điểm. Trả đúng JSON schema.',
-    { cv, criteria }, { message: 'AI cục bộ chưa thể so sánh CV với JD. Hãy kiểm tra Ollama và thử lại.', code: 'CV_JOB_AI_UNAVAILABLE' }, { numPredict: 600, format: 'json' })
+    'Đối chiếu CV với từng tiêu chí JD trong criteria. Trả JSON gồm classifications (mỗi phần tử: criterionId khớp đúng id trong criteria, status, evidence tiếng Việt <= 15 từ) và explanation tiếng Việt <= 35 từ. Quy tắc status: chỉ gán "met" khi CV thực sự có bằng chứng trực tiếp đáp ứng đúng chuyên môn/kỹ năng/số năm kinh nghiệm đó; gán "partial" nếu chỉ liên quan một phần; bắt buộc gán "missing" nếu CV không có thông tin hoặc khác chuyên ngành. Mỗi criterionId xuất hiện đúng 1 lần, không chép lại cv/criteria, không suy đoán.',
+    { cv, criteria }, { message: 'AI cục bộ chưa thể so sánh CV với JD. Hãy kiểm tra Ollama và thử lại.', code: 'CV_JOB_AI_UNAVAILABLE' }, { numPredict: 1200 })
   return normalizeComparisonResult(raw, criteria, cv)
 }
 
