@@ -1834,3 +1834,157 @@
   .admin-page-header__summary { gap: 12px; grid-template-columns: repeat(3, 1fr); }
   .admin-tabs--compact { overflow-x: auto; width: 100%; }
 }
+
+.portal-account__theme {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+  padding: .78rem 1rem;
+  border: 0;
+  color: #365044;
+  background: #fff;
+  text-align: left;
+  transition: background .16s, color .16s;
+  &:hover { color: #08783f; background: #f2faf5; }
+  > i { width: 34px; height: 34px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 10px; color: #08783f; background: #e8f8ef; }
+  > span { min-width: 0; flex: 1; }
+  strong, small { display: block; }
+  strong { font-size: .76rem; }
+  small { margin-top: .15rem; color: #829087; font-size: .62rem; }
+}
+.portal-theme-switch {
+  width: 38px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  border-radius: 999px;
+  background: #d5e4dc;
+  transition: background .2s ease;
+  b { width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, .2); transition: transform .2s ease; }
+  &.is-dark { background: #00a94f; b { transform: translateX(16px); } }
+}
+
+/* Dark Mode scoped strictly to Candidate & HR portal (.portal-shell) — Login/Register untouched */
+html[data-theme='dark'] .portal-shell {
+  color-scheme: dark;
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+
+  .jobs-explorer-page, .recommendations-page, .candidate-journey-page, .saved-jobs-page, .employer-applications-page, .employer-job-editor, .candidate-profile-page, .employer-profile-page, .candidate-cv-page, .employer-jobs-page {
+    --cv-ink: #f8fafc; --cv-mint: rgba(16, 185, 129, .16); --cv-green-dark: #4ade80;
+    --emp-ink: #f8fafc; --emp-mint: rgba(16, 185, 129, .16); --emp-green-dark: #4ade80;
+    --job-ink: #f8fafc; --job-muted: #cbd5e1; --job-green-dark: #4ade80;
+    --talent-ink: #f8fafc; --talent-dark: #4ade80; --app-ink: #f8fafc; --app-green-dark: #4ade80;
+    background: #0f172a !important; color: #e2e8f0 !important;
+  }
+
+  .text-dark { color: #f8fafc !important; }
+  .text-muted, .text-secondary { color: #94a3b8 !important; }
+  .bg-white, .bg-light, .card { border-color: #334155 !important; background-color: #1e293b !important; color: #e2e8f0 !important; }
+  .border-top, .border-bottom, .border, hr, .profile-section, .emp-section, .cv-detail, .ai-runs > header, .ai-editor__header, .ai-match-result__header, .ai-criteria > header, .ai-criteria article { border-color: #334155 !important; }
+  .form-label, .col-form-label { color: #e2e8f0 !important; }
+  .form-control, .form-select { border-color: #475569 !important; background-color: #0f172a !important; color: #f8fafc !important; }
+  .form-control::placeholder { color: #94a3b8 !important; }
+  .form-control:disabled, .form-control[readonly] { border-color: #334155 !important; background-color: #162032 !important; color: #94a3b8 !important; }
+
+  .portal-header { background: #1e293b; box-shadow: 0 1px 0 rgba(255, 255, 255, .08); }
+  .portal-brand, .portal-brand span, .app-logo, .app-logo__word, .portal-account__identity strong, .portal-account__summary strong, .notification-popover__header strong, .notification-item__content strong { color: #f8fafc !important; }
+  .portal-account__identity small, .portal-account__summary span, .portal-account__theme small { color: #94a3b8 !important; }
+  .portal-nav a { color: #cbd5e1; }
+  .portal-nav a.active, .portal-nav a:hover { color: #4ade80; }
+  .portal-account__trigger:hover, .portal-account__trigger[aria-expanded='true'] { border-color: #334155; background: #0f172a; }
+  .portal-account__dropdown, .notification-popover { border-color: #334155; background: #1e293b; box-shadow: 0 22px 55px rgba(2, 6, 23, .6); }
+  .notification-popover::before { border-color: #334155; background: #1e293b; }
+  .portal-account__summary, .notification-popover__header { border-color: #334155; background: #0f172a; }
+  .portal-account__dropdown > a, .portal-account__theme, .portal-account__logout, .notification-item { border-color: #334155 !important; color: #e2e8f0 !important; background: #1e293b !important; }
+  .portal-account__dropdown > a:hover, .portal-account__theme:hover, .notification-item:hover { background: #334155 !important; }
+  .notification-bell__trigger { border-color: #334155 !important; color: #e2e8f0 !important; background: #0f172a !important; }
+
+  /* Jobs Explorer (/candidate/jobs) */
+  .jobs-search-form { background: rgba(15, 23, 42, .45); }
+  .jobs-search-form label { border: 1px solid #334155; background: #0f172a !important; color: #94a3b8 !important; }
+  .jobs-search-form input, .jobs-search-form select { border: 0 !important; background: transparent !important; color: #f8fafc !important; }
+  .jobs-search-form input::placeholder { color: #94a3b8 !important; }
+  .jobs-filter-panel, .jobs-explorer-card, .job-preview, .jobs-state { border-color: #334155 !important; background: #1e293b !important; color: #e2e8f0 !important; }
+  .jobs-explorer-card:hover, .jobs-explorer-card:focus, .jobs-explorer-card.is-active { border-color: #00b14f !important; background: #17253b !important; }
+  .jobs-filter-panel__heading, .job-preview__facts { border-color: #334155 !important; color: #cbd5e1 !important; }
+  .jobs-filter-panel__heading h2, .jobs-results__heading h2, .jobs-explorer-card__heading h2, .jobs-explorer-card__heading h2 a, .job-preview__header h2, .job-preview__content h3, .jobs-state h3 { color: #f8fafc !important; }
+  .jobs-filter-panel label, .jobs-explorer-card__heading p, .jobs-explorer-card__meta, .job-preview__header span { color: #cbd5e1 !important; }
+  .jobs-filter-panel select, .jobs-results__heading select { border-color: #475569 !important; background: #0f172a !important; color: #f8fafc !important; }
+  .job-preview__content { background: #0f172a !important; color: #cbd5e1 !important; }
+  .jobs-explorer-card__tags span { border: 1px solid #334155; background: #0f172a !important; color: #cbd5e1 !important; }
+  .job-action--secondary, .job-favorite, .jobs-pagination button { border-color: #475569 !important; background: #0f172a !important; color: #e2e8f0 !important; }
+  .job-action--ai { border-color: rgba(167, 139, 250, .45) !important; background: rgba(109, 40, 217, .22) !important; color: #ddd6fe !important; }
+
+  /* AI Studio, JD Analysis & Recommendations (PB15, PB16, PB18, PB19) */
+  .ai-studio { --ai-ink: #f8fafc; --ai-muted: #cbd5e1; --ai-border: #334155; --ai-surface: #1e293b; }
+  .ai-studio__header, .ai-metrics article, .ai-launcher, .ai-runs, .ai-editor, .ai-match-builder, .ai-source-card, .ai-score-card, .ai-score-note, .ai-match-stats article, .ai-criteria, .ai-conclusion, .ai-rec-toolbar, .ai-rec-cv-banner, .ai-rec-card, .ai-rec-card__top, .ai-rec-card__body, .ai-rec-card__footer, .ai-rec-panel, .ai-rec-apply-box, .ai-rec-compare-panel, .ai-rec-compare-grid article, .ai-summary-field, .ai-section-grid label, .role-home__welcome, .role-home__grid a, .cv-upload-card, .candidate-cv-card, .cv-overview > article, .cv-overview__note, .saved-jobs-hero, .saved-jobs-summary, .saved-jobs-workspace, .saved-job-card, .saved-job-card footer, .candidate-journey-hero, .journey-metrics article, .journey-workspace, .journey-card, .recommendations-hero, .recommendations-insight > div, .recommendations-toolbar, .recommendation-card, .recruitment-card, .application-card, .application-manager-total, .application-stage, .application-workspace, .application-candidate-card, .employer-jobs-hero, .employer-job-metrics article, .employer-job-workspace, .employer-job-card, .job-editor-main, .job-form-section, .job-progress-card, .job-tip-card, .job-review-card, .profile-card, .emp-card, .cv-quality, .cv-improvement {
+    border-color: #334155 !important; background: #1e293b !important; color: #e2e8f0 !important;
+  }
+  .ai-summary-field > span, .ai-section-grid label header strong, .ai-criteria article strong { color: #f8fafc !important; }
+  .ai-section-grid label header small, .ai-criteria > header p, .ai-criteria article p { color: #cbd5e1 !important; }
+  .ai-section-grid label header > i, .ai-section-grid label header em, .ai-criteria > header em { background: rgba(16, 185, 129, .18) !important; color: #4ade80 !important; }
+  .ai-summary-field textarea, .ai-section-grid label textarea { border-color: #475569 !important; background: #0f172a !important; color: #f8fafc !important; }
+  .ai-runs > header button, .ai-editor__actions button:not(.is-primary) { border-color: #475569 !important; background: #0f172a !important; color: #4ade80 !important; }
+  .ai-delete-result button:not(.is-cancel) { border-color: rgba(244, 63, 94, .45) !important; background: rgba(225, 29, 72, .16) !important; color: #fda4af !important; }
+  .ai-runs > button.is-active, .ai-runs > button:hover { background: #1e293b !important; }
+  .ai-runs > button strong { color: #f8fafc !important; }
+  .ai-runs > button small { color: #94a3b8 !important; }
+
+  .profile-completeness, .emp-completeness, .profile-ai-tip, .emp-trust-tip, .cv-file-picker, .candidate-cv-card__topline, .cv-quality > header, .cv-quality > footer, .cv-quality__criteria article, .cv-quality__insights article, .cv-improvement > header, .cv-improvement > footer, .cv-improvement__block, .cv-improvement__skill-item, .cv-improvement__rewrite, .cv-improvement__diff, .job-jd-item, .job-file-drop, .job-editor-actions, .ai-editor__content, .ai-match-result__content, .saved-job-grid, .saved-jobs-toolbar, .journey-list, .journey-toolbar, .journey-card__facts, .journey-next, .journey-card__footer, .journey-notifications, .employer-job-list, .employer-job-toolbar, .application-toolbar, .application-candidate-list, .application-candidate-card blockquote, .ai-rec-explanation, .recommendation-explain, .ai-runs > button, .ai-progress {
+    border-color: #334155 !important; background: #0f172a !important; color: #cbd5e1 !important;
+  }
+  .journey-card__facts > span + span, .saved-jobs-summary span + span, .application-candidate-card__details, .journey-card aside { border-color: #334155 !important; }
+  .journey-card__facts strong, .journey-toolbar h2, .saved-jobs-toolbar h2, .employer-job-toolbar h2, .application-toolbar h2, .application-job-context strong, .application-cv-context strong, .application-candidate-card__identity h3, .recruitment-heading h1, .application-card h2, .recruitment-card h2 { color: #f8fafc !important; }
+  .journey-card__facts small, .journey-card__title p, .journey-next p, .journey-timeline small, .saved-job-card__body > p, .saved-job-meta, .employer-job-card__meta, .application-candidate-card__identity p, .application-candidate-card__identity a, .application-card p, .recruitment-card p { color: #cbd5e1 !important; }
+  .journey-timeline > div:not(.is-complete)::before { background: #334155 !important; }
+  .journey-timeline > div:not(.is-complete) span { background: #0f172a !important; border: 1px solid #475569; color: #94a3b8 !important; }
+  .journey-jd-link, .journey-card__footer a, .journey-notifications button, .saved-job-card__head button, .job-quick-actions a, .job-quick-actions button, .application-action:not(.application-action--primary), .recruitment-actions a, .recruitment-actions button {
+    border-color: #475569 !important; background: #0f172a !important; color: #4ade80 !important;
+  }
+  .journey-jd-link small { color: #94a3b8 !important; }
+  .journey-card__tags span, .saved-job-skills span, .employer-job-card__skills span, .application-skills span { border: 1px solid #334155; background: #0f172a !important; color: #6ee7b7 !important; }
+  .journey-rejection { border-color: rgba(244, 63, 94, .45) !important; background: rgba(225, 29, 72, .14) !important; color: #fecdd3 !important; p, small { color: #fda4af !important; } a { border-color: rgba(244, 63, 94, .5) !important; background: #0f172a !important; color: #fda4af !important; } }
+  .profile-avatar-upload-button, .skill-suggest-tag, .skill-badge, .cv-skill-list span, .cv-action--ai, .cv-copy-btn, .job-jd-btn, .job-btn--ghost, .job-btn--secondary {
+    border-color: #475569 !important; background: #0f172a !important; color: #6ee7b7 !important;
+  }
+  .cv-quality__score > span { background: #0f172a !important; color: #4ade80 !important; small { color: #cbd5e1 !important; } }
+  .candidate-cv-card__headline, .cv-detail h3, .cv-detail li, .cv-quality__criteria article > div, .cv-quality__criteria p, .cv-quality__insights ul, .cv-improvement__advice p, .cv-improvement__skill-item span, .cv-improvement__rationale, .cv-improvement__diff-orig p, .cv-improvement__warn-group ul { color: #cbd5e1 !important; }
+  .cv-improvement__input, .cv-display-name input, .cv-rename-form input { border-color: #475569 !important; background: #0f172a !important; color: #f8fafc !important; }
+  .ai-studio__trust { border-color: #00a94f !important; background: #0f172a !important; color: #cbd5e1 !important; }
+
+  .ai-score-card__ring {
+    background: radial-gradient(circle at center, #0f172a 58%, transparent 60%), conic-gradient(var(--ai-accent) var(--match-score), #334155 0) !important;
+    strong { color: #4ade80 !important; }
+    small { color: #cbd5e1 !important; }
+  }
+  .ai-score-card__copy { > span { color: #4ade80 !important; } > strong { color: #f8fafc !important; } > small { color: #cbd5e1 !important; b { color: #4ade80 !important; } } }
+  .ai-rec-rank { background: #00a94f !important; color: #fff !important; }
+  .ai-rec-tier.is-high { background: rgba(16, 185, 129, .2) !important; color: #6ee7b7 !important; }
+  .ai-rec-tier.is-medium { background: rgba(245, 158, 11, .22) !important; color: #fde68a !important; }
+  .ai-rec-tier.is-low { background: rgba(239, 68, 68, .22) !important; color: #fca5a5 !important; }
+  .ai-rec-source { border: 1px solid #334155; background: #0f172a !important; color: #cbd5e1 !important; }
+  .ai-rec-chips span {
+    border-color: rgba(52, 211, 153, .4) !important; background: rgba(16, 185, 129, .16) !important; color: #6ee7b7 !important;
+    &.is-partial { border-color: rgba(251, 191, 36, .45) !important; background: rgba(245, 158, 11, .16) !important; color: #fde68a !important; }
+  }
+  .ai-rec-cv-banner__skills span { background: rgba(16, 185, 129, .18) !important; color: #6ee7b7 !important; }
+  .ai-rec-panel.is-matched header { strong, strong i { color: #6ee7b7 !important; } em { background: rgba(16, 185, 129, .2) !important; color: #6ee7b7 !important; } }
+  .ai-rec-panel.is-missing header { strong, strong i { color: #fca5a5 !important; } em { background: rgba(239, 68, 68, .2) !important; color: #fca5a5 !important; } }
+  .ai-rec-missing-list { color: #fecaca !important; }
+  .ai-rec-empty-note, .ai-rec-company, .ai-rec-meta, .ai-metrics small, .ai-rec-toolbar label > span { color: #cbd5e1 !important; }
+  .ai-rec-toolbar label > span i, .ai-rec-meta span i { color: #4ade80 !important; }
+  .ai-rec-title a, .ai-studio h1, .ai-studio h2, .ai-studio h3, .ai-metrics strong, .role-home h1, .candidate-cv-heading h1, .saved-jobs-hero h1, .saved-jobs-summary strong, .saved-job-card h3, .candidate-journey-hero h1, .journey-metrics strong, .journey-card h3, .employer-jobs-hero h1, .employer-job-metrics strong, .employer-job-card h3, .application-manager-header h1, .application-stage strong, .job-editor-header h1 { color: #f8fafc !important; }
+
+  .employer-job-search, .employer-job-select, .recommendations-search, .recommendations-score, .journey-toolbar form label, .saved-jobs-toolbar form label, .application-search, .application-filter {
+    border-color: #475569 !important; background: #0f172a !important; color: #94a3b8 !important;
+    input, select { border: 0 !important; background: transparent !important; color: #f8fafc !important; }
+  }
+  .ai-rec-toolbar input[type='search'], .ai-rec-toolbar select, .ai-rec-apply-box select, .ai-rec-apply-box textarea, .ai-launcher select, .ai-source-card select, .job-field input, .job-field select, .job-field textarea, .ai-rec-actions a, .ai-rec-actions button:not(.is-primary), .ai-rec-refresh, .ai-rec-toggle {
+    border-color: #475569 !important; background: #0f172a !important; color: #f8fafc !important;
+  }
+  .ai-rec-actions .is-primary { border-color: #00a94f !important; background: linear-gradient(135deg, #00a94f, #08783f) !important; color: #fff !important; }
+  .ai-rec-actions .is-saved { border-color: rgba(244, 63, 94, .5) !important; background: rgba(225, 29, 72, .18) !important; color: #fda4af !important; }
+}

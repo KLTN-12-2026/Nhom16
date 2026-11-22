@@ -24,6 +24,7 @@ const menus: Partial<Record<Role, { label: string; to: string }[]>> = {
     { label: 'Hồ sơ doanh nghiệp', to: '/employer/company' },
     { label: 'Hồ sơ ứng tuyển', to: '/employer/applications' },
     { label: 'Ứng viên phù hợp', to: '/employer/recommendations' },
+    { label: 'Ứng viên đã lưu', to: '/employer/favorite-candidates' },
   ],
 }
 
@@ -34,11 +35,25 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
   const [accountOpen, setAccountOpen] = useState(false)
   const [avatarFailed, setAvatarFailed] = useState(false)
   const [avatarVersion, setAvatarVersion] = useState(Date.now())
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (
+    typeof window !== 'undefined' && window.localStorage.getItem('topcv-theme') === 'dark' ? 'dark' : 'light'
+  ))
 
   const isCandidate = role === ROLE.CANDIDATE
-  const profileRoute = isCandidate ? '/candidate/profile' : '/employer/company'
   const roleLabel = isCandidate ? 'Ứng viên' : 'Nhà tuyển dụng'
   const avatarUrl = isCandidate ? getCandidateAvatarUrl(user?.id, avatarVersion) : null
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    window.localStorage.setItem('topcv-theme', theme)
+    return () => {
+      document.documentElement.removeAttribute('data-theme')
+    }
+  }, [theme])
+
+  const toggleTheme = () => {
+    setTheme((current) => (current === 'dark' ? 'light' : 'dark'))
+  }
 
   useEffect(() => {
     const closeOnOutsideClick = (event: MouseEvent) => {
@@ -103,10 +118,20 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
                 <strong>{user?.fullName}</strong>
                 <span>{user?.email}</span>
               </div>
-              <NavLink to={profileRoute} onClick={() => setAccountOpen(false)}>
-                <i className="bi bi-person-circle" />
-                <span><strong>Quản lý hồ sơ</strong><small>Cập nhật thông tin và ảnh đại diện</small></span>
-              </NavLink>
+              <button
+                type="button"
+                className="portal-account__theme"
+                onClick={toggleTheme}
+              >
+                <i className={`bi ${theme === 'dark' ? 'bi-moon-stars-fill' : 'bi-sun-fill'}`} />
+                <span>
+                  <strong>Giao diện: {theme === 'dark' ? 'Tối' : 'Sáng'}</strong>
+                  <small>{theme === 'dark' ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}</small>
+                </span>
+                <em className={`portal-theme-switch${theme === 'dark' ? ' is-dark' : ''}`} aria-hidden="true">
+                  <b />
+                </em>
+              </button>
               <button type="button" className="portal-account__logout" onClick={handleLogout}>
                 <i className="bi bi-box-arrow-right" />
                 <span>Đăng xuất</span>
