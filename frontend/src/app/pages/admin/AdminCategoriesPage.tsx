@@ -84,7 +84,7 @@ export default function AdminCategoriesPage() {
             <>
               <label>
                 Mã ngành
-                <input {...register('code', { required: 'Vui lòng nhập mã ngành.' })} placeholder="Ví dụ: CNTT" />
+                <input maxLength={10} {...register('code', { required: 'Vui lòng nhập mã ngành.', maxLength: { value: 10, message: 'Mã ngành tối đa 10 ký tự.' } })} placeholder="Ví dụ: CNTT" />
               </label>
               {errors.code && <small className="text-danger">{errors.code.message}</small>}
               <label>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useParams } from 'react-router-dom'
+import { ApiClientError } from '../../apis/fetch-api'
 import { listJobCategoriesApi, type JobCategory } from '../../apis/job'
 import {
   createEmployerJobApi,
@@ -22,11 +23,39 @@ interface FormData
   jdFile?: FileList
 }
 
-const splitItems = (value: string) =>
+const countWords = (value?: string) => (String(value || '').trim().match(/[\p{L}\p{N}+#.]+/gu) || []).length
+
+const splitLines = (value: string) =>
   value
-    .split(/\n|,/)
+    .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean)
+
+const splitSkills = (value: string) =>
+  value
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+const mergeBrokenLines = (items: string[] = []) => {
+  const merged: string[] = []
+  items.map((item) => String(item || '').trim()).filter(Boolean).forEach((item) => {
+    if (countWords(item) < 3 && merged.length > 0 && !/^[-•*+]/.test(item)) {
+      merged[merged.length - 1] = `${merged[merged.length - 1]}, ${item}`
+    } else {
+      merged.push(item)
+    }
+  })
+  return merged.join('\n')
+}
+
+const JOB_STATUS_LABELS: Record<string, string> = {
+  DRAFT: 'Bản nháp',
+  ACTIVE: 'Đang tuyển',
+  HIDDEN: 'Đang ẩn',
+  CLOSED: 'Đã đóng',
+  EXPIRED: 'Hết hạn',
+}
 
 const formatFileSize = (bytes?: number) => {
   if (!bytes) return '0 B'
@@ -41,6 +70,7 @@ export default function EmployerJobFormPage() {
   const navigate = useNavigate()
   const [categories, setCategories] = useState<JobCategory[]>([])
   const [error, setError] = useState('')
+  const [jobStatus, setJobStatus] = useState('DRAFT')
   const [jdFiles, setJdFiles] = useState<JobJdFileData[]>([])
   const [uploadingJd, setUploadingJd] = useState(false)
   const [jdFeedback, setJdFeedback] = useState('')
@@ -65,11 +95,11 @@ export default function EmployerJobFormPage() {
   const values = watch()
   const completionItems = useMemo(
     () => [
-      { label: 'Thông tin vị trí', done: Boolean(values.title && values.categoryId && values.location) },
+      { label: 'Thông tin vị trí', done: Boolean(values.title && values.title.trim().length >= 3 && values.categoryId && values.location) },
       { label: 'Mức lương & điều kiện', done: Boolean(values.deadline && values.employmentType) },
-      { label: 'Mô tả công việc', done: Boolean(values.description && values.description.length >= 20) },
-      { label: 'Yêu cầu ứng viên', done: Boolean(values.requirementsText) },
-      { label: 'Quyền lợi & kỹ năng', done: Boolean(values.benefitsText && values.skillsText) },
+      { label: 'Mô tả công việc', done: Boolean(values.description && values.description.trim().length >= 40 && countWords(values.description) >= 8) },
+      { label: 'Yêu cầu ứng viên', done: Boolean(values.requirementsText && countWords(values.requirementsText) >= 2) },
+      { label: 'Quyền lợi & kỹ năng', done: Boolean(values.benefitsText && countWords(values.benefitsText) >= 2 && values.skillsText) },
     ],
     [values],
   )
@@ -89,6 +119,7 @@ export default function EmployerJobFormPage() {
       .then((response) => {
         const job = response.data
         setJdFiles(job.jdFiles || [])
+        setJobStatus(job.status || 'DRAFT')
         reset({
           categoryId: String(job.category.id),
           title: job.title,
@@ -100,8 +131,8 @@ export default function EmployerJobFormPage() {
           employmentType: job.employmentType,
           positionLevel: job.positionLevel,
           description: job.description,
-          requirementsText: job.requirements.join('\n'),
-          benefitsText: job.benefits.join('\n'),
+          requirementsText: mergeBrokenLines(job.requirements),
+          benefitsText: mergeBrokenLines(job.benefits),
           skillsText: job.tags.join(', '),
           deadline: job.deadline,
         })
@@ -118,9 +149,9 @@ export default function EmployerJobFormPage() {
         categoryId: Number(formValues.categoryId),
         salaryMin: formValues.salaryMin ? Number(formValues.salaryMin) : null,
         salaryMax: formValues.salaryMax ? Number(formValues.salaryMax) : null,
-        requirements: splitItems(formValues.requirementsText),
-        benefits: splitItems(formValues.benefitsText),
-        skills: splitItems(formValues.skillsText),
+        requirements: splitLines(formValues.requirementsText),
+        benefits: splitLines(formValues.benefitsText),
+        skills: splitSkills(formValues.skillsText),
       }
       const response = id
         ? await updateEmployerJobApi(Number(id), payload)
@@ -128,7 +159,12 @@ export default function EmployerJobFormPage() {
       if (formValues.jdFile?.[0]) await uploadJobJdApi(response.data.id, formValues.jdFile[0])
       navigate('/employer/jobs')
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Không thể lưu tin tuyển dụng.')
+      if (cause instanceof ApiClientError && cause.details) {
+        const detailMessages = Object.values(cause.details).filter(Boolean)
+        setError(detailMessages.length ? `${cause.message} (${detailMessages.join(' ')})` : cause.message)
+      } else {
+        setError(cause instanceof Error ? cause.message : 'Không thể lưu tin tuyển dụng.')
+      }
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
   })
@@ -202,7 +238,7 @@ export default function EmployerJobFormPage() {
             <h1>{id ? 'Chỉnh sửa tin tuyển dụng' : 'Tạo tin tuyển dụng mới'}</h1>
             <p>Thông tin đầy đủ và rõ ràng giúp tin tuyển dụng tiếp cận đúng ứng viên hơn.</p>
           </div>
-          <span className="job-editor-status"><i className="bi bi-pencil-square" /> Bản nháp</span>
+          <span className="job-editor-status"><i className="bi bi-pencil-square" /> {id ? (JOB_STATUS_LABELS[jobStatus] || jobStatus) : 'Bản nháp'}</span>
         </header>
 
         {error && <div className="alert alert-danger job-editor-alert">{error}</div>}
@@ -217,8 +253,8 @@ export default function EmployerJobFormPage() {
               <div className="job-form-grid job-form-grid--2">
                 <label className="job-field job-field--wide">
                   <span>Chức danh <b>*</b></span>
-                  <input placeholder="Ví dụ: Frontend Developer" {...register('title', { required: true, minLength: 5 })} />
-                  {errors.title && <small>Vui lòng nhập chức danh ít nhất 5 ký tự.</small>}
+                  <input placeholder="Ví dụ: Frontend Developer" {...register('title', { required: true, minLength: 3 })} />
+                  {errors.title && <small>Vui lòng nhập chức danh ít nhất 3 ký tự.</small>}
                 </label>
                 <label className="job-field">
                   <span>Ngành nghề <b>*</b></span>
@@ -260,7 +296,7 @@ export default function EmployerJobFormPage() {
                 <div><h2>Nội dung tuyển dụng</h2><p>Mô tả cụ thể để tăng chất lượng hồ sơ ứng tuyển.</p></div>
               </div>
               <div className="job-form-grid">
-                <label className="job-field"><span>Mô tả công việc <b>*</b></span><textarea rows={6} placeholder="Mô tả vai trò, nhiệm vụ và phạm vi công việc..." {...register('description', { required: true, minLength: 20 })} />{errors.description && <small>Nội dung mô tả cần ít nhất 20 ký tự.</small>}</label>
+                <label className="job-field"><span>Mô tả công việc <b>*</b></span><textarea rows={6} placeholder="Mô tả vai trò, nhiệm vụ và phạm vi công việc..." {...register('description', { required: true, minLength: 40 })} />{errors.description && <small>Nội dung mô tả cần ít nhất 40 ký tự (tối thiểu 8 từ).</small>}</label>
                 <div className="job-form-grid job-form-grid--2">
                   <label className="job-field"><span>Yêu cầu ứng viên <b>*</b></span><em>Mỗi yêu cầu trên một dòng</em><textarea rows={7} placeholder={'Tốt nghiệp chuyên ngành liên quan\nCó kinh nghiệm ReactJS...'} {...register('requirementsText', { required: true })} />{errors.requirementsText && <small>Vui lòng nhập yêu cầu ứng viên.</small>}</label>
                   <label className="job-field"><span>Quyền lợi <b>*</b></span><em>Mỗi quyền lợi trên một dòng</em><textarea rows={7} placeholder={'Thưởng hiệu suất\nBảo hiểm đầy đủ...'} {...register('benefitsText', { required: true })} />{errors.benefitsText && <small>Vui lòng nhập quyền lợi.</small>}</label>

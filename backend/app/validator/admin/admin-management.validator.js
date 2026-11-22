@@ -17,7 +17,7 @@ const moderationSchema = yup.object({
 const catalogCreateSchema = yup.object({
   type: yup.string().trim().uppercase().oneOf(['INDUSTRY', 'SKILL', 'POSITION'], 'Loại danh mục không hợp lệ.').required('Vui lòng chọn loại danh mục.'),
   name: yup.string().trim().min(2, 'Tên danh mục phải có ít nhất 2 ký tự.').max(180).required('Vui lòng nhập tên danh mục.'),
-  code: yup.string().trim().uppercase().max(50).nullable(),
+  code: yup.string().trim().uppercase().max(10, 'Mã ngành không được vượt quá 10 ký tự.').nullable(),
   shortName: yup.string().trim().max(100).nullable(),
   legalReference: yup.string().trim().max(500).nullable(),
 }).noUnknown(true)

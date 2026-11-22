@@ -3,9 +3,9 @@ const { db } = require('../../db')
 const { ApiError } = require('../../util')
 
 const JOB_ACTIONS = Object.freeze({
-  APPROVE: { status: 'ACTIVE', isPublic: true, isHidden: false, closedAt: null },
+  APPROVE: { status: 'ACTIVE', isPublic: true, isHidden: false, closedAt: null, publishedAt: () => new Date() },
   HIDE: { status: 'HIDDEN', isPublic: false, isHidden: true },
-  RESTORE: { status: 'ACTIVE', isPublic: true, isHidden: false, closedAt: null },
+  RESTORE: { status: 'ACTIVE', isPublic: true, isHidden: false, closedAt: null, publishedAt: () => new Date() },
   REMOVE: { status: 'CLOSED', isPublic: false, isHidden: true, closedAt: () => new Date() },
 })
 

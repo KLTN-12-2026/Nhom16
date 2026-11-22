@@ -3,7 +3,7 @@ const { isTechnicalLabel, isVietnameseText } = require('./cv-quality-schema.serv
 const WARNING_FIELDS = ['missingContacts', 'spellingOrExpression', 'missingSections']
 const OUT_OF_SCOPE_MESSAGE = 'Câu hỏi này nằm ngoài phạm vi hỗ trợ của hệ thống.'
 
-const RECRUITMENT_ANCHORS = /(?:cv|hồ\s*sơ|resume|tuyển\s*dụng|ứng\s*tuyển|ứng\s*viên|nhà\s*tuyển\s*dụng|việc\s*làm|công\s*việc|nghề\s*nghiệp|kỹ\s*năng|skills?|kinh\s*nghiệm|experience|học\s*vấn|education|dự\s*án|projects?|chứng\s*chỉ|certificates?|mục\s*tiêu|tóm\s*tắt|summary|objective|trình\s*bày|bố\s*cục|layout|format|chính\s*tả|văn\s*phong|ngắn\s*gọn|súc\s*tích|chuyên\s*nghiệp|chuẩn\s*ats|\bats\b|thành\s*tích|số\s*liệu|phỏng\s*vấn|interview|lương|salary|\bjd\b|mô\s*tả\s*công\s*việc|vị\s*trí|chức\s*danh|ngành|chuyên\s*ngành|gpa|thực\s*tập|intern|fresher|junior|senior|developer|lập\s*trình|backend|frontend|fullstack|tester|\bqa\b|\bba\b|designer|marketing|kế\s*toán|nhân\s*sự|devops|mobile|data|react|vue|angular|node\.?js|typescript|javascript|java\b|python|golang|docker|sql|mysql|figma|ui\/?ux|cải\s*thiện|viết\s*lại|chỉnh\s*sửa|tối\s*ưu|nổi\s*bật|nhấn\s*mạnh|bổ\s*sung|gợi\s*ý|đánh\s*giá|liên\s*hệ|github|linkedin|portfolio)/iu
+const RECRUITMENT_ANCHORS = /(?:cv|hồ\s*sơ|resume|tuyển\s*dụng|ứng\s*tuyển|ứng\s*viên|nhà\s*tuyển\s*dụng|việc\s*làm|công\s*việc|nghề\s*nghiệp|kỹ\s*năng|skills?|năng\s*lực|kinh\s*nghiệm|experience|học\s*vấn|education|dự\s*án|projects?|chứng\s*chỉ|certificates?|mục\s*tiêu|tóm\s*tắt|summary|objective|trình\s*bày|bố\s*cục|layout|format|chính\s*tả|văn\s*phong|ngắn\s*gọn|súc\s*tích|chuyên\s*nghiệp|chuẩn\s*ats|\bats\b|thành\s*tích|số\s*liệu|phỏng\s*vấn|interview|lương|salary|\bjd\b|mô\s*tả\s*công\s*việc|vị\s*trí|chức\s*danh|ngành|chuyên\s*ngành|gpa|thực\s*tập|intern|fresher|junior|senior|developer|lập\s*trình|backend|frontend|fullstack|tester|\bqa\b|\bba\b|designer|marketing|kế\s*toán|nhân\s*sự|devops|mobile|data|react|vue|angular|node\.?js|typescript|javascript|java\b|python|golang|docker|sql|mysql|figma|ui\/?ux|cải\s*thiện|viết\s*lại|chỉnh\s*sửa|tối\s*ưu|nổi\s*bật|nhấn\s*mạnh|bổ\s*sung|gợi\s*ý|đánh\s*giá|liên\s*hệ|github|linkedin|portfolio|đầy\s*đủ|rõ\s*ràng|nhất\s*quán|điểm\s*mạnh|điểm\s*yếu|chi\s*tiết|cụ\s*thể|chuyên\s*sâu|thuyết\s*phục)/iu
 const OFF_TOPIC_PATTERNS = /(?:thời\s*tiết|nắng\s*mưa|trời\s*mưa|nấu\s*ăn|công\s*thức\s*món|ăn\s*(?:gì|món|trưa|tối|sáng)|món\s*(?:ăn|ngon)|giải\s*phương\s*trình|đạo\s*hàm|tích\s*phân|chứng\s*khoán|crypto|bitcoin|xổ\s*số|lô\s*đề|bóng\s*đá|tỷ\s*số|cá\s*độ|kể\s*chuyện|thơ\s*ca|viết\s*thơ|tử\s*vi|phong\s*thủy|thuốc\s*chữa|du\s*lịch|giá\s*vàng|xem\s*phim|nghe\s*nhạc|chơi\s*game|bạn\s*là\s*ai|mấy\s*giờ|xin\s*chào|chào\s*bạn)/iu
 
 const sectionAdviceSchema = (editDesc) => ({
@@ -96,7 +96,7 @@ const isRecruitmentScopeRequest = (customRequest) => {
   if (!normalized) return true
   const hasAnchor = RECRUITMENT_ANCHORS.test(normalized)
   if (OFF_TOPIC_PATTERNS.test(normalized) && !hasAnchor) return false
-  return hasAnchor
+  return true
 }
 
 const cleanString = (value, maxLength, field) => {
