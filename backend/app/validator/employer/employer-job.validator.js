@@ -6,6 +6,7 @@ const meaningfulSentence = value => {
   const tokens = words(value)
   return tokens.length >= 2 && new Set(tokens.map(token => token.toLowerCase())).size >= Math.min(2, tokens.length)
 }
+const hasValue = value => value !== null && value !== undefined && value !== ''
 const normalizeMultilineItems = (items) => {
   if (!Array.isArray(items)) return items
   const merged = []
@@ -38,7 +39,7 @@ const jobSchema = yup.object({
   requirements: yup.array().transform(normalizeMultilineItems).of(yup.string().trim().test('meaningful-requirement', 'Mỗi yêu cầu cần mô tả rõ ít nhất 2 từ.', meaningfulSentence)).min(1).required(),
   benefits: yup.array().transform(normalizeMultilineItems).of(yup.string().trim().test('meaningful-benefit', 'Mỗi quyền lợi cần mô tả rõ ít nhất 2 từ.', meaningfulSentence)).min(1).required(), skills: yup.array().of(yup.string().trim().min(1)).min(1).required(),
   deadline: yup.date().test('deadline-from-today', 'Hạn nộp phải từ hôm nay trở đi.', isTodayOrFuture).required(), publish: yup.boolean().default(false),
-}).test('salary-range', 'Mức lương tối đa phải lớn hơn hoặc bằng mức tối thiểu.', value => !value?.salaryMin || !value?.salaryMax || value.salaryMax >= value.salaryMin).noUnknown(true)
+}).test('salary-range', 'Mức lương tối đa phải lớn hơn hoặc bằng mức tối thiểu.', value => !hasValue(value?.salaryMin) || !hasValue(value?.salaryMax) || value.salaryMax >= value.salaryMin).noUnknown(true)
 
 const validateJob = async (payload) => {
   try { return await jobSchema.validate(payload, { abortEarly: false, stripUnknown: true }) }
