@@ -19,6 +19,7 @@ const requestOllamaStructuredJson = async ({
       body: JSON.stringify({
         model,
         stream: false,
+        keep_alive: '30m',
         format: format || schema,
         options: { temperature: 0, ...(numPredict ? { num_predict: numPredict } : {}) },
         messages,

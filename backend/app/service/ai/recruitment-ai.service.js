@@ -9,7 +9,7 @@ const jdSchema = { type: 'object', additionalProperties: false, required: ['titl
   keywords: stringArray, mandatoryRequirements: stringArray,
 } }
 const classification = { type: 'object', additionalProperties: false, required: ['criterionId', 'status', 'evidence'], properties: {
-  criterionId: { type: 'string', maxLength: 80 }, status: { type: 'string', enum: ['met', 'partial', 'missing'] }, evidence: { type: 'string', maxLength: 160 },
+  criterionId: { type: 'string', maxLength: 80 }, status: { type: 'string', enum: ['met', 'partial', 'missing'] }, evidence: { type: 'string', maxLength: 100 },
 } }
 const comparisonSchema = { type: 'object', additionalProperties: false, required: ['classifications', 'explanation'], properties: {
   classifications: { type: 'array', minItems: 1, maxItems: 8, items: classification }, explanation: { type: 'string', maxLength: 360 },
@@ -74,13 +74,66 @@ const comparisonStopWords = new Set([
   'vung', 'chuan', 'muc', 'hien', 'hanh', 'thanh', 'thao', 'phan', 'mem', 'pho', 'bien', 'it', 'nhat', 'trach', 'nhiem',
   'bao', 'mat', 'thong', 'tin', 'du', 'lieu', 'can', 'than', 'trung', 'thuc', 'ti', 'mi', 'vi', 'tri', 'o', 'tu', 'den',
 ])
+const technicalAliases = {
+  javascript: ['javascript', 'js'], typescript: ['typescript', 'ts'], 'node js': ['node js', 'nodejs', 'node.js', 'node'],
+  react: ['react', 'reactjs', 'react.js'], express: ['express', 'expressjs', 'express.js'],
+  'rest api': ['rest api', 'restful api', 'restful web service', 'restful web services'],
+  jwt: ['jwt', 'json web token'], mysql: ['mysql'], redis: ['redis'], sequelize: ['sequelize'], bullmq: ['bullmq', 'bull mq'],
+}
+const flattenStrings = value => {
+  if (value == null) return []
+  if (typeof value === 'string' || typeof value === 'number') return [String(value)]
+  if (Array.isArray(value)) return value.flatMap(flattenStrings)
+  if (typeof value === 'object') return Object.values(value).flatMap(flattenStrings)
+  return []
+}
+const conceptsIn = value => {
+  const text = ` ${normalizedKey(flattenStrings(value).join(' '))} `
+  return Object.entries(technicalAliases).filter(([, aliases]) => aliases.some(alias => text.includes(` ${normalizedKey(alias)} `))).map(([concept]) => concept)
+}
 const findDirectCvEvidence = (criterionText, cv) => {
   if (!cv) return null
-  const cvItems = Object.values(cv).flatMap(value => Array.isArray(value) ? value : [value]).map(item => ` ${normalizedKey(item)} `).filter(item => item.trim())
+  const cvItems = flattenStrings(cv).map(item => ` ${normalizedKey(item)} `).filter(item => item.trim())
+  const requiredConcepts = conceptsIn(criterionText)
+  const cvConcepts = new Set(conceptsIn(cv))
+  const conceptMatches = requiredConcepts.filter(concept => cvConcepts.has(concept))
+  if (conceptMatches.length) {
+    return {
+      status: conceptMatches.length === requiredConcepts.length ? 'met' : 'partial',
+      evidence: `CV có bằng chứng tương đương: ${conceptMatches.slice(0, 4).join(', ')}.`,
+      source: 'concept',
+    }
+  }
   const criterionTokens = [...new Set(words(criterionText).map(normalizedKey).filter(token => token.length >= 3 && !comparisonStopWords.has(token)))]
   const matches = criterionTokens.filter(token => cvItems.some(item => item.includes(` ${token} `)))
   if (!matches.length) return null
   return { status: matches.length >= 2 ? 'met' : 'partial', evidence: `CV có đề cập trực tiếp: ${matches.slice(0, 3).join(', ')}.` }
+}
+
+const compactCvForComparison = (cv, criteria) => {
+  const relevanceTerms = [...new Set(criteria.flatMap(item => {
+    const aliases = conceptsIn(item.text).flatMap(concept => technicalAliases[concept] || [])
+    return [...words(item.text), ...aliases].map(normalizedKey).filter(term => term.length >= 2 && !comparisonStopWords.has(term))
+  }))]
+  const score = value => {
+    const text = normalizedKey(flattenStrings(value).join(' '))
+    return relevanceTerms.reduce((total, term) => total + (text.includes(term) ? 1 : 0), 0)
+  }
+  const compact = (value, key = '', depth = 0) => {
+    if (depth > 4 || value == null) return undefined
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value).slice(0, 900)
+    if (Array.isArray(value)) {
+      const maxItems = /skill|technolog|keyword/i.test(key) ? 16 : 4
+      return value.map((item, index) => ({ item, index, score: score(item) }))
+        .sort((a, b) => b.score - a.score || a.index - b.index).slice(0, maxItems)
+        .map(({ item }) => compact(item, key, depth + 1)).filter(item => item !== undefined)
+    }
+    if (typeof value === 'object') {
+      return Object.fromEntries(Object.entries(value).slice(0, 12).map(([childKey, childValue]) => [childKey, compact(childValue, childKey, depth + 1)]).filter(([, childValue]) => childValue !== undefined))
+    }
+    return undefined
+  }
+  return compact(cv) || {}
 }
 const normalizeComparisonResult = (value, criteria, cv) => {
   const allowed = new Map(criteria.map(item => [item.id, item]))
@@ -134,7 +187,8 @@ const parseModelJson = (raw) => {
 
 const request = async (schema, system, data, unavailableError, options = {}) => {
   if (env.ai.provider !== 'ollama') throw new ApiError(503, 'Tính năng này hiện yêu cầu AI cục bộ Ollama.', 'LOCAL_AI_REQUIRED')
-  const raw = await requestOllamaStructuredJson({ baseUrl: env.ai.ollamaBaseUrl, model: env.ai.ollamaModel, timeoutMs: Math.min(env.ai.requestTimeoutMs, 90000), numPredict: options.numPredict || 600, format: options.format, schema, messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(data) }], unavailableError })
+  const requestedTimeout = Number(options.timeoutMs) || env.ai.requestTimeoutMs
+  const raw = await requestOllamaStructuredJson({ baseUrl: env.ai.ollamaBaseUrl, model: env.ai.ollamaModel, timeoutMs: Math.min(requestedTimeout, env.ai.requestTimeoutMs), numPredict: options.numPredict ?? 600, format: options.format, schema, messages: [{ role: 'system', content: system }, { role: 'user', content: JSON.stringify(data) }], unavailableError })
   return parseModelJson(raw)
 }
 
@@ -147,10 +201,25 @@ const analyzeJobDescription = async (jobData) => {
 
 const compareCvWithJob = async ({ cv, jd }) => {
   const criteria = buildJdCriteria(jd)
+  // Tiêu chí có bằng chứng kỹ thuật trực tiếp trong CV (kể cả viết tắt như JS, NodeJS) được xác định cục bộ,
+  // không cần AI sinh lại: giảm số token đầu vào/đầu ra nên nhanh hơn rõ rệt trên máy chạy CPU.
+  const resolved = []
+  const pending = []
+  criteria.forEach(item => {
+    const direct = findDirectCvEvidence(item.text, cv)
+    if (direct?.source === 'concept' && direct.status === 'met') resolved.push({ criterion: item.text, evidence: direct.evidence })
+    else pending.push(item)
+  })
+  if (!pending.length) {
+    return { metCriteria: resolved, partialCriteria: [], missingCriteria: [], explanation: 'Tất cả tiêu chí JD đều có bằng chứng trực tiếp trong CV.' }
+  }
+  const compactCv = compactCvForComparison(cv, pending)
   const raw = await request(comparisonSchema,
-    'Đối chiếu CV với từng tiêu chí JD trong criteria. Trả JSON gồm classifications (mỗi phần tử: criterionId khớp đúng id trong criteria, status, evidence tiếng Việt <= 15 từ) và explanation tiếng Việt <= 35 từ. Quy tắc status: chỉ gán "met" khi CV thực sự có bằng chứng trực tiếp đáp ứng đúng chuyên môn/kỹ năng/số năm kinh nghiệm đó; gán "partial" nếu chỉ liên quan một phần; bắt buộc gán "missing" nếu CV không có thông tin hoặc khác chuyên ngành. Mỗi criterionId xuất hiện đúng 1 lần, không chép lại cv/criteria, không suy đoán.',
-    { cv, criteria }, { message: 'AI cục bộ chưa thể so sánh CV với JD. Hãy kiểm tra Ollama và thử lại.', code: 'CV_JOB_AI_UNAVAILABLE' }, { numPredict: 1200 })
-  return normalizeComparisonResult(raw, criteria, cv)
+    'Đối chiếu CV với từng tiêu chí JD theo ngữ nghĩa, không chỉ khớp từng từ. Hiểu viết tắt kỹ thuật phổ biến như JS=JavaScript, TS=TypeScript, NodeJS=Node.js, RESTful=REST API và JWT=JSON Web Token; bỏ qua khác biệt hoa thường, dấu câu, thứ tự và cách trình bày. Dùng đúng criterionId, mỗi ID đúng một lần. status: met khi CV thực sự có bằng chứng trực tiếp đáp ứng đúng chuyên môn, kỹ năng hoặc số năm kinh nghiệm; partial nếu chỉ liên quan một phần; bắt buộc missing nếu CV không có thông tin hoặc khác chuyên ngành. Chỉ dùng dữ liệu CV, tuyệt đối không suy đoán hoặc tạo bằng chứng. evidence chỉ điền khi met hoặc partial (trích tối đa 8 từ từ CV); khi missing để evidence là chuỗi rỗng. Giải thích tối đa 20 từ. Không chấm điểm. Trả đúng JSON schema.',
+    { cv: compactCv, criteria: pending }, { message: 'AI cục bộ chưa thể so sánh CV với JD. Hãy kiểm tra Ollama và thử lại.', code: 'CV_JOB_AI_UNAVAILABLE' }, { numPredict: 300, timeoutMs: 150000 })
+  const result = normalizeComparisonResult(raw, pending, cv)
+  result.metCriteria = [...resolved, ...result.metCriteria]
+  return result
 }
 
-module.exports = { analyzeJobDescription, assertMeaningfulJobSource, buildJdCriteria, calculateMatchScore, compareCvWithJob, normalizeComparisonResult, parseModelJson }
+module.exports = { analyzeJobDescription, assertMeaningfulJobSource, buildJdCriteria, calculateMatchScore, compactCvForComparison, compareCvWithJob, normalizeComparisonResult, parseModelJson }

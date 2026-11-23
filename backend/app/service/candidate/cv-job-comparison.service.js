@@ -36,7 +36,7 @@ const requestCvJobComparison = async (userId, { cvId, jobId, force = false }, ai
     return serialize(row)
   }
   if (row && !force && row.status === 'PROCESSING') {
-    const staleAt = Date.now() - (2 * 60 * 1000)
+    const staleAt = Date.now() - (4 * 60 * 1000)
     if (new Date(row.updatedAt).getTime() >= staleAt) return serialize(row)
     await row.update({ status: 'FAILED', errorMessage: 'Phiên đối chiếu trước đã quá thời gian xử lý. Vui lòng thử lại.' })
   }

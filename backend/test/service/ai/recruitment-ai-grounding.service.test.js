@@ -4,6 +4,8 @@ const {
   assertMeaningfulJobSource,
   buildJdCriteria,
   calculateMatchScore,
+  compactCvForComparison,
+  compareCvWithJob,
   normalizeComparisonResult,
   parseModelJson,
 } = require('../../../app/service/ai/recruitment-ai.service')
@@ -17,6 +19,17 @@ describe('Recruitment AI grounding and JD quality gates', () => {
     educationRequirements: ['Tốt nghiệp Công nghệ thông tin'],
     mandatoryRequirements: ['Có kinh nghiệm xây dựng REST API'],
   }
+
+  it('resolves criteria with direct technical evidence locally without calling the AI', async () => {
+    const result = await compareCvWithJob({
+      jd: { requiredSkills: ['Node.js', 'MySQL'], mandatoryRequirements: ['Redis'] },
+      cv: { skills: ['NodeJS', 'JavaScript', 'MySQL', 'Redis'] },
+    })
+    expect(result.metCriteria.map(item => item.criterion)).to.have.members(['Redis', 'Node.js', 'MySQL'])
+    expect(result.partialCriteria).to.have.length(0)
+    expect(result.missingCriteria).to.have.length(0)
+    expect(result.explanation).to.be.a('string').and.not.empty
+  })
 
   it('rejects the garbage JD that previously produced a 77% match', () => {
     expect(() => assertMeaningfulJobSource({
@@ -80,6 +93,39 @@ describe('Recruitment AI grounding and JD quality gates', () => {
     expect(result.missingCriteria.map(item => item.criterion)).to.not.include(criteria[0].text)
     expect(result.metCriteria).to.have.length(1)
     expect(result.metCriteria[0].evidence).to.include('node js')
+  })
+
+  it('understands common technical abbreviations instead of comparing words literally', () => {
+    const criteria = buildJdCriteria({ mandatoryRequirements: ['Có kinh nghiệm JavaScript, TypeScript và Node.js', 'Có kinh nghiệm triển khai sản phẩm thực tế'] })
+    const result = normalizeComparisonResult(
+      { criteria: [{ id: criteria[0].id, status: 'missing', message: 'Không có.' }] },
+      criteria,
+      { skills: ['JS', 'TS', 'NodeJS'] },
+    )
+    expect(result.missingCriteria.map(item => item.criterion)).to.not.include(criteria[0].text)
+    expect(result.metCriteria).to.have.length(1)
+  })
+
+  it('recognizes semantically equivalent REST API wording', () => {
+    const criteria = buildJdCriteria({ mandatoryRequirements: ['Có kinh nghiệm xây dựng REST API', 'Có kinh nghiệm triển khai sản phẩm thực tế'] })
+    const result = normalizeComparisonResult(
+      { criteria: [{ id: criteria[0].id, status: 'missing', message: 'Không có.' }] },
+      criteria,
+      { experience: ['Developed RESTful web services for a recruitment platform'] },
+    )
+    expect(result.missingCriteria.map(item => item.criterion)).to.not.include(criteria[0].text)
+  })
+
+  it('keeps relevant late CV evidence while removing unrelated content before AI inference', () => {
+    const criteria = buildJdCriteria({ mandatoryRequirements: ['Có kinh nghiệm Node.js và Redis', 'Có kinh nghiệm triển khai sản phẩm thực tế'] })
+    const compact = compactCvForComparison({
+      experience: Array.from({ length: 20 }, (_, index) => `Nội dung không liên quan số ${index + 1}`).concat('Xây dựng NodeJS API và cache bằng Redis'),
+      projects: Array.from({ length: 20 }, (_, index) => `Dự án thiết kế số ${index + 1}`),
+      skills: ['HTML', 'CSS', 'NodeJS', 'Redis'],
+    }, criteria)
+    expect(compact.experience.join(' ')).to.include('NodeJS API')
+    expect(compact.experience.length).to.be.at.most(4)
+    expect(compact.projects.length).to.be.at.most(4)
   })
 
   it('calculates the match score deterministically from grounded groups', () => {
