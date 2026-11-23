@@ -36,6 +36,7 @@ const env = Object.freeze({
     user: process.env.SMTP_USER || '',
     password: process.env.SMTP_PASSWORD || '',
     from: process.env.MAIL_FROM || 'TopCV <no-reply@example.com>',
+    replyTo: process.env.MAIL_REPLY_TO || '',
   },
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   recaptcha: {
@@ -48,7 +49,7 @@ const env = Object.freeze({
     ollamaModel: process.env.OLLAMA_MODEL || 'qwen2.5:3b',
     requestTimeoutMs: toNumber(process.env.AI_REQUEST_TIMEOUT_MS, 120000),
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
-    anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929',
+    anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
     cvMaxCharacters: toNumber(process.env.AI_CV_MAX_CHARACTERS, 30000),
   },
   upload: {

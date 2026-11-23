@@ -20,7 +20,10 @@ export default function ForgotPasswordPage() {
 
   return <AuthShell title="Quên mật khẩu" description="Nhập email tài khoản để nhận liên kết đặt lại mật khẩu.">
     {error && <div className="auth-alert" role="alert">{error}</div>}
-    {message && <div className="auth-alert auth-alert--success" role="status">{message}</div>}
+    {message && <>
+      <div className="auth-alert auth-alert--success" role="status">{message}</div>
+      <div className="auth-config-note" role="note">Chưa thấy email? Hãy kiểm tra thư mục <strong>Spam/Thư rác</strong> hoặc <strong>Quảng cáo</strong>. Nếu có, bấm "Không phải spam" để các email sau vào thẳng hộp thư đến.</div>
+    </>}
     <form className="auth-form" onSubmit={handleSubmit(submit)}>
       <label>Email<input type="email" {...register('email', { required: true })} autoComplete="email" required /></label>
       <button className="btn btn-primary auth-submit" type="submit" disabled={!watch('email')?.trim() || submitting}>{submitting ? 'Đang gửi...' : 'Gửi hướng dẫn'}</button>

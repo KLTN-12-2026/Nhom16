@@ -14,7 +14,13 @@ const createEmailService = (config) => {
   return {
     async send(message) {
       if (!transporter) throw new ApiError(503, 'Dịch vụ email chưa được cấu hình.', 'EMAIL_NOT_CONFIGURED')
-      return transporter.sendMail({ from: config.from, ...message })
+      return transporter.sendMail({
+        from: config.from,
+        replyTo: config.replyTo || undefined,
+        // Đánh dấu đây là mail giao dịch tự động để hộp thư không xử lý như thư hàng loạt/quảng cáo.
+        headers: { 'Auto-Submitted': 'auto-generated', 'X-Auto-Response-Suppress': 'OOF, AutoReply' },
+        ...message,
+      })
     },
   }
 }

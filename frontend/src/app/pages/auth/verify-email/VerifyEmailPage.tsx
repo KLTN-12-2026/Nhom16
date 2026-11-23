@@ -34,6 +34,7 @@ export default function VerifyEmailPage() {
     {token && message
       ? <p className="auth-switch"><Link to={ROUTE.LOGIN}>Đi đến đăng nhập</Link></p>
       : <form className="auth-form" onSubmit={handleSubmit(resend)}>
+          <div className="auth-config-note" role="note">Không nhận được email? Hãy kiểm tra thư mục <strong>Spam/Thư rác</strong> hoặc <strong>Quảng cáo</strong> trước khi gửi lại.</div>
           <label>Gửi lại email xác minh<input type="email" {...register('email', { required: true })} autoComplete="email" placeholder="email@example.com" required /></label>
           <button className="btn btn-primary auth-submit" type="submit" disabled={!watch('email')?.trim() || submitting}>{submitting ? 'Đang gửi...' : 'Gửi lại email'}</button>
         </form>}

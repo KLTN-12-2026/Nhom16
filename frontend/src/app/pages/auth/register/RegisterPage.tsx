@@ -54,7 +54,7 @@ export default function RegisterPage() {
       <button type="button" className={role === ROLE.CANDIDATE ? 'active' : ''} onClick={() => setValue('role', ROLE.CANDIDATE)}><i className="bi bi-person" /><span><strong>Tôi đang tìm việc</strong><small>Tạo hồ sơ ứng viên</small></span></button>
       <button type="button" className={role === ROLE.EMPLOYER ? 'active' : ''} onClick={() => setValue('role', ROLE.EMPLOYER)}><i className="bi bi-building" /><span><strong>Tôi cần tuyển người</strong><small>Tạo tài khoản doanh nghiệp</small></span></button>
     </div>
-    {error && <div className="auth-alert" role="alert">{error}</div>}{success && <div className="auth-alert auth-alert--success" role="status">{success}</div>}
+    {error && <div className="auth-alert" role="alert">{error}</div>}{success && <><div className="auth-alert auth-alert--success" role="status">{success}</div><div className="auth-config-note" role="note">Chưa thấy email? Hãy kiểm tra thư mục <strong>Spam/Thư rác</strong> hoặc <strong>Quảng cáo</strong>. Nếu có, bấm "Không phải spam" để các email sau vào thẳng hộp thư đến.</div></>}
     <form className="auth-form" onSubmit={handleSubmit(submit)}>
       <label>Họ và tên<input {...register('fullName', { required: true })} autoComplete="name" required /></label>
       <label>Email<input type="email" {...register('email', { required: true })} autoComplete="email" required /></label>
