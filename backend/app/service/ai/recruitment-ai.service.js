@@ -207,7 +207,10 @@ const compareCvWithJob = async ({ cv, jd }) => {
   const pending = []
   criteria.forEach(item => {
     const direct = findDirectCvEvidence(item.text, cv)
-    if (direct?.source === 'concept' && direct.status === 'met') resolved.push({ criterion: item.text, evidence: direct.evidence })
+    // Chỉ tiêu chí kỹ năng ngắn (vd "ReactJS") mới đủ để kết luận cục bộ; tiêu chí về số năm, vai trò hay mô tả
+    // (vd "3 năm kinh nghiệm ReactJS") cần AI đọc ngữ cảnh trong CV nên luôn được gửi đi.
+    const isPlainSkill = ['required_skill', 'preferred_skill'].includes(item.type) && words(item.text).length <= 4
+    if (isPlainSkill && direct?.source === 'concept' && direct.status === 'met') resolved.push({ criterion: item.text, evidence: direct.evidence })
     else pending.push(item)
   })
   if (!pending.length) {

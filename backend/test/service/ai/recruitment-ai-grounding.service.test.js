@@ -22,7 +22,7 @@ describe('Recruitment AI grounding and JD quality gates', () => {
 
   it('resolves criteria with direct technical evidence locally without calling the AI', async () => {
     const result = await compareCvWithJob({
-      jd: { requiredSkills: ['Node.js', 'MySQL'], mandatoryRequirements: ['Redis'] },
+      jd: { requiredSkills: ['Node.js', 'MySQL', 'Redis'] },
       cv: { skills: ['NodeJS', 'JavaScript', 'MySQL', 'Redis'] },
     })
     expect(result.metCriteria.map(item => item.criterion)).to.have.members(['Redis', 'Node.js', 'MySQL'])
