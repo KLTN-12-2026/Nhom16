@@ -11,10 +11,7 @@
     "build": "yarn run build:clean && yarn run v-build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "unzip": "tar -xzvf build.tar.gz",
-    "remote-clean": "babel-node --openssl-legacy-provider --presets @babel/preset-env ./internals/scripts/remote-clean.js",
-    "remote-untar": "node ./internals/scripts/remote-untar.js",
-    "deploy": "babel-node --presets @babel/preset-env ./internals/scripts/deploy.js"
+    "unzip": "tar -xzvf build.tar.gz"
   },
   "dependencies": {
     "@datasert/cronjs-matcher": "^1.4.0",

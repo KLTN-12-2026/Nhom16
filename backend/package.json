@@ -16,11 +16,9 @@
     "db:migrate:undo": "sequelize-cli db:migrate:undo",
     "db:seed": "sequelize-cli db:seed:all",
     "db:seed:undo": "sequelize-cli db:seed:undo:all",
-    "clear-top-up-cache": "env-cmd babel-node app/scripts/clear-top-up-package-cache.js",
     "test": "mocha --recursive --timeout 100000 --exit",
     "coverage": "nyc yarn test && nyc report --reporter=text-lcov",
-    "minify": "node script/minify.cjs",
-    "prod": "yarn run build && yarn run minify",
+    "prod": "yarn run build",
     "prod-local": "rimraf /usr/projects/coco/backend && mkdir -p /usr/projects/coco/backend && yarn run prod && cp -r dist node_modules /usr/projects/coco/backend",
     "scanner": "npx sonarqube-scanner"
   },
