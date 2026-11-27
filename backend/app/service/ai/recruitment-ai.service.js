@@ -1,6 +1,7 @@
 const { env } = require('../../config')
 const { ApiError } = require('../../util')
 const { requestOllamaStructuredJson } = require('./structured-ai-client.service')
+const { technicalAliases, conceptGroups } = require('./technical-aliases')
 
 const stringArray = { type: 'array', maxItems: 12, items: { type: 'string', maxLength: 300 } }
 const jdSchema = { type: 'object', additionalProperties: false, required: ['title', 'summary', 'responsibilities', 'requiredSkills', 'preferredSkills', 'experienceRequirements', 'educationRequirements', 'keywords', 'mandatoryRequirements'], properties: {
@@ -74,12 +75,6 @@ const comparisonStopWords = new Set([
   'vung', 'chuan', 'muc', 'hien', 'hanh', 'thanh', 'thao', 'phan', 'mem', 'pho', 'bien', 'it', 'nhat', 'trach', 'nhiem',
   'bao', 'mat', 'thong', 'tin', 'du', 'lieu', 'can', 'than', 'trung', 'thuc', 'ti', 'mi', 'vi', 'tri', 'o', 'tu', 'den',
 ])
-const technicalAliases = {
-  javascript: ['javascript', 'js'], typescript: ['typescript', 'ts'], 'node js': ['node js', 'nodejs', 'node.js', 'node'],
-  react: ['react', 'reactjs', 'react.js'], express: ['express', 'expressjs', 'express.js'],
-  'rest api': ['rest api', 'restful api', 'restful web service', 'restful web services'],
-  jwt: ['jwt', 'json web token'], mysql: ['mysql'], redis: ['redis'], sequelize: ['sequelize'], bullmq: ['bullmq', 'bull mq'],
-}
 const flattenStrings = value => {
   if (value == null) return []
   if (typeof value === 'string' || typeof value === 'number') return [String(value)]
@@ -87,19 +82,40 @@ const flattenStrings = value => {
   if (typeof value === 'object') return Object.values(value).flatMap(flattenStrings)
   return []
 }
+const hasAlias = (text, alias) => text.includes(` ${normalizedKey(alias)} `)
 const conceptsIn = value => {
   const text = ` ${normalizedKey(flattenStrings(value).join(' '))} `
-  return Object.entries(technicalAliases).filter(([, aliases]) => aliases.some(alias => text.includes(` ${normalizedKey(alias)} `))).map(([concept]) => concept)
+  return Object.entries(technicalAliases).filter(([, aliases]) => aliases.some(alias => hasAlias(text, alias))).map(([concept]) => concept)
+}
+// Nhóm khái niệm chung (vd "hệ quản trị CSDL"): khớp khi nhắc tới cụm chung hoặc bất kỳ công nghệ thành viên.
+const groupsIn = value => {
+  const text = ` ${normalizedKey(flattenStrings(value).join(' '))} `
+  const specific = new Set(conceptsIn(value))
+  return Object.entries(conceptGroups)
+    .filter(([, group]) => group.terms.some(term => hasAlias(text, term)) || group.members.some(member => specific.has(member)))
+    .map(([name]) => name)
+}
+const aliasTermsFor = value => {
+  const concepts = conceptsIn(value)
+  const groups = groupsIn(value)
+  return [
+    ...concepts.flatMap(concept => technicalAliases[concept] || []),
+    ...groups.flatMap(name => [...conceptGroups[name].terms, ...conceptGroups[name].members.flatMap(member => technicalAliases[member] || [])]),
+  ]
 }
 const findDirectCvEvidence = (criterionText, cv) => {
   if (!cv) return null
   const cvItems = flattenStrings(cv).map(item => ` ${normalizedKey(item)} `).filter(item => item.trim())
-  const requiredConcepts = conceptsIn(criterionText)
-  const cvConcepts = new Set(conceptsIn(cv))
+  const criterionKey = ` ${normalizedKey(flattenStrings(criterionText).join(' '))} `
+  const anyOf = / (hoac|or) /.test(criterionKey)
+  const specific = conceptsIn(criterionText)
+  // Yêu cầu nêu đích danh công nghệ thì đối chiếu công nghệ đó; yêu cầu chung chung thì đối chiếu theo nhóm.
+  const requiredConcepts = specific.length ? specific : groupsIn(criterionText)
+  const cvConcepts = new Set(specific.length ? conceptsIn(cv) : groupsIn(cv))
   const conceptMatches = requiredConcepts.filter(concept => cvConcepts.has(concept))
   if (conceptMatches.length) {
     return {
-      status: conceptMatches.length === requiredConcepts.length ? 'met' : 'partial',
+      status: anyOf || conceptMatches.length === requiredConcepts.length ? 'met' : 'partial',
       evidence: `CV có bằng chứng tương đương: ${conceptMatches.slice(0, 4).join(', ')}.`,
       source: 'concept',
     }
@@ -112,7 +128,7 @@ const findDirectCvEvidence = (criterionText, cv) => {
 
 const compactCvForComparison = (cv, criteria) => {
   const relevanceTerms = [...new Set(criteria.flatMap(item => {
-    const aliases = conceptsIn(item.text).flatMap(concept => technicalAliases[concept] || [])
+    const aliases = aliasTermsFor(item.text)
     return [...words(item.text), ...aliases].map(normalizedKey).filter(term => term.length >= 2 && !comparisonStopWords.has(term))
   }))]
   const score = value => {

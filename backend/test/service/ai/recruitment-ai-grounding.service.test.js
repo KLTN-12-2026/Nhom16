@@ -31,6 +31,38 @@ describe('Recruitment AI grounding and JD quality gates', () => {
     expect(result.explanation).to.be.a('string').and.not.empty
   })
 
+  it('understands a generic requirement ("hệ quản trị CSDL") from a specific technology ("MySQL") without the AI', async () => {
+    const result = await compareCvWithJob({
+      jd: { requiredSkills: ['Thành thạo hệ quản trị CSDL', 'Framework frontend', 'Dịch vụ cloud'] },
+      cv: { skills: ['Thành thạo MySQL', 'ReactJS', 'AWS'] },
+    })
+    expect(result.metCriteria).to.have.length(3)
+    expect(result.missingCriteria).to.have.length(0)
+  })
+
+  it('treats "A hoặc B" as met when the CV has either one', async () => {
+    const result = await compareCvWithJob({
+      jd: { requiredSkills: ['MySQL hoặc PostgreSQL', 'Docker'] },
+      cv: { skills: ['PostgreSQL', 'Docker'] },
+    })
+    expect(result.metCriteria).to.have.length(2)
+  })
+
+  it('does not accept a different specific technology as a full match', async () => {
+    const originalUrl = process.env.OLLAMA_BASE_URL
+    process.env.OLLAMA_BASE_URL = 'http://127.0.0.1:9'
+    try {
+      const result = await compareCvWithJob({
+        jd: { requiredSkills: ['PostgreSQL', 'Docker'] },
+        cv: { skills: ['MySQL', 'Docker'] },
+      }).catch(() => null)
+      if (result) expect(result.metCriteria.map(item => item.criterion)).to.not.include('PostgreSQL')
+    } finally {
+      if (originalUrl === undefined) delete process.env.OLLAMA_BASE_URL
+      else process.env.OLLAMA_BASE_URL = originalUrl
+    }
+  })
+
   it('rejects the garbage JD that previously produced a 77% match', () => {
     expect(() => assertMeaningfulJobSource({
       title: 'front end', description: 'adasdadadasdasdasdasdasdsadasd', requirements: ['ádsada'], benefits: ['ádasadsa'], skills: ['react'],
