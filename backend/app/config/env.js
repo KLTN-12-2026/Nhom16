@@ -51,7 +51,7 @@ const env = Object.freeze({
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
     anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
     geminiApiKey: process.env.GEMINI_API_KEY || '',
-    geminiModel: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite',
     geminiBaseUrl: process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta',
     cvMaxCharacters: toNumber(process.env.AI_CV_MAX_CHARACTERS, 30000),
   },

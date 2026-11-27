@@ -35,6 +35,7 @@ const requestOllamaStructuredJson = async ({
   }
 }
 
+const geminiAttemptTimeoutMs = 45000
 const retryableGeminiStatuses = new Set([429, 500, 503])
 const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms) })
 
@@ -74,7 +75,8 @@ const requestGeminiStructuredJson = async ({
   const post = (legacySchemaFormat) => fetchImpl(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    signal: AbortSignal.timeout(timeoutMs),
+    // Model Gemini đôi khi treo khi quá tải: giới hạn mỗi lượt để người dùng không phải chờ nhiều phút.
+    signal: AbortSignal.timeout(Math.min(timeoutMs, geminiAttemptTimeoutMs)),
     body: JSON.stringify(buildGeminiBody({ messages, schema, maxOutputTokens, legacySchemaFormat })),
   })
   try {
