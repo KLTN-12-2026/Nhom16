@@ -219,7 +219,7 @@ const compareCvWithJob = async ({ cv, jd }) => {
   const compactCv = compactCvForComparison(cv, pending)
   const raw = await request(comparisonSchema,
     'Đối chiếu CV với từng tiêu chí JD theo ngữ nghĩa, không chỉ khớp từng từ. Hiểu viết tắt kỹ thuật phổ biến như JS=JavaScript, TS=TypeScript, NodeJS=Node.js, RESTful=REST API và JWT=JSON Web Token; bỏ qua khác biệt hoa thường, dấu câu, thứ tự và cách trình bày. Dùng đúng criterionId, mỗi ID đúng một lần. status: met khi CV thực sự có bằng chứng trực tiếp đáp ứng đúng chuyên môn, kỹ năng hoặc số năm kinh nghiệm; partial nếu chỉ liên quan một phần; bắt buộc missing nếu CV không có thông tin hoặc khác chuyên ngành. Chỉ dùng dữ liệu CV, tuyệt đối không suy đoán hoặc tạo bằng chứng. evidence chỉ điền khi met hoặc partial (trích tối đa 8 từ từ CV); khi missing để evidence là chuỗi rỗng. Giải thích tối đa 20 từ. Không chấm điểm. Trả đúng JSON schema.',
-    { cv: compactCv, criteria: pending }, { message: 'AI cục bộ chưa thể so sánh CV với JD. Hãy kiểm tra Ollama và thử lại.', code: 'CV_JOB_AI_UNAVAILABLE' }, { numPredict: 300, timeoutMs: 150000 })
+    { cv: compactCv, criteria: pending }, { message: 'AI cục bộ chưa thể so sánh CV với JD. Hãy kiểm tra Ollama và thử lại.', code: 'CV_JOB_AI_UNAVAILABLE' }, { numPredict: 600, timeoutMs: 150000 })
   const result = normalizeComparisonResult(raw, pending, cv)
   result.metCriteria = [...resolved, ...result.metCriteria]
   return result
