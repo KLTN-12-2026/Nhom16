@@ -35,6 +35,69 @@ const requestOllamaStructuredJson = async ({
   }
 }
 
+const retryableGeminiStatuses = new Set([429, 500, 503])
+const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms) })
+
+// messages dạng { role: 'system' | 'user' | 'assistant', content } (cùng định dạng với Ollama).
+const buildGeminiBody = ({ messages, schema, maxOutputTokens, legacySchemaFormat }) => {
+  const system = messages.filter((message) => message.role === 'system').map((message) => message.content).join('\n\n')
+  const contents = messages
+    .filter((message) => message.role !== 'system')
+    .map((message) => ({ role: message.role === 'assistant' ? 'model' : 'user', parts: [{ text: message.content }] }))
+  const generationConfig = { temperature: 0, maxOutputTokens }
+  if (legacySchemaFormat) {
+    generationConfig.responseMimeType = 'application/json'
+    generationConfig.responseJsonSchema = schema
+  } else {
+    generationConfig.responseFormat = { text: { mimeType: 'APPLICATION_JSON', schema } }
+  }
+  return { ...(system ? { systemInstruction: { parts: [{ text: system }] } } : {}), contents, generationConfig }
+}
+
+const requestGeminiStructuredJson = async ({
+  apiKey,
+  model,
+  baseUrl = 'https://generativelanguage.googleapis.com/v1beta',
+  timeoutMs,
+  numPredict,
+  schema,
+  messages,
+  fetchImpl = global.fetch,
+  unavailableError,
+  notConfiguredMessage = 'Dịch vụ AI chưa được cấu hình.',
+  retryDelayMs = 2000,
+}) => {
+  if (!apiKey) throw new ApiError(503, notConfiguredMessage, 'AI_NOT_CONFIGURED')
+  // maxOutputTokens của Gemini có thể gồm cả token "suy nghĩ", nên để dư so với số token JSON dự kiến.
+  const maxOutputTokens = Math.max((Number(numPredict) || 1024) * 4, 4096)
+  const url = `${baseUrl.replace(/\/$/, '')}/models/${encodeURIComponent(model)}:generateContent`
+  const post = (legacySchemaFormat) => fetchImpl(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    signal: AbortSignal.timeout(timeoutMs),
+    body: JSON.stringify(buildGeminiBody({ messages, schema, maxOutputTokens, legacySchemaFormat })),
+  })
+  try {
+    let response = await post(false)
+    // Một số phiên bản API chỉ nhận định dạng schema cũ: thử lại một lần với định dạng đó.
+    if (response.status === 400) response = await post(true)
+    if (retryableGeminiStatuses.has(response.status)) {
+      await sleep(retryDelayMs)
+      response = await post(false)
+    }
+    if (!response.ok) throw new Error(`Gemini ${response.status}`)
+    const payload = await response.json()
+    const candidate = payload.candidates?.[0]
+    if (candidate?.finishReason === 'MAX_TOKENS') throw new Error('Gemini output was truncated')
+    const text = (candidate?.content?.parts || []).filter((part) => part.text && !part.thought).map((part) => part.text).join('')
+    if (!text) throw new Error('Gemini returned no structured content')
+    return text
+  } catch (error) {
+    if (error instanceof ApiError) throw error
+    throw new ApiError(503, unavailableError.message, unavailableError.code)
+  }
+}
+
 const requestClaudeStructuredJson = async ({
   client,
   model,
@@ -85,6 +148,7 @@ const executeWithVietnameseRetry = async ({
 module.exports = {
   executeWithVietnameseRetry,
   requestClaudeStructuredJson,
+  requestGeminiStructuredJson,
   requestOllamaStructuredJson,
 }
 

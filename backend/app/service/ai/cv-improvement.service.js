@@ -9,7 +9,7 @@ const {
   isVietnameseCvImprovement,
   validateCvImprovement,
 } = require('./cv-improvement-schema.service')
-const { executeWithVietnameseRetry, requestClaudeStructuredJson, requestOllamaStructuredJson } = require('./structured-ai-client.service')
+const { executeWithVietnameseRetry, requestClaudeStructuredJson, requestGeminiStructuredJson, requestOllamaStructuredJson } = require('./structured-ai-client.service')
 
 const UNAVAILABLE_ERROR = {
   message: 'Hệ thống AI đang bận, vui lòng thử lại sau.',
@@ -98,6 +98,39 @@ const createOllamaImprovementProvider = ({
   },
 })
 
+const createGeminiImprovementProvider = ({
+  apiKey = env.ai.geminiApiKey,
+  model = env.ai.geminiModel,
+  baseUrl = env.ai.geminiBaseUrl,
+  timeoutMs = env.ai.requestTimeoutMs,
+  fetchImpl = global.fetch,
+} = {}) => ({
+  async suggest(cvData) {
+    const result = await executeWithVietnameseRetry({
+      initialMessages: [
+        { role: 'system', content: systemPrompt },
+        buildInitialUserMessage(cvData),
+      ],
+      runModel: (messages) => requestGeminiStructuredJson({
+        apiKey,
+        model,
+        baseUrl,
+        timeoutMs,
+        numPredict: 2600,
+        schema: cvImprovementSchema,
+        messages,
+        fetchImpl,
+        unavailableError: UNAVAILABLE_ERROR,
+      }),
+      validate: validateCvImprovement,
+      isVietnamese: isVietnameseCvImprovement,
+      buildTranslationMessages,
+      invalidLanguageError: INVALID_LANGUAGE_ERROR,
+    })
+    return ensureInScopeResult(result)
+  },
+})
+
 const createClaudeImprovementProvider = ({
   apiKey = env.ai.anthropicApiKey,
   model = env.ai.anthropicModel,
@@ -133,6 +166,7 @@ const createCvImprovementService = ({ provider = env.ai.provider, providers = {}
   const availableProviders = {
     ollama: providers.ollama || createOllamaImprovementProvider(),
     claude: providers.claude || createClaudeImprovementProvider(),
+    gemini: providers.gemini || createGeminiImprovementProvider(),
   }
   return {
     async suggest(cvData) {
@@ -153,6 +187,7 @@ const cvImprovementService = createCvImprovementService()
 module.exports = {
   createClaudeImprovementProvider,
   createCvImprovementService,
+  createGeminiImprovementProvider,
   createOllamaImprovementProvider,
   cvImprovementService,
 }

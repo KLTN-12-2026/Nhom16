@@ -50,6 +50,9 @@ const env = Object.freeze({
     requestTimeoutMs: toNumber(process.env.AI_REQUEST_TIMEOUT_MS, 120000),
     anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
     anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
+    geminiApiKey: process.env.GEMINI_API_KEY || '',
+    geminiModel: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
+    geminiBaseUrl: process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta',
     cvMaxCharacters: toNumber(process.env.AI_CV_MAX_CHARACTERS, 30000),
   },
   upload: {

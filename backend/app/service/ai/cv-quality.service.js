@@ -2,6 +2,7 @@ const Anthropic = require('@anthropic-ai/sdk').default
 
 const { env } = require('../../config')
 const { ApiError } = require('../../util')
+const { requestGeminiStructuredJson } = require('./structured-ai-client.service')
 const { cvQualitySchema, isVietnameseCvQuality, validateCvQuality } = require('./cv-quality-schema.service')
 
 const systemPrompt = `Bạn là dịch vụ đánh giá chất lượng CV của hệ thống tuyển dụng nội bộ.
@@ -66,6 +67,37 @@ const createOllamaQualityProvider = ({
   },
 })
 
+const createGeminiQualityProvider = ({
+  apiKey = env.ai.geminiApiKey,
+  model = env.ai.geminiModel,
+  baseUrl = env.ai.geminiBaseUrl,
+  timeoutMs = env.ai.requestTimeoutMs,
+  fetchImpl = global.fetch,
+} = {}) => ({
+  async assess(cvData) {
+    const unavailableError = { message: 'AI chưa thể đánh giá CV. Vui lòng thử lại sau.', code: 'CV_QUALITY_AI_FAILED' }
+    let messages = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: `<cv_data>\n${normalizeInput(cvData)}\n</cv_data>\nHãy đánh giá và viết TOÀN BỘ nhận xét bằng tiếng Việt có dấu.` },
+    ]
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const raw = await requestGeminiStructuredJson({ apiKey, model, baseUrl, timeoutMs, numPredict: 1800, schema: cvQualitySchema, messages, fetchImpl, unavailableError })
+      let result = null
+      try {
+        result = parseVietnameseResult(raw)
+      } catch {
+        throw new ApiError(503, unavailableError.message, unavailableError.code)
+      }
+      if (result) return result
+      messages = [
+        { role: 'system', content: translationPrompt },
+        { role: 'user', content: `<assessment>\n${raw}\n</assessment>\nHãy dịch toàn bộ câu nhận xét sang tiếng Việt có dấu.` },
+      ]
+    }
+    throw new ApiError(422, 'AI chưa thể tạo bản đánh giá tiếng Việt. Vui lòng thử lại.', 'CV_QUALITY_LANGUAGE_INVALID')
+  },
+})
+
 const createClaudeQualityProvider = ({
   apiKey = env.ai.anthropicApiKey,
   model = env.ai.anthropicModel,
@@ -98,6 +130,7 @@ const createCvQualityService = ({ provider = env.ai.provider, providers = {} } =
   const availableProviders = {
     ollama: providers.ollama || createOllamaQualityProvider(),
     claude: providers.claude || createClaudeQualityProvider(),
+    gemini: providers.gemini || createGeminiQualityProvider(),
   }
   return {
     assess(cvData) {
@@ -113,6 +146,7 @@ const cvQualityService = createCvQualityService()
 module.exports = {
   createClaudeQualityProvider,
   createCvQualityService,
+  createGeminiQualityProvider,
   createOllamaQualityProvider,
   cvQualityService,
 }

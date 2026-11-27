@@ -1,12 +1,14 @@
 const { env } = require('../../config')
 const { ApiError } = require('../../util')
 const { createClaudeCvAnalysisService } = require('./claude-cv-analysis.service')
+const { createGeminiCvAnalysisService } = require('./gemini-cv-analysis.service')
 const { createOllamaCvAnalysisService } = require('./ollama-cv-analysis.service')
 
 const createCvAnalysisService = ({ provider = env.ai.provider, services = {} } = {}) => {
   const providers = {
     ollama: services.ollama || createOllamaCvAnalysisService(),
     claude: services.claude || createClaudeCvAnalysisService(),
+    gemini: services.gemini || createGeminiCvAnalysisService(),
   }
   return {
     async analyze(cvText) {

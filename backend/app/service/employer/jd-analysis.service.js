@@ -19,7 +19,7 @@ const failAbandonedAnalyses = async () => {
   }).map(row => row.update({
     status: 'FAILED',
     errorMessage: row.status === 'PROCESSING'
-      ? 'Phiên AI đã quá thời gian xử lý. Vui lòng kiểm tra Ollama/worker rồi phân tích lại.'
+      ? 'Phiên AI đã quá thời gian xử lý. Vui lòng kiểm tra dịch vụ AI/worker rồi phân tích lại.'
       : 'Phiên AI chờ quá lâu nhưng worker chưa tiếp nhận. Vui lòng kiểm tra Redis/worker rồi thử lại.',
   })))
 }
