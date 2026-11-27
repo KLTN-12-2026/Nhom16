@@ -39,6 +39,24 @@ export interface NotificationData { id: number; type: string; title: string; mes
 export const listNotificationsApi = () => fetchApi<NotificationData[]>('/candidate/notifications')
 export const markNotificationReadApi = (id: number) => fetchApi<NotificationData>(`/candidate/notifications/${id}/read`, { method: 'PATCH' })
 
+export interface UserReportInput {
+  reportType: 'JOB' | 'USER' | 'COMPANY' | 'OTHER' | string
+  content: string
+  entityType?: 'JOB' | 'USER' | 'COMPANY' | 'OTHER' | string | null
+  entityId?: number | null
+}
+export interface UserReportData {
+  id: number
+  reportType: string
+  content: string
+  entityType?: string | null
+  entityId?: number | null
+  status: string
+  createdAt: string
+}
+export const submitReportApi = (payload: UserReportInput) =>
+  fetchApi<UserReportData>('/reports', { method: 'POST', body: JSON.stringify(payload) })
+
 export interface EmployerRecommendedJobSummary extends JobData {
   jdAnalysisVersion: number | null
   hasCompletedJdAnalysis: boolean

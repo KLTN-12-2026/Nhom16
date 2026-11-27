@@ -30,6 +30,7 @@ const reportResolveSchema = yup.object({
   status: yup.string().trim().uppercase().oneOf(['RECEIVED', 'PROCESSING', 'RESOLVED', 'REJECTED'], 'Trạng thái xử lý không hợp lệ.').required('Vui lòng chọn trạng thái.'),
   resolution: yup.string().trim().min(5, 'Kết quả xử lý phải có ít nhất 5 ký tự.').max(2000).required('Vui lòng nhập kết quả xử lý.'),
   actionTaken: yup.string().trim().max(1000).nullable(),
+  jobAction: yup.string().trim().uppercase().oneOf(['', 'HIDE', 'REMOVE', 'RESTORE', 'APPROVE'], 'Biện pháp xử lý tin không hợp lệ.').nullable(),
 }).noUnknown(true)
 
 const reportCreateSchema = yup.object({

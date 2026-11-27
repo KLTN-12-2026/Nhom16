@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 
 import { getCandidateAvatarUrl } from '../../apis/candidate'
+import { submitReportApi } from '../../apis/recruitment'
 import { AppLogo } from '../app-logo'
 import { ROLE, type Role } from '../../constants/role.constant'
 import { ROUTE } from '../../constants/route.constant'
@@ -38,6 +39,12 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => (
     typeof window !== 'undefined' && window.localStorage.getItem('topcv-theme') === 'dark' ? 'dark' : 'light'
   ))
+  const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [reportType, setReportType] = useState<'JOB' | 'USER' | 'COMPANY' | 'OTHER'>('OTHER')
+  const [reportEntityId, setReportEntityId] = useState('')
+  const [reportContent, setReportContent] = useState('')
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [reportFeedback, setReportFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const isCandidate = role === ROLE.CANDIDATE
   const roleLabel = isCandidate ? 'Ứng viên' : 'Nhà tuyển dụng'
@@ -132,6 +139,21 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
                   <b />
                 </em>
               </button>
+              <button
+                type="button"
+                className="portal-account__theme"
+                onClick={() => {
+                  setAccountOpen(false)
+                  setReportFeedback(null)
+                  setReportModalOpen(true)
+                }}
+              >
+                <i className="bi bi-flag-fill" />
+                <span>
+                  <strong>Báo cáo & Phản hồi</strong>
+                  <small>Gửi báo cáo vi phạm hoặc góp ý hệ thống</small>
+                </span>
+              </button>
               <button type="button" className="portal-account__logout" onClick={handleLogout}>
                 <i className="bi bi-box-arrow-right" />
                 <span>Đăng xuất</span>
@@ -140,6 +162,102 @@ export function PortalHeader({ role }: { role: Extract<Role, 1 | 2> }) {
           </div>
         </div>
       </div>
+
+      {reportModalOpen && (
+        <div className="admin-modal-backdrop" role="dialog" aria-modal="true" aria-label="Gửi báo cáo vi phạm hoặc phản hồi">
+          <form
+            className="admin-modal"
+            onSubmit={async (event) => {
+              event.preventDefault()
+              if (reportContent.trim().length < 10) {
+                setReportFeedback({ type: 'error', message: 'Nội dung báo cáo phải có ít nhất 10 ký tự.' })
+                return
+              }
+              const parsedEntityId = reportEntityId.trim() ? Number(reportEntityId.trim()) : null
+              if (parsedEntityId !== null && (!Number.isInteger(parsedEntityId) || parsedEntityId <= 0)) {
+                setReportFeedback({ type: 'error', message: 'Mã đối tượng liên quan phải là số nguyên dương.' })
+                return
+              }
+              setReportSubmitting(true)
+              setReportFeedback(null)
+              try {
+                await submitReportApi({
+                  reportType,
+                  content: reportContent.trim(),
+                  entityType: parsedEntityId ? reportType : null,
+                  entityId: parsedEntityId,
+                })
+                setReportContent('')
+                setReportEntityId('')
+                setReportFeedback({
+                  type: 'success',
+                  message: 'Đã gửi báo cáo thành công! Quản trị viên sẽ xử lý và gửi thông báo kết quả cho bạn.',
+                })
+              } catch (cause) {
+                setReportFeedback({
+                  type: 'error',
+                  message: cause instanceof Error ? cause.message : 'Không thể gửi báo cáo. Vui lòng thử lại.',
+                })
+              } finally {
+                setReportSubmitting(false)
+              }
+            }}
+          >
+            <button className="admin-modal__close" type="button" aria-label="Đóng" onClick={() => setReportModalOpen(false)}>×</button>
+            <span className="eyebrow">Hỗ trợ & An toàn nền tảng</span>
+            <h2>Báo cáo vi phạm & Gửi phản hồi</h2>
+            <p className="text-muted small">Thông tin người báo cáo được bảo mật tuyệt đối. Bạn sẽ nhận được thông báo ngay khi Quản trị viên xử lý.</p>
+
+            {reportFeedback && (
+              <div className={`alert ${reportFeedback.type === 'success' ? 'alert-success' : 'alert-danger'} py-2 px-3 small mb-0`}>
+                {reportFeedback.message}
+              </div>
+            )}
+
+            <label>
+              Loại báo cáo / phản hồi
+              <select value={reportType} onChange={(e) => setReportType(e.target.value as 'JOB' | 'USER' | 'COMPANY' | 'OTHER')}>
+                <option value="JOB">Tin tuyển dụng vi phạm (JOB)</option>
+                <option value="COMPANY">Doanh nghiệp đáng ngờ (COMPANY)</option>
+                <option value="USER">Tài khoản người dùng vi phạm (USER)</option>
+                <option value="OTHER">Phản hồi / Góp ý hệ thống (OTHER)</option>
+              </select>
+            </label>
+
+            {reportType !== 'OTHER' && (
+              <label>
+                Mã đối tượng liên quan (không bắt buộc)
+                <input
+                  type="number"
+                  min={1}
+                  value={reportEntityId}
+                  onChange={(e) => setReportEntityId(e.target.value)}
+                  placeholder={`Nhập ID ${reportType === 'JOB' ? 'tin tuyển dụng' : reportType === 'COMPANY' ? 'doanh nghiệp' : 'người dùng'} (nếu có)`}
+                />
+              </label>
+            )}
+
+            <label>
+              Nội dung chi tiết *
+              <textarea
+                required
+                minLength={10}
+                maxLength={5000}
+                value={reportContent}
+                onChange={(e) => setReportContent(e.target.value)}
+                placeholder="Mô tả rõ vấn đề hoặc hành vi vi phạm bạn gặp phải (tối thiểu 10 ký tự)..."
+              />
+            </label>
+
+            <div>
+              <button type="button" onClick={() => setReportModalOpen(false)}>Đóng</button>
+              <button type="submit" disabled={reportSubmitting}>
+                {reportSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </header>
   )
 }

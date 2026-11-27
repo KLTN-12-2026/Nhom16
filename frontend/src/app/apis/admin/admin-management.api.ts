@@ -17,6 +17,7 @@ export interface CatalogGroups { industries: CatalogItem[]; skills: CatalogItem[
 export interface AdminReport {
   id: number; reportType: string; content: string; entityType?: string; entityId?: number
   status: string; resolution?: string; actionTaken?: string; createdAt: string; handledAt?: string
+  targetJob?: { id: number; title: string; company: string; location: string; status: string } | null
 }
 export interface AdminAuditLog {
   id: number; action: string; entityType: string; entityId?: number; reason?: string
@@ -48,5 +49,5 @@ export const toggleAdminCatalogApi = (payload: { type: string; id: number; activ
 
 export const listAdminReportsApi = (filters: Record<string, string | number | undefined>) =>
   fetchApi<{ items: AdminReport[]; pagination: Pagination }>(`/admin/reports${query(filters)}`).then((response) => response.data)
-export const resolveAdminReportApi = (payload: { id: number; status: string; resolution: string; actionTaken?: string }) =>
+export const resolveAdminReportApi = (payload: { id: number; status: string; resolution: string; actionTaken?: string; jobAction?: string }) =>
   fetchApi<AdminReport>(`/admin/reports/${payload.id}`, { method: 'PATCH', body: JSON.stringify(payload) }).then((response) => response.data)

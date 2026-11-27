@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Link } from 'react-router-dom'
 import { adminActions } from '../../modules/admin/redux'
 import { useAppDispatch, useAppSelector } from '../../store/hooks'
 
-type ResolutionForm = { status: string; resolution: string; actionTaken: string }
+type ResolutionForm = { status: string; resolution: string; actionTaken: string; jobAction: string }
 
 const STATUS_LABELS: Record<string, string> = {
   RECEIVED: 'Mới tiếp nhận',
@@ -26,8 +27,13 @@ export default function AdminReportsPage() {
   const [typeFilter, setTypeFilter] = useState('')
   const [selected, setSelected] = useState<number | null>(null)
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ResolutionForm>({
-    defaultValues: { status: 'PROCESSING' },
+    defaultValues: { status: 'PROCESSING', jobAction: '' },
   })
+
+  const selectedReport = useMemo(
+    () => reports.find((item) => item.id === selected) || null,
+    [reports, selected],
+  )
 
   useEffect(() => {
     dispatch(adminActions.reportsLoad({}))
@@ -45,7 +51,7 @@ export default function AdminReportsPage() {
     if (!selected) return
     dispatch(adminActions.reportUpdate({ id: selected, ...form }))
     setSelected(null)
-    reset({ status: 'PROCESSING', resolution: '', actionTaken: '' })
+    reset({ status: 'PROCESSING', resolution: '', actionTaken: '', jobAction: '' })
   })
 
   return (
@@ -111,9 +117,39 @@ export default function AdminReportsPage() {
                   </td>
                   <td className="admin-report-content">
                     <span>{report.content}</span>
-                    {report.resolution && <small><strong>Kết quả:</strong> {report.resolution}</small>}
+                    {report.resolution && <small className="d-block mt-1"><strong>Kết quả:</strong> {report.resolution}</small>}
+                    {report.actionTaken && <small className="d-block text-success"><strong>Biện pháp:</strong> {report.actionTaken}</small>}
                   </td>
-                  <td>{report.entityType ? `${report.entityType} #${report.entityId}` : 'Báo cáo chung'}</td>
+                  <td>
+                    {report.targetJob ? (
+                      <div>
+                        <strong className="admin-table-primary">{report.targetJob.title}</strong>
+                        <small className="admin-table-secondary">
+                          {report.targetJob.company} · Tin #{report.targetJob.id} ({report.targetJob.status})
+                        </small>
+                        <div className="d-flex gap-2 mt-1">
+                          <Link
+                            to={`/jobs/${report.targetJob.id}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="small fw-bold text-success text-decoration-none"
+                          >
+                            <i className="bi bi-box-arrow-up-right me-1" />Xem chi tiết tin
+                          </Link>
+                          <Link
+                            to="/admin/jobs"
+                            className="small fw-bold text-primary text-decoration-none"
+                          >
+                            <i className="bi bi-shield-check me-1" />Kiểm duyệt
+                          </Link>
+                        </div>
+                      </div>
+                    ) : report.entityType ? (
+                      <span>{report.entityType} #{report.entityId}</span>
+                    ) : (
+                      <span>Báo cáo chung</span>
+                    )}
+                  </td>
                   <td>{new Date(report.createdAt).toLocaleString('vi-VN')}</td>
                   <td>
                     <span className={`admin-status admin-status--${report.status.toLowerCase()}`}>
@@ -141,20 +177,38 @@ export default function AdminReportsPage() {
             <button className="admin-modal__close" type="button" onClick={() => setSelected(null)}>×</button>
             <span className="admin-page-header__eyebrow">Kết quả xử lý</span>
             <h2>Cập nhật báo cáo #{selected}</h2>
+            {selectedReport?.targetJob && (
+              <div className="p-2 rounded-3 border bg-light small">
+                <div><strong>Đối tượng:</strong> {selectedReport.targetJob.title} (Tin #{selectedReport.targetJob.id})</div>
+                <div className="text-muted">Doanh nghiệp: {selectedReport.targetJob.company} · Trạng thái hiện tại: <strong>{selectedReport.targetJob.status}</strong></div>
+                <div className="mt-1"><strong>Nội dung phản ánh:</strong> “{selectedReport.content}”</div>
+              </div>
+            )}
             <label>
               Trạng thái
               <select {...register('status', { required: true })}>
                 {['PROCESSING', 'RESOLVED', 'REJECTED'].map((item) => <option value={item} key={item}>{STATUS_LABELS[item]}</option>)}
               </select>
             </label>
+            {selectedReport?.targetJob && (
+              <label>
+                Thực hiện biện pháp với tin tuyển dụng (trong phạm vi quyền)
+                <select {...register('jobAction')}>
+                  <option value="">Không thay đổi trạng thái tin</option>
+                  <option value="HIDE">Tạm ẩn tin tuyển dụng vi phạm (HIDE)</option>
+                  <option value="REMOVE">Đóng / Gỡ tin tuyển dụng vi phạm (CLOSED)</option>
+                  <option value="RESTORE">Khôi phục hiển thị tin (ACTIVE)</option>
+                </select>
+              </label>
+            )}
             <label>
-              Kết luận
-              <textarea {...register('resolution', { required: 'Vui lòng nhập kết quả xử lý.' })} />
+              Kết luận / Phản hồi cho người báo cáo
+              <textarea {...register('resolution', { required: 'Vui lòng nhập kết quả xử lý.' })} placeholder="Nhập kết luận xử lý (tối thiểu 5 ký tự)..." />
             </label>
             {errors.resolution && <small className="text-danger">{errors.resolution.message}</small>}
             <label>
-              Hành động đã thực hiện
-              <input {...register('actionTaken')} placeholder="Ví dụ: Ẩn tin vi phạm" />
+              Ghi chú hành động bổ sung
+              <input {...register('actionTaken')} placeholder="Ví dụ: Đã nhắc nhở doanh nghiệp cập nhật lại thông tin" />
             </label>
             <div>
               <button type="button" onClick={() => setSelected(null)}>Hủy</button>

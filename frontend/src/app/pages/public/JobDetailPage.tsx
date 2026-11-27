@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { getPublicJobApi, downloadPublicJobJdApi, type JobData } from '../../apis/job'
 import { listCandidateCvsApi, type CandidateCv } from '../../apis/candidate'
-import { applyToJobApi, getCandidateApplicationJobApi, toggleFavoriteJobApi } from '../../apis/recruitment'
+import { applyToJobApi, getCandidateApplicationJobApi, submitReportApi, toggleFavoriteJobApi } from '../../apis/recruitment'
 import { ROUTE } from '../../constants/route.constant'
 import { ROLE } from '../../constants/role.constant'
 import { useAuth } from '../../provider/auth-provider'
@@ -20,6 +20,11 @@ export default function JobDetailPage() {
   const [cvs, setCvs] = useState<CandidateCv[]>([])
   const [actionError, setActionError] = useState('')
   const [saved, setSaved] = useState(false)
+  const [showReport, setShowReport] = useState(false)
+  const [reportType, setReportType] = useState('JOB')
+  const [reportContent, setReportContent] = useState('')
+  const [reportSubmitting, setReportSubmitting] = useState(false)
+  const [reportSuccess, setReportSuccess] = useState('')
   const { register, handleSubmit, formState: { isSubmitting } } = useForm<{ cvId: string; coverLetter: string }>()
 
   useEffect(() => {
@@ -190,10 +195,81 @@ export default function JobDetailPage() {
               </button>
             )}
 
-            {!applicationId && <button type="button" className="btn btn-outline-secondary w-100 py-2 rounded-pill mb-3" onClick={() => { if (!user) return setActionError('Vui lòng đăng nhập để lưu việc làm.'); toggleFavoriteJobApi(job.id).then(response => setSaved(response.data.favorite)).catch(cause => setActionError(cause.message)) }}>
+            {!applicationId && <button type="button" className="btn btn-outline-secondary w-100 py-2 rounded-pill mb-2" onClick={() => { if (!user) return setActionError('Vui lòng đăng nhập để lưu việc làm.'); toggleFavoriteJobApi(job.id).then(response => setSaved(response.data.favorite)).catch(cause => setActionError(cause.message)) }}>
               <i className={`bi ${saved ? 'bi-bookmark-fill' : 'bi-bookmark'} me-2`} /> {saved ? 'Đã lưu việc làm' : 'Lưu tin việc làm'}
             </button>}
+            <button
+              type="button"
+              className="btn btn-outline-danger w-100 py-2 rounded-pill mb-3"
+              onClick={() => {
+                if (!user) {
+                  setActionError('Vui lòng đăng nhập để gửi báo cáo vi phạm.')
+                  return
+                }
+                setActionError('')
+                setReportSuccess('')
+                setShowReport((prev) => !prev)
+              }}
+            >
+              <i className="bi bi-flag me-2" /> Báo cáo tin tuyển dụng
+            </button>
             {actionError && <div className="alert alert-danger small">{actionError}</div>}
+            {reportSuccess && <div className="alert alert-success small"><i className="bi bi-check-circle-fill me-1" />{reportSuccess}</div>}
+            {showReport && (
+              <form
+                className="apply-form mb-3"
+                onSubmit={async (event) => {
+                  event.preventDefault()
+                  if (reportContent.trim().length < 10) {
+                    setActionError('Nội dung báo cáo phải có ít nhất 10 ký tự.')
+                    return
+                  }
+                  setReportSubmitting(true)
+                  setActionError('')
+                  try {
+                    await submitReportApi({
+                      reportType,
+                      content: reportContent.trim(),
+                      entityType: reportType === 'COMPANY' ? 'COMPANY' : 'JOB',
+                      entityId: job.id,
+                    })
+                    setShowReport(false)
+                    setReportContent('')
+                    setReportSuccess('Đã gửi báo cáo vi phạm. Quản trị viên sẽ xem xét và phản hồi qua thông báo.')
+                  } catch (cause) {
+                    setActionError(cause instanceof Error ? cause.message : 'Không thể gửi báo cáo.')
+                  } finally {
+                    setReportSubmitting(false)
+                  }
+                }}
+              >
+                <h4><i className="bi bi-shield-exclamation text-danger me-1" /> Báo cáo vi phạm / Phản hồi</h4>
+                <select
+                  aria-label="Loại báo cáo"
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value)}
+                >
+                  <option value="JOB">Tin tuyển dụng vi phạm / Sai sự thật</option>
+                  <option value="COMPANY">Doanh nghiệp đáng ngờ / Thu phí</option>
+                  <option value="OTHER">Phản hồi khác về tin tuyển dụng</option>
+                </select>
+                <textarea
+                  rows={3}
+                  required
+                  minLength={10}
+                  maxLength={5000}
+                  value={reportContent}
+                  onChange={(e) => setReportContent(e.target.value)}
+                  placeholder="Mô tả chi tiết dấu hiệu vi phạm hoặc nội dung cần phản hồi (ít nhất 10 ký tự)..."
+                />
+                <div>
+                  <button type="button" onClick={() => setShowReport(false)}>Hủy</button>
+                  <button className="btn btn-danger" disabled={reportSubmitting} type="submit">
+                    {reportSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
+                  </button>
+                </div>
+              </form>
+            )}
             {showApply && <form className="apply-form" onSubmit={handleSubmit(async values => { try { await applyToJobApi(job.id, Number(values.cvId), values.coverLetter); setApplied(true); setShowApply(false); setActionError('') } catch (cause) { setActionError(cause instanceof Error ? cause.message : 'Không thể nộp hồ sơ.') } })}><h4>Chọn CV ứng tuyển</h4>{cvs.length === 0 ? <p>Bạn chưa có CV. Hãy tải CV trước khi ứng tuyển.</p> : <><select aria-label="Chọn CV ứng tuyển" title="Chọn CV ứng tuyển" {...register('cvId', { required: true })} defaultValue=""><option value="" disabled>Chọn CV</option>{cvs.map(cv => <option value={cv.id} key={cv.id}>{cv.displayName}{cv.isDefault ? ' (Mặc định)' : ''}</option>)}</select><textarea rows={4} placeholder="Thư giới thiệu (không bắt buộc)" {...register('coverLetter')} /><div><button type="button" onClick={() => setShowApply(false)}>Hủy</button><button className="btn btn-success" disabled={isSubmitting} type="submit">{isSubmitting ? 'Đang gửi...' : 'Xác nhận nộp'}</button></div></>}</form>}
 
             <hr className="text-muted my-3" />

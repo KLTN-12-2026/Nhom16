@@ -175,18 +175,55 @@ const listReports = async ({ page = 1, limit = 20, status, reportType } = {}) =>
   const safePage = Math.max(Number(page) || 1, 1)
   const where = { ...(status ? { status } : {}), ...(reportType ? { reportType } : {}) }
   const { rows, count } = await db.UserReport.findAndCountAll({ where, attributes: { exclude: ['reporterId'] }, order: [['createdAt', 'DESC']], limit: safeLimit, offset: (safePage - 1) * safeLimit })
-  return { items: rows, pagination: { page: safePage, limit: safeLimit, total: count, totalPages: Math.ceil(count / safeLimit) } }
+  const jobIds = [...new Set(rows.filter((row) => ['JOB', 'COMPANY'].includes(row.entityType) && row.entityId).map((row) => Number(row.entityId)))]
+  const jobs = jobIds.length
+    ? await db.Job.findAll({ where: { id: { [Op.in]: jobIds } }, attributes: ['id', 'title', 'company', 'location', 'status'] })
+    : []
+  const jobMap = new Map(jobs.map((job) => [Number(job.id), job.toJSON()]))
+  const items = rows.map((row) => {
+    const json = row.toJSON()
+    const targetJob = json.entityId ? jobMap.get(Number(json.entityId)) || null : null
+    return { ...json, targetJob }
+  })
+  return { items, pagination: { page: safePage, limit: safeLimit, total: count, totalPages: Math.ceil(count / safeLimit) } }
 }
 
-const resolveReport = async (id, { status, resolution, actionTaken }, admin) => {
+const resolveReport = async (id, { status, resolution, actionTaken, jobAction }, admin) => {
   const normalizedStatus = String(status || '').toUpperCase()
   if (!REPORT_STATUSES.includes(normalizedStatus)) throw new ApiError(400, 'Trạng thái xử lý không hợp lệ.', 'INVALID_REPORT_STATUS')
   if (!String(resolution || '').trim()) throw new ApiError(400, 'Vui lòng nhập kết quả xử lý.', 'RESOLUTION_REQUIRED')
+  const normalizedJobAction = jobAction ? String(jobAction).toUpperCase() : ''
+  if (normalizedJobAction && !JOB_ACTIONS[normalizedJobAction]) {
+    throw new ApiError(400, 'Biện pháp xử lý tin tuyển dụng không hợp lệ.', 'INVALID_JOB_ACTION')
+  }
   return db.sequelize.transaction(async (transaction) => {
     const report = await db.UserReport.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE })
     if (!report) throw new ApiError(404, 'Không tìm thấy báo cáo.', 'REPORT_NOT_FOUND')
-    await report.update({ status: normalizedStatus, resolution: resolution.trim(), actionTaken: actionTaken || null, handledById: admin.id, handledAt: new Date() }, { transaction })
-    await audit(transaction, admin.id, 'REPORT_UPDATE', 'REPORT', report.id, resolution.trim(), { actionTaken: actionTaken || null, status: normalizedStatus })
+    let finalActionTaken = actionTaken ? String(actionTaken).trim() : null
+    if (normalizedJobAction && report.entityId && ['JOB', 'COMPANY'].includes(report.entityType)) {
+      const job = await db.Job.findByPk(report.entityId, { transaction, lock: transaction.LOCK.UPDATE })
+      if (job) {
+        const previousStatus = job.status
+        const changes = JOB_ACTIONS[normalizedJobAction]
+        const resolvedChanges = Object.fromEntries(Object.entries(changes).map(([key, value]) => [key, typeof value === 'function' ? value() : value]))
+        await job.update(resolvedChanges, { transaction })
+        await audit(transaction, admin.id, `JOB_${normalizedJobAction}`, 'JOB', job.id, `Xử lý từ báo cáo #${report.id}: ${resolution.trim()}`, { previousStatus, nextStatus: job.status, reportId: report.id })
+        const actionLabel = normalizedJobAction === 'HIDE' ? 'Ẩn tin tuyển dụng' : normalizedJobAction === 'REMOVE' ? 'Đóng tin tuyển dụng' : normalizedJobAction === 'RESTORE' ? 'Khôi phục tin tuyển dụng' : 'Phê duyệt tin tuyển dụng'
+        finalActionTaken = finalActionTaken ? `${actionLabel} — ${finalActionTaken}` : `${actionLabel} (#${job.id} - ${job.title})`
+        if (job.createdById) {
+          await db.Notification.create({
+            userId: job.createdById,
+            type: 'ADMIN_JOB_MODERATION',
+            title: `Tin tuyển dụng đã được ${normalizedJobAction === 'HIDE' ? 'tạm ẩn' : normalizedJobAction === 'REMOVE' ? 'đóng' : 'cập nhật'} sau phản ánh`,
+            message: `${job.title}: ${resolution.trim()}`,
+            entityType: 'JOB',
+            entityId: job.id,
+          }, { transaction })
+        }
+      }
+    }
+    await report.update({ status: normalizedStatus, resolution: resolution.trim(), actionTaken: finalActionTaken, handledById: admin.id, handledAt: new Date() }, { transaction })
+    await audit(transaction, admin.id, 'REPORT_UPDATE', 'REPORT', report.id, resolution.trim(), { actionTaken: finalActionTaken, status: normalizedStatus, jobAction: normalizedJobAction || null })
     await db.Notification.create({ userId: report.reporterId, type: 'REPORT_STATUS_UPDATED', title: 'Báo cáo của bạn đã được cập nhật', message: resolution.trim(), entityType: 'REPORT', entityId: report.id }, { transaction })
     return report
   })
